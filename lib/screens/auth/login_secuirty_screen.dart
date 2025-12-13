@@ -31,7 +31,7 @@ class LoginSecurityScreen extends StatelessWidget {
                     style: GoogleFonts.spaceGrotesk(
                         fontSize: 24,
                         fontWeight: FontWeight.w400,
-                        color: kPrimaryColor,
+                        color: Colors.black,
                         ),
                   ),
                   IconButton(
@@ -47,7 +47,7 @@ class LoginSecurityScreen extends StatelessWidget {
                     'Account Delete Permanently'.tr,
                     style: GoogleFonts.spaceGrotesk(
                       fontSize: 16,
-                      color: kPrimaryColor,
+                      color: Colors.black54,
 
                       fontWeight: FontWeight.w400,
                     ),
@@ -154,7 +154,7 @@ class LoginSecurityScreen extends StatelessWidget {
                           }
                         }
                       },
-                      child: Text('Delete'.tr),
+                      child: Text('Delete'.tr,style:  GoogleFonts.spaceGrotesk(color: Colors.black,fontWeight: FontWeight.w500),),
                     ),
                   ),
 
@@ -167,7 +167,7 @@ class LoginSecurityScreen extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(vertical: 12),
                       ),
                       onPressed: () => Navigator.pop(context),
-                      child: Text('Cancel'.tr),
+                      child: Text('Cancel'.tr,style: GoogleFonts.spaceGrotesk(color: Colors.white,fontWeight: FontWeight.w500)),
                     ),
                   ),
                 ],
@@ -185,7 +185,10 @@ class LoginSecurityScreen extends StatelessWidget {
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
+        centerTitle: true,
+
         elevation: 0,
+        title: Text('Login & Security',style: GoogleFonts.spaceGrotesk(fontSize: 18,fontWeight: FontWeight.w700,color: Colors.black),),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black),
           onPressed: () => Navigator.pop(context),
@@ -196,22 +199,15 @@ class LoginSecurityScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Login & Security'.tr,
-              style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w600,
-                  fontFamily: 'Inter'.tr,
-                  color: kPrimaryColor),
-            ),
+
             const SizedBox(height: 40),
             Text(
               'Login'.tr,
-              style: TextStyle(
-                  fontSize: 18,
+              style: GoogleFonts.spaceGrotesk(
+                  color: Colors.black,
                   fontWeight: FontWeight.w700,
-                  fontFamily: "Inter",
-                  color: kPrimaryColor),
+                  fontSize: 18
+              )
             ),
             const SizedBox(height: 24),
             Row(
@@ -222,11 +218,11 @@ class LoginSecurityScreen extends StatelessWidget {
                   children: [
                     Text(
                       'Password'.tr,
-                      style: TextStyle(
-                          fontSize: 16,
+                      style:  GoogleFonts.spaceGrotesk(
+                          color: Colors.black54,
                           fontWeight: FontWeight.w400,
-                          fontFamily: 'Inter'.tr,
-                          color: kPrimaryColor),
+                          fontSize: 18
+                      )
                     ),
                     SizedBox(height: 4),
                     // Text(
@@ -250,12 +246,11 @@ class LoginSecurityScreen extends StatelessWidget {
                   },
                   child: Text(
                     'Update'.tr,
-                    style: TextStyle(
+                    style: GoogleFonts.spaceGrotesk(
                         decoration: TextDecoration.underline,
-                        color: kPrimaryColor,
-                        fontSize: 16,
-                        fontFamily: 'Inter'.tr,
-                        fontWeight: FontWeight.w500),
+                        fontWeight: FontWeight.w500,
+                        fontSize: 18
+                    )
                   ),
                 ),
               ],
@@ -263,11 +258,11 @@ class LoginSecurityScreen extends StatelessWidget {
             const SizedBox(height: 40),
             Text(
               'Account'.tr,
-              style: TextStyle(
-                  fontSize: 18,
+              style: GoogleFonts.spaceGrotesk(
+                  color: Colors.black,
                   fontWeight: FontWeight.w700,
-                  fontFamily: "Inter",
-                  color: kPrimaryColor),
+                  fontSize: 18
+              )
             ),
             const SizedBox(height: 24),
             Row(
@@ -275,22 +270,21 @@ class LoginSecurityScreen extends StatelessWidget {
               children: [
                 Text(
                   'Delete your account'.tr,
-                  style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w400,
-                      fontFamily: 'Inter'.tr,
-                      color: kPrimaryColor),
+                  style: GoogleFonts.spaceGrotesk(
+                    color: Colors.black54,
+                    fontWeight: FontWeight.w400,
+                    fontSize: 18
+                  )
                 ),
                 TextButton(
                   onPressed: () => _showDeleteConfirmation(context),
                   child: Text(
                     'Delete'.tr,
-                    style: TextStyle(
-                        color: flutterpads,
-                        decoration: TextDecoration.underline,
-                        fontSize: 16,
-                        fontFamily: 'Inter'.tr,
-                        fontWeight: FontWeight.w500),
+                    style: GoogleFonts.spaceGrotesk(
+                      decoration: TextDecoration.underline,
+                      fontWeight: FontWeight.w500,
+                      fontSize: 18
+                    )
                   ),
                 ),
               ],

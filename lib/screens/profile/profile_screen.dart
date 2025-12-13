@@ -59,12 +59,11 @@ class _AccountScreenState extends State<AccountScreen> {
                   const SizedBox(height: 40), // Space for the close button
                   Text(
                     'Are you sure you want to logout?'.tr,
-                    style: const TextStyle(
+                    style: GoogleFonts.spaceGrotesk(
+                      color: Colors.black,
                       fontSize: 18,
-                      fontWeight: FontWeight.w400,
-                      color: kPrimaryColor,
-                      fontFamily: 'Inter',
-                    ),
+                      fontWeight: FontWeight.w500
+                    )
                   ),
                   const SizedBox(height: 24),
                   Row(
@@ -100,7 +99,7 @@ class _AccountScreenState extends State<AccountScreen> {
                               (route) => false,
                             );
                           },
-                          child: Text('Log Out'.tr),
+                          child: Text('Log Out'.tr, style: GoogleFonts.spaceGrotesk(color: Colors.black,fontWeight: FontWeight.w500),),
                         ),
                       ),
                       const SizedBox(width: 16),
@@ -113,7 +112,7 @@ class _AccountScreenState extends State<AccountScreen> {
                             padding: const EdgeInsets.symmetric(vertical: 12),
                           ),
                           onPressed: () => Navigator.pop(context),
-                          child: Text('Cancel'.tr),
+                          child: Text('Cancel'.tr,style: GoogleFonts.spaceGrotesk(color: Colors.white,fontWeight: FontWeight.w500)),
                         ),
                       ),
                     ],
@@ -121,15 +120,15 @@ class _AccountScreenState extends State<AccountScreen> {
                 ],
               ),
               // Close button
-              Positioned(
-                top: 0,
-                right: 0,
-                child: IconButton(
-                  icon: const Icon(Icons.close),
-                  onPressed: () => Navigator.pop(context),
-                  tooltip: 'Close'.tr,
-                ),
-              ),
+              // Positioned(
+              //   top: 0,
+              //   right: 0,
+              //   child: IconButton(
+              //     icon: const Icon(Icons.close),
+              //     onPressed: () => Navigator.pop(context),
+              //     tooltip: 'Close'.tr,
+              //   ),
+              // ),
             ],
           ),
         );
@@ -663,10 +662,11 @@ class _AccountScreenState extends State<AccountScreen> {
                 padding: const EdgeInsets.all(16.0),
                 child: Text(
                   'Select Language'.tr,
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: GoogleFonts.spaceGrotesk(
+                    color: Colors.black,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 18
+                  )
                 ),
               ),
               Padding(

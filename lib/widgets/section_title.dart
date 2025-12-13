@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 //section title
 
@@ -15,11 +16,11 @@ class SectionTitle extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       ktext,
-      style:  TextStyle(
-        fontSize: 20,
-        fontFamily: 'Inter'.tr,
-        fontWeight: FontWeight.w500,
-      ),
+      style:  GoogleFonts.spaceGrotesk(
+        color: Colors.black,
+        fontWeight: FontWeight.w700,
+        fontSize: 18,
+      )
     );
   }
 }

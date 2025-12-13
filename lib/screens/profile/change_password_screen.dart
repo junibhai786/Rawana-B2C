@@ -1,5 +1,6 @@
 import 'dart:developer';
 
+import 'package:google_fonts/google_fonts.dart';
 import 'package:moonbnd/constants.dart';
 import 'package:moonbnd/data_models/all_space_item_screen.dart';
 import 'package:moonbnd/screens/auth/signin_screen.dart';
@@ -33,10 +34,10 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-          icon: Icon(Icons.arrow_back),
+          icon: Icon(Icons.arrow_back,color: Colors.black,),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: Text('Update Password'.tr),
+        title: Text('Update Password'.tr,style: GoogleFonts.spaceGrotesk(color: Colors.black,fontWeight: FontWeight.w500)),
       ),
       body: loading
           ? Center(child: CircularProgressIndicator(color: kSecondaryColor))
@@ -76,7 +77,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                       Text(
                         '*require at least one uppercase, one lowercase letter, one number and one symbol'
                             .tr,
-                        style: TextStyle(color: Colors.grey, fontSize: 12),
+                        style:  GoogleFonts.spaceGrotesk(color: Colors.black,fontWeight: FontWeight.w400),
                       ),
                       SizedBox(height: 16),
                       _buildPasswordField(
@@ -97,7 +98,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                           Expanded(
                             child: ElevatedButton(
                               onPressed: () => Navigator.of(context).pop(),
-                              child: Text('Cancel'.tr),
+                              child: Text('Cancel'.tr,style: GoogleFonts.spaceGrotesk(color: Colors.black,fontWeight: FontWeight.w500)),
                               style: ElevatedButton.styleFrom(
                                 foregroundColor: Colors.black,
                                 backgroundColor: Colors.white,
@@ -112,7 +113,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                           Expanded(
                             child: ElevatedButton(
                               onPressed: _updatePassword,
-                              child: Text('Update'.tr),
+                              child: Text('Update'.tr,style: GoogleFonts.spaceGrotesk(color: Colors.white,fontWeight: FontWeight.w500)),
                               style: ElevatedButton.styleFrom(
                                 foregroundColor: Colors.white,
                                 backgroundColor: Colors.blue,
@@ -145,10 +146,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
       children: [
         Text(
           label,
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 16,
-          ),
+          style: GoogleFonts.spaceGrotesk(color: Colors.black,fontWeight: FontWeight.w700)
         ),
         SizedBox(height: 8),
         TextFormField(

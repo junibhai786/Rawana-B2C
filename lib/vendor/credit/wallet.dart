@@ -1,3 +1,4 @@
+import 'package:google_fonts/google_fonts.dart';
 import 'package:moonbnd/Provider/singup_vendor_provider.dart';
 import 'package:moonbnd/constants.dart';
 import 'package:moonbnd/data_models/all_space_item_screen.dart';
@@ -89,11 +90,18 @@ class _WalletScreenState extends State<WalletScreen> {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(Icons.arrow_back,color: Colors.black,),
           onPressed: () {
             Navigator.of(context).pop();
           },
         ),
+        title: Text('Wallet',style: GoogleFonts.spaceGrotesk(
+            color: Colors.black,
+            fontWeight: FontWeight.w700,
+            fontSize: 18
+        ),
+        ),
+        centerTitle: true,
       ),
       body: loading
           ? Center(
@@ -107,13 +115,7 @@ class _WalletScreenState extends State<WalletScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        'Wallet'.tr,
-                        style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w600,
-                            fontFamily: "intern"),
-                      ),
+
                       SizedBox(
                         height: 32,
                       ),
@@ -142,10 +144,11 @@ class _WalletScreenState extends State<WalletScreen> {
                       // Latest Transactions Header
                       Text(
                         'Latest Transactions'.tr,
-                        style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w600,
-                            fontFamily: "intern"),
+                        style: GoogleFonts.spaceGrotesk(
+                            color: Colors.black,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 18
+                        ),
                       ),
                       const SizedBox(height: 16),
                       // Transactions List
@@ -256,11 +259,11 @@ class _WalletScreenState extends State<WalletScreen> {
         children: [
           Text(
             title,
-            style: TextStyle(
-                color: Color(0xff0000000),
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                fontFamily: "intern"),
+            style: GoogleFonts.spaceGrotesk(
+                color: Colors.black,
+                fontWeight: FontWeight.w700,
+                fontSize: 18
+            )
           ),
           const SizedBox(height: 8),
           Text(

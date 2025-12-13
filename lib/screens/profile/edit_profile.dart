@@ -6,6 +6,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:moonbnd/Provider/auth_provider.dart';
@@ -127,12 +128,15 @@ class _EditProfileScreenState extends State<EditProfile> {
       appBar: AppBar(
         title: Text(
           'My Profile'.tr,
-          // style: TextStyle(
-          //     fontWeight: FontWeight.w600, fontSize: 24, color: kPrimaryColor),
+           style:  GoogleFonts.spaceGrotesk(
+                color: Colors.black,
+                fontWeight: FontWeight.w700,
+                fontSize: 18
+            )
         ),
         centerTitle: true,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back),
+          icon: Icon(Icons.arrow_back,color: Colors.black,),
           onPressed: () {
             Navigator.pop(context);
           },
@@ -187,11 +191,11 @@ class _EditProfileScreenState extends State<EditProfile> {
 
                     Text(
                       'Personal Information'.tr,
-                      style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontFamily: 'Inter'.tr,
-                          fontSize: 18,
-                          color: kPrimaryColor),
+                      style: GoogleFonts.spaceGrotesk(
+                       color: Colors.black,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 18
+                      )
                     ),
                     SizedBox(height: 10),
                     buildEditableField(
@@ -210,11 +214,11 @@ class _EditProfileScreenState extends State<EditProfile> {
                       children: [
                         Text(
                           "E-mail".tr,
-                          style: TextStyle(
-                              color: kPrimaryColor,
-                              fontWeight: FontWeight.w400,
-                              fontFamily: 'Inter'.tr,
-                              fontSize: 16),
+                          style: GoogleFonts.spaceGrotesk(
+                            fontSize: 16,
+                            color: Colors.black,
+                            fontWeight: FontWeight.w400,
+                          )
                         ),
                         // No Edit button for email
                       ],
@@ -404,10 +408,11 @@ class _EditProfileScreenState extends State<EditProfile> {
                     SizedBox(height: 20),
                     Text(
                       'Location Information'.tr,
-                      style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontFamily: 'Inter'.tr,
-                          fontSize: 18),
+                      style: GoogleFonts.spaceGrotesk(
+                          color: Colors.black,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 18
+                      )
                     ),
                     SizedBox(height: 20),
                     buildEditableField(
@@ -640,11 +645,11 @@ class _EditProfileScreenState extends State<EditProfile> {
           children: [
             Text(
               label,
-              style: TextStyle(
-                  color: kPrimaryColor,
-                  fontWeight: FontWeight.w400,
-                  fontFamily: 'Inter'.tr,
-                  fontSize: 16),
+              style:GoogleFonts.spaceGrotesk(
+                fontSize: 16,
+                color: Colors.black,
+                fontWeight: FontWeight.w400,
+              )
             ),
             if (!isEditing && label != "E-mail")
               if (userNameEdit)

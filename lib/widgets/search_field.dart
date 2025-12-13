@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../constants.dart';
 
@@ -22,6 +23,11 @@ class SearchField extends StatelessWidget {
       onChanged: onChanged,
       decoration: InputDecoration(
         hintText: hint,
+        hintStyle: GoogleFonts.spaceGrotesk(
+          fontSize: 16,
+          color: Colors.black54,
+
+        ),
 
         border: outlineInputBorder(),
 

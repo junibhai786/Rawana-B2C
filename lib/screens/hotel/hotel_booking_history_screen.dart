@@ -1,3 +1,4 @@
+import 'package:google_fonts/google_fonts.dart';
 import 'package:moonbnd/Provider/home_provider.dart';
 import 'package:moonbnd/constants.dart';
 import 'package:moonbnd/screens/reservation/reservation_detail_screen.dart';
@@ -137,11 +138,11 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
         ),
         title: Text(
           'Booking History'.tr,
-          style: TextStyle(
-            color: Colors.black,
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-          ),
+          style: GoogleFonts.spaceGrotesk(
+              color: Colors.black,
+              fontWeight: FontWeight.w700,
+              fontSize: 18
+          )
         ),
         backgroundColor: Colors.transparent,
         elevation: 0,

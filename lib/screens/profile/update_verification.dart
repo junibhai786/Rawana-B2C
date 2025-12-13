@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 
@@ -136,6 +137,14 @@ class _UpdateVerificationDataScreenState
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        title:    Text('Update Verification Data'.tr,
+            style: GoogleFonts.spaceGrotesk(
+              color: Colors.black,
+              fontWeight: FontWeight.w700,
+
+            )
+
+        ),
         leading: IconButton(
           icon: Icon(Icons.arrow_back, color: Colors.black),
           onPressed: () => Navigator.of(context).pop(),
@@ -152,12 +161,7 @@ class _UpdateVerificationDataScreenState
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text('Update Verification Data'.tr,
-                      style: TextStyle(
-                          fontFamily: 'Inter'.tr,
-                          color: Colors.black,
-                          fontSize: 24,
-                          fontWeight: FontWeight.w600)),
+
                   // SizedBox(height: 0),
                   SizedBox(height: 40),
 
@@ -200,11 +204,8 @@ class _UpdateVerificationDataScreenState
         inputFormatters: [FilteringTextInputFormatter.digitsOnly],
         controller: phoneController,
         decoration: InputDecoration(
-          labelText: label,
-          labelStyle: TextStyle(
-            fontFamily: 'Inter'.tr,
-            color: kPrimaryColor,
-          ),
+          labelText: label.tr,
+          labelStyle: GoogleFonts.spaceGrotesk(color: Colors.black54,),
           border: InputBorder.none,
           contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         ),
@@ -224,11 +225,15 @@ class _UpdateVerificationDataScreenState
         children: [
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-            child: Text(label,
-                style: TextStyle(
-                    fontFamily: 'Inter'.tr,
-                    fontSize: 16,
-                    color: kPrimaryColor)),
+            child: Text(label.tr,
+                style: GoogleFonts.spaceGrotesk(
+                  fontWeight: FontWeight.w400,
+                  color: Colors.black54,
+                  fontSize: 18
+                )
+
+
+            ),
           ),
           Row(
             children: [
@@ -279,8 +284,13 @@ class _UpdateVerificationDataScreenState
                       'assets/icons/upload_icon.svg',
                     ),
                     label: Text('Select File',
-                        style: TextStyle(
-                            fontFamily: 'Inter'.tr, color: Colors.white)),
+                        style: GoogleFonts.spaceGrotesk(
+                            fontWeight: FontWeight.w400,
+                            color: Colors.white,
+                            fontSize: 16
+                        )
+
+                    ),
                     onPressed:
                         onPickImage, // Trigger respective image selection
                   ),
