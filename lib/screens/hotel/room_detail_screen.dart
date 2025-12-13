@@ -27,12 +27,14 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
 
 import '../../constants.dart';
+import '../../modals/hotel_list_model.dart';
 
 class RoomDetailScreen extends StatefulWidget {
   final int hotelId;
-  final Room? room; // Add this line
+  final Room? room;
+  final Hotel? hotelData;// Add this line
   RoomDetailScreen(
-      {super.key, required this.hotelId, this.room}); // Update this line
+      {super.key, required this.hotelId, this.room, this.hotelData}); // Update this line
 
   @override
   State<RoomDetailScreen> createState() => _RoomDetailScreenState();
@@ -319,553 +321,531 @@ class _RoomDetailScreenState extends State<RoomDetailScreen>
                         ),
                       ),
 
-                      Card(
-                        elevation: 2,
-                        margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.only(bottom: 20),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 15),
-                                child: Text(
-                                  item.hotelDetail?.data?.title ?? ''.tr,
-                                  style: GoogleFonts.spaceGrotesk(
-                                    fontWeight: FontWeight.w700, // Bold
-                                    fontSize: 24,
-                                    height: 32 / 24,
-                                    letterSpacing: 0,
-                                    color: Colors.black,
-                                  ),
-                                  maxLines: 3,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                              Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 15),
-                                child: Row(
-                                  children: [
-                                    const Icon(Icons.location_on_rounded, color: Colors.black54),
-                                    const SizedBox(width: 5),
-                                    Expanded(
-                                      child: Text(
-                                        (item.hotelDetail?.data?.address ?? '').tr, // <-- .tr ONLY here
-                                        style: GoogleFonts.spaceGrotesk(
-                                          fontWeight: FontWeight.w400, // Regular weight
-                                          fontSize: 14,
-                                          height: 19.5 / 14, // line-height
-                                          letterSpacing: 0,
-                                          color: Colors.black54,
-                                        ),
-                                      ),
+                      Column(
+                        children: [
+                          const SizedBox(height: 12),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 15),
+                                  child: Text(
+                                    item.hotelDetail?.data?.title ?? ''.tr,
+                                    style: GoogleFonts.spaceGrotesk(
+                                      fontWeight: FontWeight.w700, // Bold
+                                      fontSize: 24,
+                                      height: 32 / 24,
+                                      letterSpacing: 0,
+                                      color: Colors.black,
                                     ),
-                                  ],
-                                ),
-                              ),
-
-                              Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 15),
-                                child: Text(
-                                  "${item.hotelDetail?.data?.reviewScore?.totalReview ?? 0} Reviews".tr, // .tr ONLY here
-                                  style: GoogleFonts.spaceGrotesk(
-                                    fontWeight: FontWeight.w400, // Regular
-                                    fontSize: 13,
-                                    height: 19.5 / 13, // line-height
-                                    letterSpacing: 0,
-                                    color: const Color(0xFF65758B), // #65758B
+                                    maxLines: 3,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
-                              ),
-
-                              // ───────────────────────────────
-                              // 1. IMAGE SLIDER (wrapped inside rounded top)
-                              // ───────────────────────────────
-                              ClipRRect(
-                                borderRadius: const BorderRadius.only(
-                                ),
-                                child: Stack(
-                                  children: [
-                                    SizedBox(
-                                      height: 250,
-                                      width: MediaQuery.of(context).size.width,
-                                      child: PageView.builder(
-                                        onPageChanged: (value) {
-                                          setState(() {
-                                            currentPage = value;
-                                          });
-                                        },
-                                        itemCount:
-                                        item.hotelDetail?.data?.gallery?.length ?? 0,
-                                        itemBuilder: (context, index) => SliderContent(
-                                          imageUrl: item.hotelDetail?.data?.gallery?[index] ?? '',
-                                        ),
-                                        physics: const ClampingScrollPhysics(),
-                                      ),
-                                    ),
-
-                                    Positioned(
-                                      bottom: 12,
-                                      right: 12,
-                                      child: Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 12,
-                                          vertical: 4,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: Colors.black,
-                                          // borderRadius: BorderRadius.circular(5),
-                                        ),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 15),
+                                  child: Row(
+                                    children: [
+                                      const Icon(Icons.location_on_rounded, color: Colors.black54),
+                                      const SizedBox(width: 5),
+                                      Expanded(
                                         child: Text(
-                                          '${currentPage + 1} / ${item.hotelDetail?.data?.gallery?.length}',
-                                          style: TextStyle(
-                                            color: Colors.white,
-                                            fontWeight: FontWeight.w500,
-                                            fontSize: 12,
-                                            fontFamily: 'Inter'.tr,
+                                          (item.hotelDetail?.data?.address ?? '').tr, // <-- .tr ONLY here
+                                          style: GoogleFonts.spaceGrotesk(
+                                            fontWeight: FontWeight.w400, // Regular weight
+                                            fontSize: 14,
+                                            height: 19.5 / 14, // line-height
+                                            letterSpacing: 0,
+                                            color: Colors.black54,
                                           ),
                                         ),
                                       ),
+                                    ],
+                                  ),
+                                ),
+
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 15),
+                                  child: Text(
+                                    "${item.hotelDetail?.data?.reviewScore?.totalReview ?? 0} Reviews".tr, // .tr ONLY here
+                                    style: GoogleFonts.spaceGrotesk(
+                                      fontWeight: FontWeight.w400, // Regular
+                                      fontSize: 13,
+                                      height: 19.5 / 13, // line-height
+                                      letterSpacing: 0,
+                                      color: const Color(0xFF65758B), // #65758B
                                     ),
-                                  ],
+                                  ),
                                 ),
-                              ),
 
-                              const SizedBox(height: 10),
+                                const SizedBox(height: 10),
 
-                              // ───────────────────────────────
-                              // 2. HOTEL TITLE + RATING BADGE
-                              // ───────────────────────────────
-
-
-
-                              // ───────────────────────────────
-                              // 3. LOCATION ROW
-                              // ───────────────────────────────
-
-
-
-                              // ───────────────────────────────
-                              // 4. REVIEW COUNT
-                              // ───────────────────────────────
-
-
-
-                              // ───────────────────────────────
-                              // 5. ABOUT THIS HOTEL
-                              // ───────────────────────────────
-                              Padding(
-                                padding: const EdgeInsets.only(left: 10),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                  children: [
-                                    _buildAmenityPill('Wifi',Icons.wifi),
-
-                                    _buildAmenityPill('Pool',Icons.pool),
-                                    _buildAmenityPill('Restaurant',Icons.restaurant_menu),
-
-
-                                  ],
-                                ),
-                              ),
-                              Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 15),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    // Text(
-                                    //   'About this hotel'.tr,
-                                    //   style: TextStyle(
-                                    //     fontSize: 18,
-                                    //     fontWeight: FontWeight.w600,
-                                    //     fontFamily: 'Inter'.tr,
-                                    //     color: Colors.black,
-                                    //   ),
-                                    // ),
-                                    const SizedBox(height: 10),
-
-                                    ExpandableHtmlContent(
-                                      content: item.hotelDetail?.data?.content ?? '',
-                                      primaryColor: kPrimaryColor,
-                                      textStyle: GoogleFonts.spaceGrotesk(
-                                        fontWeight: FontWeight.w400, // Regular
-                                        fontSize: 14,
-                                        height: 21 / 14, // line-height
-                                        letterSpacing: 0,
-                                        color: const Color(0xFF65758B), // #65758B
+                                // ───────────────────────────────
+                                // 1. IMAGE SLIDER (wrapped inside rounded top)
+                                // ───────────────────────────────
+                                ClipRRect(
+                                  child: Stack(
+                                    children: [
+                                      SizedBox(
+                                        height: 250,
+                                        width: MediaQuery.of(context).size.width,
+                                        child: PageView.builder(
+                                          onPageChanged: (value) {
+                                            setState(() {
+                                              currentPage = value;
+                                            });
+                                          },
+                                          itemCount:
+                                          item.hotelDetail?.data?.gallery?.length ?? 0,
+                                          itemBuilder: (context, index) => SliderContent(
+                                            imageUrl: item.hotelDetail?.data?.gallery?[index] ?? '',
+                                          ),
+                                          physics: const ClampingScrollPhysics(),
+                                        ),
                                       ),
-                                      readMoreText: 'Read more'.tr, // .tr ONLY here
-                                    ),
 
+                                      Positioned(
+                                        bottom: 12,
+                                        right: 12,
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 12,
+                                            vertical: 4,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: Colors.black,
+                                            // borderRadius: BorderRadius.circular(5),
+                                          ),
+                                          child: Text(
+                                            '${currentPage + 1} / ${item.hotelDetail?.data?.gallery?.length}',
+                                            style: GoogleFonts.spaceGrotesk(
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.w500,
+                                              fontSize: 12,
 
-                                    const SizedBox(height: 20),
-                                  ],
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                              ),
 
-                            ],
+                                const SizedBox(height: 10),
+
+                                // ───────────────────────────────
+                                // 5. ABOUT THIS HOTEL
+                                // ───────────────────────────────
+                                Padding(
+                                  padding: const EdgeInsets.only(left: 10),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                    children: [
+                                      _buildAmenityPill('Wifi',Icons.wifi),
+
+                                      _buildAmenityPill('Pool',Icons.pool),
+                                      _buildAmenityPill('Restaurant',Icons.restaurant_menu),
+
+                                    ],
+                                  ),
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 15),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      // Text(
+                                      //   'About this hotel'.tr,
+                                      //   style: TextStyle(
+                                      //     fontSize: 18,
+                                      //     fontWeight: FontWeight.w600,
+                                      //     fontFamily: 'Inter'.tr,
+                                      //     color: Colors.black,
+                                      //   ),
+                                      // ),
+                                      const SizedBox(height: 10),
+
+                                      ExpandableHtmlContent(
+                                        content: item.hotelDetail?.data?.content ?? '',
+                                        primaryColor: kPrimaryColor,
+                                        textStyle: GoogleFonts.spaceGrotesk(
+                                          fontWeight: FontWeight.w400, // Regular
+                                          fontSize: 14,
+                                          height: 21 / 14, // line-height
+                                          letterSpacing: 0,
+                                          color: const Color(0xFF65758B), // #65758B
+                                        ),
+                                        readMoreText: 'Read more'.tr, // .tr ONLY here
+                                      ),
+
+                                      const SizedBox(height: 20),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
+                          const SizedBox(height: 12),
+                        ],
                       ),
 
 
 
 
-                      //     Padding(
-                      //   padding: EdgeInsets.all(20.0),
-                      //   child: Container(
-                      //     decoration: BoxDecoration(
-                      //       color: Colors.white,
-                      //       borderRadius: BorderRadius.circular(15),
-                      //       boxShadow: [
-                      //         BoxShadow(
-                      //           color: Colors.grey.withOpacity(0.3),
-                      //           spreadRadius: 2,
-                      //           blurRadius: 5,
-                      //         ),
-                      //       ],
-                      //       border: Border.all(color: Colors.grey.shade300),
-                      //     ),
-                      //     child: Column(
-                      //       mainAxisSize: MainAxisSize.min,
-                      //       children: [
-                      //         // Tabs: Book and Enquiry
-                      //         Row(
-                      //           children: [
-                      //             Expanded(
-                      //               child: InkWell(
-                      //                 onTap: () {
-                      //                   setState(() {
-                      //                     isBookTab = true;
-                      //                   });
-                      //                 },
-                      //                 child: Container(
-                      //                   padding: EdgeInsets.all(15),
-                      //                   alignment: Alignment.center,
-                      //                   child: Text(
-                      //                     'Book'.tr,
-                      //                     style: TextStyle(
-                      //                       fontFamily: 'Inter'.tr,
-                      //                       color:
-                      //                           isBookTab ? kSecondaryColor : grey,
-                      //                       fontSize: 14,
-                      //                       fontWeight: isBookTab
-                      //                           ? FontWeight.bold
-                      //                           : FontWeight.normal,
-                      //                     ),
-                      //                   ),
-                      //                 ),
-                      //               ),
-                      //             ),
-                      //             Expanded(
-                      //               child: InkWell(
-                      //                 onTap: () {
-                      //                   setState(() {
-                      //                     isBookTab = false;
-                      //                   });
-                      //                   EnquiryBottomSheet.show(
-                      //                     context,
-                      //                     serviceId: item.hotelDetail?.data?.id
-                      //                             .toString() ??
-                      //                         '',
-                      //                     serviceType: 'hotel',
-                      //                     onEnquirySubmit:
-                      //                         (name, email, phone, note) {
-                      //                       print(
-                      //                           'Enquiry submitted: $name, $email, $phone, $note');
-                      //                     },
-                      //                     onClose: () {
-                      //                       setState(() {
-                      //                         isBookTab = true;
-                      //                       });
-                      //                     },
-                      //                   );
-                      //                 },
-                      //                 child: Container(
-                      //                   padding: EdgeInsets.all(15),
-                      //                   alignment: Alignment.center,
-                      //                   child: Text(
-                      //                     'Enquiry'.tr,
-                      //                     style: TextStyle(
-                      //                       fontFamily: 'Inter'.tr,
-                      //                       color:
-                      //                           !isBookTab ? kSecondaryColor : grey,
-                      //                       fontSize: 14,
-                      //                       fontWeight: !isBookTab
-                      //                           ? FontWeight.bold
-                      //                           : FontWeight.normal,
-                      //                     ),
-                      //                   ),
-                      //                 ),
-                      //               ),
-                      //             ),
-                      //           ],
-                      //         ),
-                      //
-                      //         Row(
-                      //           children: [
-                      //             Expanded(
-                      //               child: Divider(
-                      //                 height: isBookTab ? 3 : 1,
-                      //                 thickness: isBookTab ? 3 : 1,
-                      //                 color: isBookTab ? kSecondaryColor : grey,
-                      //               ),
-                      //             ),
-                      //             Expanded(
-                      //               child: Divider(
-                      //                 height: isBookTab ? 1 : 3,
-                      //                 thickness: isBookTab ? 1 : 3,
-                      //                 color: !isBookTab ? kSecondaryColor : grey,
-                      //               ),
-                      //             ),
-                      //           ],
-                      //         ),
-                      //
-                      //         // Only show content for Book tab
-                      //         if (isBookTab) ...[
-                      //           // Pricing or Enquiry Message based on Tab
-                      //           Padding(
-                      //             padding: EdgeInsets.all(16.0),
-                      //             child: Align(
-                      //               alignment: Alignment.centerLeft,
-                      //               child: roomResponse != null &&
-                      //                       roomResponse!.rooms.isNotEmpty
-                      //                   ? Text(
-                      //                       '\$${roomResponse!.rooms[0].price.toStringAsFixed(2)}',
-                      //                       style: TextStyle(
-                      //                         fontSize: 20,
-                      //                         fontFamily: 'Inter'.tr,
-                      //                         fontWeight: FontWeight.w600,
-                      //                         color: kPrimaryColor,
-                      //                       ),
-                      //                     )
-                      //                   : Text(
-                      //                       'Check availability for pricing'.tr,
-                      //                       style: TextStyle(
-                      //                         fontSize: 16,
-                      //                         fontFamily: 'Inter'.tr,
-                      //                         fontWeight: FontWeight.w500,
-                      //                         color: Colors.grey,
-                      //                       ),
-                      //                     ),
-                      //             ),
-                      //           ),
-                      //
-                      //           // Container for Check-in, Check-out, and Guests
-                      //           Padding(
-                      //             padding: EdgeInsets.symmetric(
-                      //                 vertical: 15.0, horizontal: 15),
-                      //             child: Container(
-                      //               padding: EdgeInsets.all(10),
-                      //               decoration: BoxDecoration(
-                      //                 borderRadius: BorderRadius.circular(15),
-                      //                 border:
-                      //                     Border.all(color: Colors.grey.shade300),
-                      //               ),
-                      //               child: Column(
-                      //                 children: [
-                      //                   Row(
-                      //                     children: [
-                      //                       // Check-in date
-                      //                       Expanded(
-                      //                         child: GestureDetector(
-                      //                           onTap: () {
-                      //                             _selectDate(context, true);
-                      //                           },
-                      //                           child: Column(
-                      //                             crossAxisAlignment:
-                      //                                 CrossAxisAlignment.start,
-                      //                             children: [
-                      //                               Text(
-                      //                                 "Check-in".tr,
-                      //                                 style: TextStyle(
-                      //                                   fontFamily: 'Inter'.tr,
-                      //                                   color: kPrimaryColor,
-                      //                                   fontSize: 12,
-                      //                                 ),
-                      //                               ),
-                      //                               SizedBox(height: 5),
-                      //                               Container(
-                      //                                 padding: EdgeInsets.all(8),
-                      //                                 decoration: BoxDecoration(
-                      //                                   borderRadius:
-                      //                                       BorderRadius.circular(
-                      //                                           8),
-                      //                                   border: Border.all(
-                      //                                       color: Colors
-                      //                                           .grey.shade300),
-                      //                                 ),
-                      //                                 child: Text(
-                      //                                   checkInDate != null
-                      //                                       ? DateFormat(
-                      //                                               'd/MM/yyyy')
-                      //                                           .format(
-                      //                                               checkInDate!)
-                      //                                       : 'Select date'.tr,
-                      //                                   style: TextStyle(
-                      //                                     color: checkInDate != null
-                      //                                         ? Colors.black
-                      //                                         : Colors.grey,
-                      //                                     fontWeight: checkInDate !=
-                      //                                             null
-                      //                                         ? FontWeight.normal
-                      //                                         : FontWeight.w300,
-                      //                                   ),
-                      //                                 ),
-                      //                               ),
-                      //                             ],
-                      //                           ),
-                      //                         ),
-                      //                       ),
-                      //
-                      //                       // Vertical line
-                      //                       Container(
-                      //                         width: 1,
-                      //                         height: 60,
-                      //                         color: Colors.grey,
-                      //                         margin: EdgeInsets.symmetric(
-                      //                             horizontal: 10),
-                      //                       ),
-                      //
-                      //                       // Check-out date
-                      //                       Expanded(
-                      //                         child: GestureDetector(
-                      //                           onTap: () {
-                      //                             _selectDate(context, false);
-                      //                           },
-                      //                           child: Column(
-                      //                             crossAxisAlignment:
-                      //                                 CrossAxisAlignment.center,
-                      //                             children: [
-                      //                               Text("Check-out".tr,
-                      //                                   style: TextStyle(
-                      //                                     fontFamily: 'Inter'.tr,
-                      //                                     color: kPrimaryColor,
-                      //                                     fontSize: 12,
-                      //                                   )),
-                      //                               SizedBox(height: 5),
-                      //                               Container(
-                      //                                 padding: EdgeInsets.all(8),
-                      //                                 decoration: BoxDecoration(
-                      //                                   borderRadius:
-                      //                                       BorderRadius.circular(
-                      //                                           8),
-                      //                                   border: Border.all(
-                      //                                       color: Colors
-                      //                                           .grey.shade300),
-                      //                                 ),
-                      //                                 child: Text(
-                      //                                   checkOutDate != null
-                      //                                       ? (checkOutDate!.isAfter(
-                      //                                               checkInDate ??
-                      //                                                   DateTime
-                      //                                                       .now())
-                      //                                           ? DateFormat(
-                      //                                                   'd/MM/yyyy')
-                      //                                               .format(
-                      //                                                   checkOutDate!)
-                      //                                           : 'Invalid date'.tr)
-                      //                                       : 'Select date'.tr,
-                      //                                   style: TextStyle(
-                      //                                     color: checkOutDate !=
-                      //                                             null
-                      //                                         ? (checkOutDate!.isAfter(
-                      //                                                 checkInDate ??
-                      //                                                     DateTime
-                      //                                                         .now())
-                      //                                             ? Colors.black
-                      //                                             : Colors.red)
-                      //                                         : Colors.grey,
-                      //                                     fontWeight:
-                      //                                         checkOutDate != null
-                      //                                             ? FontWeight
-                      //                                                 .normal
-                      //                                             : FontWeight.w300,
-                      //                                   ),
-                      //                                 ),
-                      //                               ),
-                      //                             ],
-                      //                           ),
-                      //                         ),
-                      //                       ),
-                      //                     ],
-                      //                   ),
-                      //
-                      //                   // Guests Dropdown
-                      //                   Divider(
-                      //                     thickness: 1,
-                      //                   ),
-                      //                   Padding(
-                      //                     padding: EdgeInsets.only(top: 5),
-                      //                     child: Column(
-                      //                       crossAxisAlignment:
-                      //                           CrossAxisAlignment.start,
-                      //                       children: [
-                      //                         Text(
-                      //                           "Guests".tr,
-                      //                           style: TextStyle(
-                      //                               fontSize: 12,
-                      //                               fontFamily: 'Inter'.tr,
-                      //                               fontWeight: FontWeight.w600,
-                      //                               color: kPrimaryColor),
-                      //                         ),
-                      //                         InkWell(
-                      //                           onTap: _showGuestBottomSheet,
-                      //                           child: Container(
-                      //                             padding: EdgeInsets.symmetric(
-                      //                                 horizontal: 12, vertical: 8),
-                      //                             decoration: BoxDecoration(
-                      //                               border: Border.all(
-                      //                                   color:
-                      //                                       Colors.grey.shade300),
-                      //                               borderRadius:
-                      //                                   BorderRadius.circular(8),
-                      //                             ),
-                      //                             child: Row(
-                      //                               mainAxisAlignment:
-                      //                                   MainAxisAlignment
-                      //                                       .spaceBetween,
-                      //                               children: [
-                      //                                 Text(
-                      //                                   selectedGuests,
-                      //                                   style: TextStyle(
-                      //                                     fontFamily: 'Inter'.tr,
-                      //                                     fontSize: 14,
-                      //                                   ),
-                      //                                 ),
-                      //                                 Icon(Icons.arrow_drop_down),
-                      //                               ],
-                      //                             ),
-                      //                           ),
-                      //                         ),
-                      //                       ],
-                      //                     ),
-                      //                   ),
-                      //                 ],
-                      //               ),
-                      //             ),
-                      //           ),
-                      //
-                      //           SizedBox(height: 20),
-                      //
-                      //           // Check Availability Button
-                      //           Padding(
-                      //             padding: EdgeInsets.symmetric(horizontal: 15),
-                      //             child: TertiaryButton(
-                      //               text: "Check Availability".tr,
-                      //               press: _checkAvailability,
-                      //             ),
-                      //           ),
-                      //
-                      //           SizedBox(height: 20),
-                      //         ],
-                      //       ],
-                      //     ),
-                      //   ),
-                      // ),
+                          Padding(
+                        padding: EdgeInsets.all(20.0),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(15),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.grey.withOpacity(0.3),
+                                spreadRadius: 2,
+                                blurRadius: 5,
+                              ),
+                            ],
+                            border: Border.all(color: Colors.grey.shade300),
+                          ),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              // Tabs: Book and Enquiry
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: InkWell(
+                                      onTap: () {
+                                        setState(() {
+                                          isBookTab = true;
+                                        });
+                                      },
+                                      child: Container(
+                                        padding: EdgeInsets.all(15),
+                                        alignment: Alignment.center,
+                                        child: Text(
+                                          'Book'.tr,
+                                          style: TextStyle(
+                                            fontFamily: 'Inter'.tr,
+                                            color:
+                                                isBookTab ? kSecondaryColor : grey,
+                                            fontSize: 14,
+                                            fontWeight: isBookTab
+                                                ? FontWeight.bold
+                                                : FontWeight.normal,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  Expanded(
+                                    child: InkWell(
+                                      onTap: () {
+                                        setState(() {
+                                          isBookTab = false;
+                                        });
+                                        EnquiryBottomSheet.show(
+                                          context,
+                                          serviceId: item.hotelDetail?.data?.id
+                                                  .toString() ??
+                                              '',
+                                          serviceType: 'hotel',
+                                          onEnquirySubmit:
+                                              (name, email, phone, note) {
+                                            print(
+                                                'Enquiry submitted: $name, $email, $phone, $note');
+                                          },
+                                          onClose: () {
+                                            setState(() {
+                                              isBookTab = true;
+                                            });
+                                          },
+                                        );
+                                      },
+                                      child: Container(
+                                        padding: EdgeInsets.all(15),
+                                        alignment: Alignment.center,
+                                        child: Text(
+                                          'Enquiry'.tr,
+                                          style: TextStyle(
+                                            fontFamily: 'Inter'.tr,
+                                            color:
+                                                !isBookTab ? kSecondaryColor : grey,
+                                            fontSize: 14,
+                                            fontWeight: !isBookTab
+                                                ? FontWeight.bold
+                                                : FontWeight.normal,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+// line
+                              // Row(
+                              //   children: [
+                              //     Expanded(
+                              //       child: Divider(
+                              //         height: isBookTab ? 3 : 1,
+                              //         thickness: isBookTab ? 3 : 1,
+                              //         color: isBookTab ? kSecondaryColor : grey,
+                              //       ),
+                              //     ),
+                              //     Expanded(
+                              //       child: Divider(
+                              //         height: isBookTab ? 1 : 3,
+                              //         thickness: isBookTab ? 1 : 3,
+                              //         color: !isBookTab ? kSecondaryColor : grey,
+                              //       ),
+                              //     ),
+                              //   ],
+                              // ),
+
+                              // Only show content for Book tab
+                              if (isBookTab) ...[
+                                // Pricing or Enquiry Message based on Tab
+                                Padding(
+                                  padding: EdgeInsets.all(16.0),
+                                  child: Align(
+                                    alignment: Alignment.centerLeft,
+                                    child: roomResponse != null &&
+                                            roomResponse!.rooms.isNotEmpty
+                                        ? Text(
+                                            '\$${roomResponse!.rooms[0].price.toStringAsFixed(2)}',
+                                            style: TextStyle(
+                                              fontSize: 20,
+                                              fontFamily: 'Inter'.tr,
+                                              fontWeight: FontWeight.w600,
+                                              color: kPrimaryColor,
+                                            ),
+                                          )
+                                        : Text(
+                                            'Check availability for pricing'.tr,
+                                            style: TextStyle(
+                                              fontSize: 16,
+                                              fontFamily: 'Inter'.tr,
+                                              fontWeight: FontWeight.w500,
+                                              color: Colors.grey,
+                                            ),
+                                          ),
+                                  ),
+                                ),
+
+                                // Container for Check-in, Check-out, and Guests
+                                Padding(
+                                  padding: EdgeInsets.symmetric(
+                                      vertical: 15.0, horizontal: 15),
+                                  child: Container(
+                                    padding: EdgeInsets.all(10),
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(15),
+                                      border:
+                                          Border.all(color: Colors.grey.shade300),
+                                    ),
+                                    child: Column(
+                                      children: [
+                                        Row(
+                                          children: [
+                                            // Check-in date
+                                            Expanded(
+                                              child: GestureDetector(
+                                                onTap: () {
+                                                  _selectDate(context, true);
+                                                },
+                                                child: Column(
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
+                                                  children: [
+                                                    Text(
+                                                      "Check-in".tr,
+                                                      style: TextStyle(
+                                                        fontFamily: 'Inter'.tr,
+                                                        color: kPrimaryColor,
+                                                        fontSize: 12,
+                                                      ),
+                                                    ),
+                                                    SizedBox(height: 5),
+                                                    Container(
+                                                      padding: EdgeInsets.all(8),
+                                                      decoration: BoxDecoration(
+                                                        borderRadius:
+                                                            BorderRadius.circular(
+                                                                8),
+                                                        border: Border.all(
+                                                            color: Colors
+                                                                .grey.shade300),
+                                                      ),
+                                                      child: Text(
+                                                        checkInDate != null
+                                                            ? DateFormat(
+                                                                    'd/MM/yyyy')
+                                                                .format(
+                                                                    checkInDate!)
+                                                            : 'Select date'.tr,
+                                                        style: TextStyle(
+                                                          color: checkInDate != null
+                                                              ? Colors.black
+                                                              : Colors.grey,
+                                                          fontWeight: checkInDate !=
+                                                                  null
+                                                              ? FontWeight.normal
+                                                              : FontWeight.w300,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ),
+
+                                            // Vertical line
+                                            Container(
+                                              width: 1,
+                                              height: 60,
+                                              color: Colors.grey,
+                                              margin: EdgeInsets.symmetric(
+                                                  horizontal: 10),
+                                            ),
+
+                                            // Check-out date
+                                            Expanded(
+                                              child: GestureDetector(
+                                                onTap: () {
+                                                  _selectDate(context, false);
+                                                },
+                                                child: Column(
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.center,
+                                                  children: [
+                                                    Text("Check-out".tr,
+                                                        style: TextStyle(
+                                                          fontFamily: 'Inter'.tr,
+                                                          color: kPrimaryColor,
+                                                          fontSize: 12,
+                                                        )),
+                                                    SizedBox(height: 5),
+                                                    Container(
+                                                      padding: EdgeInsets.all(8),
+                                                      decoration: BoxDecoration(
+                                                        borderRadius:
+                                                            BorderRadius.circular(
+                                                                8),
+                                                        border: Border.all(
+                                                            color: Colors
+                                                                .grey.shade300),
+                                                      ),
+                                                      child: Text(
+                                                        checkOutDate != null
+                                                            ? (checkOutDate!.isAfter(
+                                                                    checkInDate ??
+                                                                        DateTime
+                                                                            .now())
+                                                                ? DateFormat(
+                                                                        'd/MM/yyyy')
+                                                                    .format(
+                                                                        checkOutDate!)
+                                                                : 'Invalid date'.tr)
+                                                            : 'Select date'.tr,
+                                                        style: TextStyle(
+                                                          color: checkOutDate !=
+                                                                  null
+                                                              ? (checkOutDate!.isAfter(
+                                                                      checkInDate ??
+                                                                          DateTime
+                                                                              .now())
+                                                                  ? Colors.black
+                                                                  : Colors.red)
+                                                              : Colors.grey,
+                                                          fontWeight:
+                                                              checkOutDate != null
+                                                                  ? FontWeight
+                                                                      .normal
+                                                                  : FontWeight.w300,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+
+                                        // Guests Dropdown
+                                        Divider(
+                                          thickness: 1,
+                                        ),
+                                        Padding(
+                                          padding: EdgeInsets.only(top: 5),
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                "Guests".tr,
+                                                style: TextStyle(
+                                                    fontSize: 12,
+                                                    fontFamily: 'Inter'.tr,
+                                                    fontWeight: FontWeight.w600,
+                                                    color: kPrimaryColor),
+                                              ),
+                                              InkWell(
+                                                onTap: _showGuestBottomSheet,
+                                                child: Container(
+                                                  padding: EdgeInsets.symmetric(
+                                                      horizontal: 12, vertical: 8),
+                                                  decoration: BoxDecoration(
+                                                    border: Border.all(
+                                                        color:
+                                                            Colors.grey.shade300),
+                                                    borderRadius:
+                                                        BorderRadius.circular(8),
+                                                  ),
+                                                  child: Row(
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment
+                                                            .spaceBetween,
+                                                    children: [
+                                                      Text(
+                                                        selectedGuests,
+                                                        style: TextStyle(
+                                                          fontFamily: 'Inter'.tr,
+                                                          fontSize: 14,
+                                                        ),
+                                                      ),
+                                                      Icon(Icons.arrow_drop_down),
+                                                    ],
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+
+                                SizedBox(height: 20),
+
+                                // Check Availability Button
+                                Padding(
+                                  padding: EdgeInsets.symmetric(horizontal: 15),
+                                  child: TertiaryButton(
+                                    text: "Check Availability".tr,
+                                    press: _checkAvailability,
+                                  ),
+                                ),
+
+                                SizedBox(height: 20),
+                              ],
+                            ],
+                          ),
+                        ),
+                      ),
 
                       if (roomResponse != null)
                         ...roomResponse!.rooms.map((room) => RoomWidget(
@@ -1061,55 +1041,55 @@ class _RoomDetailScreenState extends State<RoomDetailScreen>
                         height: 5,
                       ),
 
-                      //This seciton is being comment out because it is the section where we are writing the review ...
+                     // This seciton is being comment out because it is the section where we are writing the review ...
 
-                      // Padding(
-                      //   padding: EdgeInsets.symmetric(horizontal: 20),
-                      //   child: Text("Write a Review".tr,
-                      //       style: TextStyle(
-                      //           color: kPrimaryColor,
-                      //           fontSize: 18,
-                      //           fontWeight: FontWeight.w600)),
-                      // ),
-                      //
-                      // SizedBox(
-                      //   height: 5,
-                      // ),
-                      // _buildReviewWidget(item.hotelDetail ?? HotelDetail()),
-                      // SizedBox(height: 10),
-                      // Divider(thickness: 1),
-                      // ...(item.hotelDetail?.data?.extraPrice ?? []).map((element) {
-                      //   return Padding(
-                      //     padding: EdgeInsets.symmetric(horizontal: 15),
-                      //     child: Row(
-                      //       children: [
-                      //         Checkbox(
-                      //             materialTapTargetSize:
-                      //                 MaterialTapTargetSize.shrinkWrap,
-                      //             value: element.valueType,
-                      //             onChanged: (bool? value) {
-                      //               if (value != null) {
-                      //                 element.valueType = value;
-                      //
-                      //                 if (element.valueType == true) {
-                      //                   extraPrice +=
-                      //                       int.parse(element.price ?? "0");
-                      //                 } else {
-                      //                   extraPrice -=
-                      //                       int.parse(element.price ?? "0");
-                      //                 }
-                      //                 setState(() {});
-                      //               }
-                      //             }),
-                      //         Text(element.name ?? ""),
-                      //         Spacer(),
-                      //         Text("\$${element.price}"),
-                      //       ],
-                      //     ),
-                      //   );
-                      // }),
-                      // _buildExtraServicesWidget(
-                      //     item.hotelDetail ?? HotelDetail(), selectedRooms),
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 20),
+                        child: Text("Write a Review".tr,
+                            style: TextStyle(
+                                color: kPrimaryColor,
+                                fontSize: 18,
+                                fontWeight: FontWeight.w600)),
+                      ),
+
+                      SizedBox(
+                        height: 5,
+                      ),
+                      _buildReviewWidget(item.hotelDetail ?? HotelDetail()),
+                      SizedBox(height: 10),
+                      Divider(thickness: 1),
+                      ...(item.hotelDetail?.data?.extraPrice ?? []).map((element) {
+                        return Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 15),
+                          child: Row(
+                            children: [
+                              Checkbox(
+                                  materialTapTargetSize:
+                                      MaterialTapTargetSize.shrinkWrap,
+                                  value: element.valueType,
+                                  onChanged: (bool? value) {
+                                    if (value != null) {
+                                      element.valueType = value;
+
+                                      if (element.valueType == true) {
+                                        extraPrice +=
+                                            int.parse(element.price ?? "0");
+                                      } else {
+                                        extraPrice -=
+                                            int.parse(element.price ?? "0");
+                                      }
+                                      setState(() {});
+                                    }
+                                  }),
+                              Text(element.name ?? ""),
+                              Spacer(),
+                              Text("\$${element.price}"),
+                            ],
+                          ),
+                        );
+                      }),
+                      _buildExtraServicesWidget(
+                          item.hotelDetail ?? HotelDetail(), selectedRooms),
 
                       Divider(),
 
@@ -1537,51 +1517,70 @@ class RoomSpecsItem extends StatelessWidget {
 Widget _buildRatingSection(HotelDetail hotelDetail) {
   const Color textColor = Colors.white;
 
-  return Center(
-    child: Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFF05A8C7),
-        borderRadius: BorderRadius.circular(10.0), // Rounded corners
+  return Column(
+    children: [
+    Column(
+    children: [
+      // Guest Review Text above the container (centered)
+      Padding(
+        padding: const EdgeInsets.only(right: 210),
+        child: Text(
+          'Guest Review'.tr,
+          style: GoogleFonts.spaceGrotesk(
+            fontWeight: FontWeight.w700,
+            fontSize: 18,
+            color: Color(0xff1D2025),
+          ),
+        ),
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 120.0,vertical: 6),
+      const SizedBox(height: 8),
+      Center(
+        child: Container(
+          decoration: BoxDecoration(
+            color: const Color(0xFF05A8C7),
+            borderRadius: BorderRadius.circular(10.0), // Rounded corners
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 120.0,vertical: 6),
 
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Column(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Text(
-                '${hotelDetail.data?.reviewScore?.scoreTotal ?? '0'}/5',
-                style: GoogleFonts.spaceGrotesk(
-                  fontWeight: FontWeight.w700, // Bold
-                  fontSize: 36,
-                  height: 40 / 36, // line-height
-                  letterSpacing: 0,
-                  color: textColor,
-                ),
-                textAlign: TextAlign.center,
-              ),
+              Column(
+                children: [
+                  Text(
+                    '${hotelDetail.data?.reviewScore?.scoreTotal ?? '0'}/5',
+                    style: GoogleFonts.spaceGrotesk(
+                      fontWeight: FontWeight.w700, // Bold
+                      fontSize: 36,
+                      height: 40 / 36, // line-height
+                      letterSpacing: 0,
+                      color: textColor,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
 
-              const SizedBox(height: 4),
-              Text(
-                (hotelDetail.data?.reviewScore?.scoreText ?? 'Very Good').tr,
-                textAlign: TextAlign.center,
-                style: GoogleFonts.spaceGrotesk(
-                  fontWeight: FontWeight.w400, // Regular
-                  fontSize: 14,
-                  height: 20 / 14,
-                  letterSpacing: 0,
-                  color: textColor,
-                ),
-              ),
+                  const SizedBox(height: 4),
+                  Text(
+                    (hotelDetail.data?.reviewScore?.scoreText ?? 'Very Good').tr,
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.spaceGrotesk(
+                      fontWeight: FontWeight.w400, // Regular
+                      fontSize: 14,
+                      height: 20 / 14,
+                      letterSpacing: 0,
+                      color: textColor,
+                    ),
+                  ),
 
+                ],
+              ),
             ],
           ),
-        ],
+        ),
       ),
-    ),
-  );
+    ],
+  )]);
 }
 
 // Assuming HotelDetail is defined in your project
@@ -1745,8 +1744,8 @@ Widget _buildReviewItem(ReviewData review) {
                         Flexible(
                             child: Text(
                               review.author?.name ?? '',
-                              style: const TextStyle(
-                                  fontFamily: 'SpaceGrotesk',
+                              style:  GoogleFonts.spaceGrotesk(
+
                                   fontWeight: FontWeight.w500, // "Medium" in Figma = w500
                                   fontSize: 14,
                                   height: 20 / 14, // line-height = 20px
@@ -1764,8 +1763,8 @@ Widget _buildReviewItem(ReviewData review) {
                                   DateTime.now().toString(),
                             ),
                           ),
-                          style: const TextStyle(
-                            fontFamily: 'SpaceGrotesk',
+                          style: GoogleFonts.spaceGrotesk(
+
                             fontWeight: FontWeight.w400, // Regular
                             fontSize: 12,
                             height: 16 / 12, // exact line-height from Figma
@@ -1801,8 +1800,8 @@ Widget _buildReviewItem(ReviewData review) {
 
           Text(
             review.content ?? '',
-            style: TextStyle(
-              fontFamily: 'SpaceGrotesk',
+            style: GoogleFonts.spaceGrotesk(
+
               fontWeight: FontWeight.w400, // Regular
               fontSize: 14,
               height: 21 / 14, // Figma line-height (21px)
@@ -1841,8 +1840,10 @@ Widget _buildReviewWidget(HotelDetail hotelDetail) {
               controller: _titleController,
               decoration: InputDecoration(
                 labelText: 'Title'.tr,
+                filled: true, // Add this
+                fillColor: Color(0xFFF5F5F5),
                 border: OutlineInputBorder(
-                  borderSide: BorderSide(color: kColor1),
+                  borderSide: BorderSide.none,
                 ),
                 labelStyle: TextStyle(color: grey),
               ),
@@ -1858,8 +1859,10 @@ Widget _buildReviewWidget(HotelDetail hotelDetail) {
               controller: _contentController,
               decoration: InputDecoration(
                 labelText: 'Review Content'.tr,
+                filled: true,
+                fillColor: Color(0xFFF5F5F5),
                 border: OutlineInputBorder(
-                  borderSide: BorderSide(color: kColor1),
+                  borderSide: BorderSide.none,
                 ),
                 labelStyle: TextStyle(color: grey),
               ),

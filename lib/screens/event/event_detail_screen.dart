@@ -2,6 +2,7 @@
 
 import 'dart:developer';
 
+import 'package:google_fonts/google_fonts.dart';
 import 'package:moonbnd/Provider/event_provider.dart';
 import 'package:moonbnd/Provider/home_provider.dart';
 import 'package:moonbnd/modals/event_detail_model.dart';
@@ -121,6 +122,30 @@ class _CarRentalDetailsScreenState extends State<EventsDetailsScreen> {
     final item = Provider.of<EventProvider>(context, listen: true);
 
     return Scaffold(
+      appBar: AppBar(
+        leading:    //back button
+        InkWell(
+          onTap: () {
+            Navigator.pop(context);
+          },
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: 12),
+            child: Container(
+              height: 32,
+              width: 32,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(50),
+              ),
+              child: Icon(
+                Icons.arrow_back,
+                color: Colors.black,
+
+              ),
+            ),
+          ),
+        ),
+      ),
       body: loading
           ? Center(child: CircularProgressIndicator(color: kSecondaryColor))
           : SafeArea(
@@ -128,6 +153,57 @@ class _CarRentalDetailsScreenState extends State<EventsDetailsScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    Padding(
+                      padding: const EdgeInsets.only(left: 16),
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start, // Make sure text aligns left
+                          children: [
+                            Text(
+                              item.eventDetail?.data?.title ?? "",
+                              style: GoogleFonts.spaceGrotesk(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.w700,
+                                  color: Color(0xff1D2025)
+                              ),
+                            ),
+                            SizedBox(height: 10),
+                            Row(
+                              children: [
+                                SvgPicture.asset(
+                                  'assets/icons/location.svg',
+                                  width: 16,
+                                  height: 16,
+                                  color: Color(0xff65758B),
+                                ),
+                                SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    item.eventDetail?.data?.location?.name ?? "",
+                                    style: GoogleFonts.spaceGrotesk(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w400,
+                                      color: Color(0xff65758B),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            SizedBox(height: 10),
+                            Text(
+                              '${item.eventDetail?.data?.reviewScore?.totalReview ?? 0} Reviews',
+                              style: GoogleFonts.spaceGrotesk(
+                                fontWeight: FontWeight.w400,
+                                fontSize: 13,
+                                color: const Color(0xFF65758B),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 10,),
                     Stack(
                       children: [
                         //haven
@@ -154,126 +230,105 @@ class _CarRentalDetailsScreenState extends State<EventsDetailsScreen> {
                             padding: EdgeInsets.symmetric(
                               vertical: 12,
                             ),
-                            child: Row(
-                              children: [
-                                //back button
-                                InkWell(
-                                  onTap: () {
-                                    Navigator.pop(context);
-                                  },
-                                  child: Padding(
-                                    padding: EdgeInsets.symmetric(horizontal: 12),
-                                    child: Container(
-                                      height: 32,
-                                      width: 32,
-                                      decoration: BoxDecoration(
-                                        color: Colors.white,
-                                        borderRadius: BorderRadius.circular(50),
-                                      ),
-                                      child: Icon(
-                                        Icons.arrow_back,
-                                        color: kPrimaryColor,
-                                        size: 18,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-            
-                                Spacer(),
-            
-                                //share button
-                                InkWell(
-                                  onTap: () async {
-                                    await Share.share(
-                                        '${item.eventDetail?.data?.shareUrl}');
-                                  },
-                                  child: Padding(
-                                    padding: EdgeInsets.only(right: 12),
-                                    child: Container(
-                                      height: 32,
-                                      width: 32,
-                                      decoration: BoxDecoration(
-                                        color: Colors.white,
-                                        borderRadius: BorderRadius.circular(50),
-                                      ),
-                                      child: Icon(
-                                        Icons.share,
-                                        color: kPrimaryColor,
-                                        size: 18,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-            
-                                //favorite button
-                                InkWell(
-                                  onTap: () async {
-                                    log("message");
-                                    final homeProvider =
-                                        Provider.of<HomeProvider>(context,
-                                            listen: false);
-                                    final eventProvider =
-                                        Provider.of<EventProvider>(context,
-                                            listen: false);
-                                    final success =
-                                        await homeProvider.addToWishlist(
-                                      '${widget.eventId}',
-                                      'event',
-                                    );
-                                    // ignore: use_build_context_synchronously
-                                    Provider.of<EventProvider>(context,
-                                            listen: false)
-                                        .fetchEventDetails(widget.eventId);
-            
-                                    await eventProvider
-                                        .eventlistapi(5, searchParams: {});
-            
-                                    if (success == "Added to wishlist") {
-                                      setState(() {
-                                        item.eventDetail?.data?.isInWishlist =
-                                            true;
-                                      });
-                                    } else if (success ==
-                                        "Removed from wishlist") {
-                                      setState(() {
-                                        item.eventDetail?.data?.isInWishlist =
-                                            false;
-                                      });
-                                    }
-            
-                                    // Notify listeners to rebuild the widget
-            
-                                    // ignore: use_build_context_synchronously
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(content: Text(success)),
-                                    );
-                                  },
-                                  child: Padding(
-                                    padding: EdgeInsets.only(right: 12),
-                                    child: Container(
-                                      height: 32,
-                                      width: 32,
-                                      decoration: BoxDecoration(
-                                        color: Colors.white,
-                                        borderRadius: BorderRadius.circular(50),
-                                      ),
-                                      child: Icon(
-                                        item.eventDetail?.data?.isInWishlist ==
-                                                true
-                                            ? Icons.favorite
-                                            : Icons.favorite_border,
-                                        color: item.eventDetail?.data
-                                                    ?.isInWishlist ==
-                                                true
-                                            ? Colors.red
-                                            : kPrimaryColor,
-                                        size: 18,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
+                            // child: Row(
+                            //   children: [
+                            //
+                            //
+                            //     Spacer(),
+                            //
+                            //     //share button
+                            //     InkWell(
+                            //       onTap: () async {
+                            //         await Share.share(
+                            //             '${item.eventDetail?.data?.shareUrl}');
+                            //       },
+                            //       child: Padding(
+                            //         padding: EdgeInsets.only(right: 12),
+                            //         child: Container(
+                            //           height: 32,
+                            //           width: 32,
+                            //           decoration: BoxDecoration(
+                            //             color: Colors.white,
+                            //             borderRadius: BorderRadius.circular(50),
+                            //           ),
+                            //           child: Icon(
+                            //             Icons.share,
+                            //             color: kPrimaryColor,
+                            //             size: 18,
+                            //           ),
+                            //         ),
+                            //       ),
+                            //     ),
+                            //
+                            //     //favorite button
+                            //     InkWell(
+                            //       onTap: () async {
+                            //         log("message");
+                            //         final homeProvider =
+                            //             Provider.of<HomeProvider>(context,
+                            //                 listen: false);
+                            //         final eventProvider =
+                            //             Provider.of<EventProvider>(context,
+                            //                 listen: false);
+                            //         final success =
+                            //             await homeProvider.addToWishlist(
+                            //           '${widget.eventId}',
+                            //           'event',
+                            //         );
+                            //         // ignore: use_build_context_synchronously
+                            //         Provider.of<EventProvider>(context,
+                            //                 listen: false)
+                            //             .fetchEventDetails(widget.eventId);
+                            //
+                            //         await eventProvider
+                            //             .eventlistapi(5, searchParams: {});
+                            //
+                            //         if (success == "Added to wishlist") {
+                            //           setState(() {
+                            //             item.eventDetail?.data?.isInWishlist =
+                            //                 true;
+                            //           });
+                            //         } else if (success ==
+                            //             "Removed from wishlist") {
+                            //           setState(() {
+                            //             item.eventDetail?.data?.isInWishlist =
+                            //                 false;
+                            //           });
+                            //         }
+                            //
+                            //         // Notify listeners to rebuild the widget
+                            //
+                            //         // ignore: use_build_context_synchronously
+                            //         ScaffoldMessenger.of(context).showSnackBar(
+                            //           SnackBar(content: Text(success)),
+                            //         );
+                            //       },
+                            //       child: Padding(
+                            //         padding: EdgeInsets.only(right: 12),
+                            //         child: Container(
+                            //           height: 32,
+                            //           width: 32,
+                            //           decoration: BoxDecoration(
+                            //             color: Colors.white,
+                            //             borderRadius: BorderRadius.circular(50),
+                            //           ),
+                            //           child: Icon(
+                            //             item.eventDetail?.data?.isInWishlist ==
+                            //                     true
+                            //                 ? Icons.favorite
+                            //                 : Icons.favorite_border,
+                            //             color: item.eventDetail?.data
+                            //                         ?.isInWishlist ==
+                            //                     true
+                            //                 ? Colors.red
+                            //                 : kPrimaryColor,
+                            //             size: 18,
+                            //           ),
+                            //         ),
+                            //       ),
+                            //     ),
+                            //   ],
+                            // ),
                           ),
                         ),
                         //slider navigation
@@ -286,23 +341,23 @@ class _CarRentalDetailsScreenState extends State<EventsDetailsScreen> {
                               vertical: 4,
                             ),
                             decoration: BoxDecoration(
-                              color: kPrimaryColor,
+                              color: Colors.black38,
                               borderRadius: BorderRadius.all(
-                                Radius.circular(5),
+                                Radius.circular(6),
                               ),
                             ),
                             child: Text(
                               '${currentPage + 1} / ${item.eventDetail?.data?.gallery?.length}',
-                              style: TextStyle(
+                              style: GoogleFonts.spaceGrotesk(
                                 color: Colors.white,
                                 fontWeight: FontWeight.w500,
                                 fontSize: 12,
-                                fontFamily: 'Inter'.tr,
+                                
                               ),
                             ),
                           ),
                         ),
-            
+
                         Positioned(
                           bottom: 12,
                           left: 12,
@@ -350,74 +405,65 @@ class _CarRentalDetailsScreenState extends State<EventsDetailsScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            item.eventDetail?.data?.title ?? "",
-                            style: TextStyle(
-                                fontSize: 24, fontWeight: FontWeight.bold),
-                          ),
-                          Text(
-                            item.eventDetail?.data?.location?.name ?? "",
-                          ),
-            
-                          Divider(
-                            thickness: 1,
-                          ),
+
+
+
                           SizedBox(height: 9),
-                          Row(
-                            children: [
-                              Container(
-                                margin: EdgeInsets.only(top: 10),
-                                child: CircleAvatar(
-                                  backgroundImage: NetworkImage(
-                                      item.eventDetail?.data?.vendor?.avatarUrl ??
-                                          ""),
-                                  radius: 25,
-                                ),
-                              ),
-                              SizedBox(width: 8),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  SizedBox(
-                                    height: 8,
-                                  ),
-                                  Text('Rented by'.tr,
-                                      style: TextStyle(
-                                          color: grey,
-                                          fontFamily: 'Inter'.tr,
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w500)),
-                                  SizedBox(
-                                    height: 8,
-                                  ),
-                                  RichText(
-                                    text: TextSpan(
-                                      children: [
-                                        TextSpan(
-                                          text: item.eventDetail?.data?.vendor
-                                                  ?.name ??
-                                              "",
-                                          style: TextStyle(
-                                              fontFamily: 'Inter'.tr,
-                                              color: kPrimaryColor,
-                                              fontWeight: FontWeight.w500,
-                                              fontSize: 16),
-                                        ),
-                                        TextSpan(
-                                          text: ' · Member since Feb 2023'.tr,
-                                          style: TextStyle(
-                                              color: grey,
-                                              fontFamily: 'Inter'.tr,
-                                              fontSize: 13,
-                                              fontWeight: FontWeight.w400),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
+                          // Row(
+                          //   children: [
+                          //     Container(
+                          //       margin: EdgeInsets.only(top: 10),
+                          //       child: CircleAvatar(
+                          //         backgroundImage: NetworkImage(
+                          //             item.eventDetail?.data?.vendor?.avatarUrl ??
+                          //                 ""),
+                          //         radius: 25,
+                          //       ),
+                          //     ),
+                          //     SizedBox(width: 8),
+                          //     Column(
+                          //       crossAxisAlignment: CrossAxisAlignment.start,
+                          //       children: [
+                          //         SizedBox(
+                          //           height: 8,
+                          //         ),
+                          //         Text('Rented by'.tr,
+                          //             style: TextStyle(
+                          //                 color: grey,
+                          //                 fontFamily: 'Inter'.tr,
+                          //                 fontSize: 12,
+                          //                 fontWeight: FontWeight.w500)),
+                          //         SizedBox(
+                          //           height: 8,
+                          //         ),
+                          //         RichText(
+                          //           text: TextSpan(
+                          //             children: [
+                          //               TextSpan(
+                          //                 text: item.eventDetail?.data?.vendor
+                          //                         ?.name ??
+                          //                     "",
+                          //                 style: TextStyle(
+                          //                     fontFamily: 'Inter'.tr,
+                          //                     color: kPrimaryColor,
+                          //                     fontWeight: FontWeight.w500,
+                          //                     fontSize: 16),
+                          //               ),
+                          //               TextSpan(
+                          //                 text: ' · Member since Feb 2023'.tr,
+                          //                 style: TextStyle(
+                          //                     color: grey,
+                          //                     fontFamily: 'Inter'.tr,
+                          //                     fontSize: 13,
+                          //                     fontWeight: FontWeight.w400),
+                          //               ),
+                          //             ],
+                          //           ),
+                          //         ),
+                          //       ],
+                          //     ),
+                          //   ],
+                          // ),
                           SizedBox(
                             height: 15,
                           ),
@@ -430,27 +476,43 @@ class _CarRentalDetailsScreenState extends State<EventsDetailsScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(
-                                  'Description'.tr,
-                                  style: TextStyle(
-                                    color: kPrimaryColor,
-                                    fontSize: 18,
-                                    fontFamily: 'Inter'.tr,
-                                    fontWeight: FontWeight.w600,
+                                // Text(
+                                //   'Description'.tr,
+                                //   style: TextStyle(
+                                //     color: kPrimaryColor,
+                                //     fontSize: 18,
+                                //     fontFamily: 'Inter'.tr,
+                                //     fontWeight: FontWeight.w600,
+                                //   ),
+                                // ),
+                                // SizedBox(height: 8),
+                                // Container(
+                                //   height: 200,
+                                //   child: Image.network(
+                                //     item.eventDetail?.data?.image ?? "",
+                                //     width: 400,
+                                //     height: 200,
+                                //     fit: BoxFit.cover,
+                                //   ),
+                                // ),
+                                // SizedBox(height: 8),
+                                const SizedBox(height: 10),
+
+                                ExpandableHtmlContent(
+                                  content: item.eventDetail?.data?.content ?? "".tr,
+                                  primaryColor: kPrimaryColor,
+                                  textStyle: GoogleFonts.spaceGrotesk(
+                                    fontWeight: FontWeight.w400, // Regular
+                                    fontSize: 14,
+                                    height: 21 / 14, // line-height
+                                    letterSpacing: 0,
+                                    color: const Color(0xFF65758B), // #65758B
                                   ),
+                                  readMoreText: 'Read more'.tr, // .tr ONLY here
                                 ),
-                                SizedBox(height: 8),
-                                Container(
-                                  height: 200,
-                                  child: Image.network(
-                                    item.eventDetail?.data?.image ?? "",
-                                    width: 400,
-                                    height: 200,
-                                    fit: BoxFit.cover,
-                                  ),
-                                ),
-                                SizedBox(height: 8),
-                                HtmlWidget(item.eventDetail?.data?.content ?? ""),
+
+                                const SizedBox(height: 20),
+
                               ],
                             ),
                           ),
@@ -461,12 +523,12 @@ class _CarRentalDetailsScreenState extends State<EventsDetailsScreen> {
                           if (item.eventDetail?.data?.terms?.length != 0)
                             Text(
                               'Event Features'.tr,
-                              style: TextStyle(
-                                  fontSize: 18, fontWeight: FontWeight.bold),
+                              style: GoogleFonts.spaceGrotesk(
+                                  fontSize: 18, fontWeight: FontWeight.bold,color: Colors.black),
                             ),
                           if (item.eventDetail?.data?.terms?.length != 0)
                             SizedBox(height: 14),
-            
+
                           if (item.eventDetail?.data?.terms?.length != 0)
                             ...(item.eventDetail?.data?.terms == null
                                     ? []
@@ -478,47 +540,47 @@ class _CarRentalDetailsScreenState extends State<EventsDetailsScreen> {
                             SizedBox(height: 26),
                           if (item.eventDetail?.data?.faqs != null)
                             Text('FAQ\'s'.tr,
-                                style: TextStyle(
-                                    fontSize: 18, fontWeight: FontWeight.bold)),
+                                style: GoogleFonts.spaceGrotesk(
+                                    fontSize: 18, fontWeight: FontWeight.bold,color: Colors.black)),
                           SizedBox(height: 20),
-            
+
                           ...(item.eventDetail?.data?.faqs ?? []).map((element) {
                             {
                               return _buildFAQItem(
                                   element.title ?? "", element.content ?? "");
                             }
                           }).toList(),
-                          SizedBox(height: 19),
-                          Text(
-                            'Location'.tr,
-                            style: TextStyle(
-                                fontSize: 18, fontWeight: FontWeight.bold),
-                          ),
-                          SizedBox(height: 10),
-                          Text(item.eventDetail?.data?.location?.name ?? ""),
-                          SizedBox(height: 10),
-                          Container(
-                            height: 200,
-                            child: GoogleMap(
-                              onMapCreated: _onMapCreated,
-                              markers: setMarkers!,
-                              initialCameraPosition: CameraPosition(
-                                target: LatLng(
-                                    double.parse(
-                                        item.eventDetail?.data?.mapLat ?? ""),
-                                    double.parse(
-                                        item.eventDetail?.data?.mapLng ?? "")),
-                                zoom: double.parse(
-                                    item.eventDetail?.data?.mapZoom.toString() ??
-                                        "12"),
-                              ),
-                            ),
-                          ),
-                          SizedBox(height: 16),
-                          SizedBox(
-                            height: 32,
-                          ),
-            
+                          // SizedBox(height: 19),
+                          // Text(
+                          //   'Location'.tr,
+                          //   style: TextStyle(
+                          //       fontSize: 18, fontWeight: FontWeight.bold),
+                          // ),
+                          // SizedBox(height: 10),
+                          // Text(item.eventDetail?.data?.location?.name ?? ""),
+                          // SizedBox(height: 10),
+                          // Container(
+                          //   height: 200,
+                          //   child: GoogleMap(
+                          //     onMapCreated: _onMapCreated,
+                          //     markers: setMarkers!,
+                          //     initialCameraPosition: CameraPosition(
+                          //       target: LatLng(
+                          //           double.parse(
+                          //               item.eventDetail?.data?.mapLat ?? ""),
+                          //           double.parse(
+                          //               item.eventDetail?.data?.mapLng ?? "")),
+                          //       zoom: double.parse(
+                          //           item.eventDetail?.data?.mapZoom.toString() ??
+                          //               "12"),
+                          //     ),
+                          //   ),
+                          // ),
+                          // SizedBox(height: 16),
+                          // SizedBox(
+                          //   height: 32,
+                          // ),
+
                           Divider(
                             thickness: 1,
                             indent: 20,
@@ -526,38 +588,38 @@ class _CarRentalDetailsScreenState extends State<EventsDetailsScreen> {
                           ),
                           //review slider
                           SizedBox(height: 12),
-                          _buildRatingSection(item.eventDetail!),
+                          buildRatingSection(item.eventDetail!),
                           SizedBox(height: 12),
                           _buildRatingBars(item.eventDetail!),
                           SizedBox(height: 12),
                           ...(item.eventDetail?.data?.reviewLists?.data ?? [])
                               .map((review) => _buildReviewItem(review)),
-            
+
                           SizedBox(
                             height: 5,
                           ),
                           // ...(hotelDetail.data?.reviewLists?.data ?? [])
                           //     .map((review) => _buildReviewItem(review)),
-            
+
                           SizedBox(
                             height: 5,
                           ),
-            
+
                           Padding(
                             padding: EdgeInsets.symmetric(horizontal: 20),
                             child: Text("Write a Review".tr,
-                                style: TextStyle(
-                                    color: kPrimaryColor,
+                                style: GoogleFonts.spaceGrotesk(
+                                    color: Colors.black,
                                     fontSize: 18,
                                     fontWeight: FontWeight.w600)),
                           ),
-            
+
                           SizedBox(
                             height: 5,
                           ),
                           _buildReviewWidget(item.eventDetail!),
                           SizedBox(height: 20),
-            
+
                           SizedBox(
                             height: 20,
                           ),
@@ -631,10 +693,10 @@ class _CarRentalDetailsScreenState extends State<EventsDetailsScreen> {
                       context, item.eventDetail); // Call the modal sheet method
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue,
+                  backgroundColor: Color(0xff05A8C7),
                   padding: EdgeInsets.symmetric(horizontal: 32, vertical: 16),
                 ),
-                child: Text('Book Now'.tr),
+                child: Text('Book Now'.tr,style: GoogleFonts.spaceGrotesk(fontSize: 16,fontWeight: FontWeight.w400),),
               ),
             ],
           ),
@@ -825,11 +887,12 @@ class _CarRentalDetailsScreenState extends State<EventsDetailsScreen> {
                                       child: Text(
                                         'From \$${txBoatDetail?.data?.salePrice == 0 ? txBoatDetail?.data?.price : txBoatDetail?.data?.salePrice}'
                                             .tr,
-                                        style: TextStyle(
+                                        style: GoogleFonts.spaceGrotesk(
                                           fontSize: 20,
-                                          fontFamily: 'Inter'.tr,
+
+
                                           fontWeight: FontWeight.w600,
-                                          color: kPrimaryColor,
+                                          color: Colors.black,
                                         ),
                                       )),
                                 ), // Container for Check-in, Check-out, and Guests
@@ -874,9 +937,9 @@ class _CarRentalDetailsScreenState extends State<EventsDetailsScreen> {
                                                   children: [
                                                     Text(
                                                       "Start Date".tr,
-                                                      style: TextStyle(
-                                                        fontFamily: 'Inter'.tr,
-                                                        color: kPrimaryColor,
+                                                      style: GoogleFonts.spaceGrotesk(
+
+                                                        color: Colors.black,
                                                         fontSize: 12,
                                                       ),
                                                     ),
@@ -986,9 +1049,9 @@ class _CarRentalDetailsScreenState extends State<EventsDetailsScreen> {
                                   padding: EdgeInsets.symmetric(horizontal: 15),
                                   alignment: Alignment.centerLeft,
                                   child: Text("Extra Prices:".tr,
-                                      style: TextStyle(
-                                          fontFamily: 'Inter'.tr,
-                                          color: kPrimaryColor,
+                                      style: GoogleFonts.spaceGrotesk(
+
+                                          color: Colors.black,
                                           fontSize: 16,
                                           fontWeight: FontWeight.w700)),
                                 ),
@@ -1064,7 +1127,7 @@ class _CarRentalDetailsScreenState extends State<EventsDetailsScreen> {
                                     child: Row(
                                       children: [
                                         Text("Total".tr,
-                                            style: TextStyle(
+                                            style: GoogleFonts.spaceGrotesk(
                                                 fontSize: 20,
                                                 fontWeight: FontWeight.bold)),
                                         Spacer(),
@@ -1176,7 +1239,7 @@ class _CarRentalDetailsScreenState extends State<EventsDetailsScreen> {
                                           children: [
                                             Text(
                                               'Enquiry'.tr,
-                                              style: TextStyle(
+                                              style: GoogleFonts.spaceGrotesk(
                                                 fontSize: 20,
                                                 fontWeight: FontWeight.bold,
                                               ),
@@ -1262,7 +1325,7 @@ class _CarRentalDetailsScreenState extends State<EventsDetailsScreen> {
                                             labelText: 'Note*'.tr,
                                             border: OutlineInputBorder(),
                                           ),
-                                          style: TextStyle(height: 1),
+                                          style: GoogleFonts.spaceGrotesk(height: 1),
                                           validator: (value) {
                                             if (value == null ||
                                                 value.isEmpty) {
@@ -1327,10 +1390,10 @@ class _CarRentalDetailsScreenState extends State<EventsDetailsScreen> {
                                             ),
                                             child: Text(
                                               'Send Now'.tr,
-                                              style: TextStyle(
+                                              style: GoogleFonts.spaceGrotesk(
                                                 color: kBackgroundColor,
                                                 fontSize: 16,
-                                                fontFamily: 'Inter',
+
                                                 fontWeight: FontWeight.w700,
                                               ),
                                             ),
@@ -1360,13 +1423,13 @@ class _CarRentalDetailsScreenState extends State<EventsDetailsScreen> {
                   child: Container(
                     height: 30,
                     width: 30,
-                    child: Icon(
-                      Icons.close,
-                      color: Colors.black,
-                    ),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.close,
+                      color: Colors.black,
                     ),
                   ),
                 ),
@@ -1393,14 +1456,14 @@ class _CarRentalDetailsScreenState extends State<EventsDetailsScreen> {
               children: [
                 Text(
                   type.name,
-                  style: TextStyle(
-                    fontFamily: 'Inter',
+                  style: GoogleFonts.spaceGrotesk(
+
                     fontWeight: FontWeight.w500,
                   ),
                 ),
                 Text(
                   "/ \$${type.desc}",
-                  style: TextStyle(fontSize: 12, color: grey),
+                  style: GoogleFonts.spaceGrotesk(fontSize: 12, color: grey),
                 ),
               ],
             ),
@@ -1440,7 +1503,12 @@ class _CarRentalDetailsScreenState extends State<EventsDetailsScreen> {
           SizedBox(
             width: 8,
           ),
-          Text(text),
+          Text(text,
+            style: GoogleFonts.spaceGrotesk(
+              fontWeight: FontWeight.w400,
+              fontSize: 14,
+              color: Color(0xff65758B), // Change text color
+            ),),
         ],
       ),
     );
@@ -1448,69 +1516,203 @@ class _CarRentalDetailsScreenState extends State<EventsDetailsScreen> {
 
   Widget _buildFAQItem(String question, String answer) {
     return ExpansionTile(
-      title: Text(question),
+      tilePadding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      childrenPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      title: Text(
+        question,
+        style: GoogleFonts.spaceGrotesk(
+          fontWeight: FontWeight.w500,
+          fontSize: 14,
+          height: 20 / 14,
+          letterSpacing: 0,
+          color: Color(0xff1D2025),
+        ),
+      ),
       children: [
         Padding(
-          padding: EdgeInsets.all(16.0),
-          child: Text(answer),
+          padding: EdgeInsets.only(left: 0, right: 16, bottom: 16),
+          child: Text(
+            answer,
+            style: GoogleFonts.spaceGrotesk(
+              fontWeight: FontWeight.w400,
+              fontSize: 14,
+              height: 21 / 14,
+              letterSpacing: 0,
+              color: Color(0xff65758B),
+            ),
+          ),
         ),
       ],
     );
   }
+  Widget buildRatingSection(EventDetailModal boatDetail) {
+    const Color textColor = Colors.white;
 
-  Widget _buildRatingSection(EventDetailModal boatDetail) {
-    log("${boatDetail.data?.reviewScore?.scoreTotal} scorechecing");
-    return Container(
-      width: double.infinity,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
+    return Column(
         children: [
           Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Text(
-                '${boatDetail.data?.reviewScore?.scoreTotal}/5',
-                style: TextStyle(fontSize: 48, fontWeight: FontWeight.bold),
-                textAlign: TextAlign.center,
+              // Guest Review Text above the container (centered)
+              Padding(
+                padding: const EdgeInsets.only(right: 210),
+                child: Text(
+                  'Guest Review'.tr,
+                  style: GoogleFonts.spaceGrotesk(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 18,
+                    color: Color(0xff1D2025),
+                  ),
+                ),
               ),
-              SizedBox(height: 8),
-              Text(
-                // ignore: unnecessary_string_interpolations
-                '${boatDetail.data?.reviewScore?.scoreText ?? 'Very Good'}',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
-              ),
-              Text(
-                'Based on ${boatDetail.data?.reviewScore?.totalReview ?? 0} reviews'
-                    .tr,
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 14, color: Colors.grey),
+              const SizedBox(height: 8),
+              Center(
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF05A8C7),
+                    borderRadius: BorderRadius.circular(10.0), // Rounded corners
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 100.0,vertical: 6),
+
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Column(
+                        children: [
+                          Text(
+                            '${boatDetail.data?.reviewScore?.scoreTotal ?? '0'}/5',
+                            style: GoogleFonts.spaceGrotesk(
+                              fontWeight: FontWeight.w700, // Bold
+                              fontSize: 36,
+                              height: 40 / 36, // line-height
+                              letterSpacing: 0,
+                              color: textColor,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+
+                          const SizedBox(height: 4),
+                          Text(
+                            (boatDetail.data?.reviewScore?.scoreText ?? 'Very Good').tr,
+                            textAlign: TextAlign.center,
+                            style: GoogleFonts.spaceGrotesk(
+                              fontWeight: FontWeight.w400, // Regular
+                              fontSize: 14,
+                              height: 20 / 14,
+                              letterSpacing: 0,
+                              color: textColor,
+                            ),
+                          ),
+                          Text(
+                            'Based on ${boatDetail.data?.reviewScore?.totalReview ?? 0} reviews'
+                                .tr,
+                            textAlign: TextAlign.center,
+                            style: GoogleFonts.spaceGrotesk( fontWeight: FontWeight.w400, // Regular
+                              fontSize: 14,
+                              height: 20 / 14,
+                              letterSpacing: 0,
+                              color: textColor,),
+                          ),
+
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ],
-          ),
-          SizedBox(height: 16),
-          // Add rating bars here
-        ],
-      ),
-    );
+          )]);
   }
+  // Widget _buildRatingSection(EventDetailModal boatDetail) {
+  //   log("${boatDetail.data?.reviewScore?.scoreTotal} scorechecing");
+  //   return Container(
+  //     width: double.infinity,
+  //     child: Column(
+  //       crossAxisAlignment: CrossAxisAlignment.center,
+  //       children: [
+  //         Column(
+  //           crossAxisAlignment: CrossAxisAlignment.center,
+  //           children: [
+  //             Text(
+  //               '${boatDetail.data?.reviewScore?.scoreTotal}/5',
+  //               style: TextStyle(fontSize: 48, fontWeight: FontWeight.bold),
+  //               textAlign: TextAlign.center,
+  //             ),
+  //             SizedBox(height: 8),
+  //             Text(
+  //               // ignore: unnecessary_string_interpolations
+  //               '${boatDetail.data?.reviewScore?.scoreText ?? 'Very Good'}',
+  //               textAlign: TextAlign.center,
+  //               style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
+  //             ),
+  //             Text(
+  //               'Based on ${boatDetail.data?.reviewScore?.totalReview ?? 0} reviews'
+  //                   .tr,
+  //               textAlign: TextAlign.center,
+  //               style: TextStyle(fontSize: 14, color: Colors.grey),
+  //             ),
+  //           ],
+  //         ),
+  //         SizedBox(height: 16),
+  //         // Add rating bars here
+  //       ],
+  //     ),
+  //   );
+  // }
 
   Widget _buildRatingBars(EventDetailModal boatDetail) {
     final rateScores = boatDetail.data?.reviewScore?.rateScore ?? [];
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 15),
-      child: Column(
-        children: [
-          for (var score in rateScores)
-            _buildRatingBar(
-              "${score.title}",
-              (score.percent)!.toDouble() / 100,
-              score.total ?? 0,
-            ),
+
+    return Container(
+      // 1. Card Styling - matches your room detail screen
+      margin: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 8.0),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12.0),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.15),
+            spreadRadius: 1,
+            blurRadius: 5,
+            offset: const Offset(0, 2),
+          ),
         ],
+      ),
+      // 2. Inner Padding and Content
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
+        child: Column(
+          children: [
+            for (var score in rateScores)
+              _buildRatingBar(
+                score.title ?? '',
+                (score.percent ?? 0).toDouble() / 100,
+                score.total ?? 0,
+              ),
+          ],
+        ),
       ),
     );
   }
+  // Widget _buildRatingBars(EventDetailModal boatDetail) {
+  //   final rateScores = boatDetail.data?.reviewScore?.rateScore ?? [];
+  //   return Padding(
+  //     padding: const EdgeInsets.symmetric(horizontal: 15),
+  //     child: Container(
+  //
+  //       child: Column(
+  //         children: [
+  //           for (var score in rateScores)
+  //             _buildRatingBar(
+  //               "${score.title}",
+  //               (score.percent)!.toDouble() / 100,
+  //               score.total ?? 0,
+  //             ),
+  //         ],
+  //       ),
+  //     ),
+  //   );
+  // }
 
   Widget _buildRatingBar(String title, double ratio, int totalScore) {
     return Padding(
@@ -1522,7 +1724,7 @@ class _CarRentalDetailsScreenState extends State<EventsDetailsScreen> {
           Expanded(
             flex: 2,
             child: Text(title,
-                style: TextStyle(fontFamily: 'Inter'.tr, fontSize: 14)),
+                style: GoogleFonts.spaceGrotesk( fontSize: 14,color: Color(0xff65758B))),
           ),
           Expanded(
             flex: 5,
@@ -1550,69 +1752,118 @@ class _CarRentalDetailsScreenState extends State<EventsDetailsScreen> {
           ),
           SizedBox(width: 8),
           Text('$totalScore',
-              style: TextStyle(fontFamily: 'Inter'.tr, fontSize: 14)),
+              style: GoogleFonts.spaceGrotesk( fontSize: 14,  color: Color(0xff65758B),)),
         ],
       ),
     );
   }
 
   Widget _buildReviewItem(ReviewData review) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 15),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              CircleAvatar(
-                backgroundImage: NetworkImage(review.author?.avatarUrl ?? ''),
-                radius: 20,
-              ),
-              SizedBox(width: 12),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(review.author?.name ?? '',
-                      style: TextStyle(
-                          fontFamily: 'Inter'.tr,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold)),
-                  // Text(review.author?.lastName ?? '',
-                  //     style: TextStyle(
-                  //         fontFamily: 'Inter'.tr, color: Colors.grey)),
-                ],
-              ),
-            ],
-          ),
-          SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.start,
-            children: [
-              Row(
-                children: List.generate(
-                  5,
-                  (index) => Icon(
-                    Icons.star,
-                    color: index < (review.rateNumber ?? 0)
-                        ? kPrimaryColor
-                        : Colors.grey,
-                    size: 18,
-                  ),
-                ),
-              ),
-              SizedBox(width: 8),
-              Text(
-                  DateFormat('dd MMM yyyy').format(DateTime.parse(
-                      review.createdAt ?? DateTime.now().toString())),
-                  style: TextStyle(fontFamily: 'Inter'.tr, color: Colors.grey)),
-            ],
-          ),
-          SizedBox(height: 8),
-          Text(
-            review.content ?? '',
-            style: TextStyle(fontFamily: 'Inter'.tr, color: Colors.grey[600]),
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
+      decoration: BoxDecoration(
+        color: Color(0xffFFFFFF),
+        borderRadius: BorderRadius.circular(12.0),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.15),
+            blurRadius: 5,
+            offset: const Offset(0, 2),
           ),
         ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                CircleAvatar(
+                  backgroundImage: NetworkImage(review.author?.avatarUrl ?? ''),
+                  radius: 20,
+                ),
+                const SizedBox(width: 12),
+
+                // ★ FIX: Give bounded width to this Column
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+
+                      /// NAME + DATE ROW FIXED
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Flexible(
+                            child: Text(
+                              review.author?.name ?? '',
+                              style:  GoogleFonts.spaceGrotesk(
+
+                                  fontWeight: FontWeight.w500, // "Medium" in Figma = w500
+                                  fontSize: 14,
+                                  height: 20 / 14, // line-height = 20px
+                                  letterSpacing: 0,
+                                  color: Color(0xff1D2025)
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          Text(
+                            DateFormat('dd MMM yyyy').format(
+                              DateTime.parse(
+                                review.createdAt ?? DateTime.now().toString(),
+                              ),
+                            ),
+                            style:  GoogleFonts.spaceGrotesk(
+
+                              fontWeight: FontWeight.w400, // Regular
+                              fontSize: 12,
+                              height: 16 / 12, // exact line-height from Figma
+                              letterSpacing: 0,
+                              color: Color(0xff65758B),
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 4),
+
+                      Row(
+                        children: List.generate(
+                          5,
+                              (index) => Icon(
+                            Icons.star,
+                            color: index < (review.rateNumber ?? 0)
+                                ? Colors.yellow // Changed from kPrimaryColor to yellow for stars
+                                : Colors.grey,
+                            size: 18,
+                          ),
+                        ),
+                      )
+                    ],
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 8),
+
+            Text(
+              review.content ?? '',
+              style: GoogleFonts.spaceGrotesk(
+
+                fontWeight: FontWeight.w400, // Regular
+                fontSize: 14,
+                height: 21 / 14, // Figma line-height (21px)
+                letterSpacing: 0,
+                color: Color(0xff65758B),
+              ),
+            )
+
+          ],
+        ),
       ),
     );
   }
@@ -1642,9 +1893,11 @@ class _CarRentalDetailsScreenState extends State<EventsDetailsScreen> {
                 decoration: InputDecoration(
                   labelText: 'Title'.tr,
                   border: OutlineInputBorder(
-                    borderSide: BorderSide(color: kColor1),
+                    borderSide: BorderSide.none,
                   ),
-                  labelStyle: TextStyle(color: grey),
+                  filled: true, // Add this
+                  fillColor: Color(0xFFF5F5F5),
+                  labelStyle: GoogleFonts.spaceGrotesk(color: grey),
                 ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
@@ -1659,9 +1912,11 @@ class _CarRentalDetailsScreenState extends State<EventsDetailsScreen> {
                 decoration: InputDecoration(
                   labelText: 'Review Content'.tr,
                   border: OutlineInputBorder(
-                    borderSide: BorderSide(color: kColor1),
+                    borderSide: BorderSide.none,
                   ),
-                  labelStyle: TextStyle(color: grey),
+                  filled: true, // Add this
+                  fillColor: Color(0xFFF5F5F5),
+                  labelStyle: GoogleFonts.spaceGrotesk(color: grey),
                 ),
                 maxLines: 3,
                 validator: (value) {
@@ -1690,7 +1945,7 @@ class _CarRentalDetailsScreenState extends State<EventsDetailsScreen> {
                               children: [
                                 SizedBox(height: 5),
                                 Text(entry.key,
-                                    style: TextStyle(
+                                    style: GoogleFonts.spaceGrotesk(
                                         fontWeight: FontWeight.w400,
                                         color: grey,
                                         fontSize: 14)),
@@ -1825,7 +2080,83 @@ class _CarRentalDetailsScreenState extends State<EventsDetailsScreen> {
     );
   }
 }
+const int _kMaxChars = 300;
 
+class ExpandableHtmlContent extends StatefulWidget {
+  final String content;
+  final String readMoreText;
+  final TextStyle textStyle;
+  final TextStyle readMoreStyle;
+  final Color primaryColor; // Assuming kPrimaryColor is passed in
+
+  const ExpandableHtmlContent({
+    required this.content,
+    required this.primaryColor,
+    this.readMoreText = 'Read more',
+    this.textStyle = const TextStyle(color: Colors.black54),
+    this.readMoreStyle = const TextStyle(color: Color(0xff05A8C7), fontWeight: FontWeight.w500),
+    Key? key,
+  }) : super(key: key);
+
+  @override
+  _ExpandableHtmlContentState createState() => _ExpandableHtmlContentState();
+}
+
+class _ExpandableHtmlContentState extends State<ExpandableHtmlContent> {
+  late bool _isExpanded;
+
+  @override
+  void initState() {
+    super.initState();
+    // Default to collapsed if content exceeds the limit
+    _isExpanded = widget.content.length <= _kMaxChars;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Determine if we need to truncate
+    final bool isTruncated = widget.content.length > _kMaxChars;
+
+    // Get the content to display: full text if expanded, or truncated text otherwise
+    final String displayedContent =
+    _isExpanded || !isTruncated
+        ? widget.content
+        : widget.content.substring(0, _kMaxChars) + '...';
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // 1. HTML Content
+        Padding(
+          padding: const EdgeInsets.only(left: 15),
+          child: HtmlWidget(
+            displayedContent,
+            textStyle: widget.textStyle,
+          ),
+        ),
+
+        // 2. Read More Button (only shown if truncation occurred and it's not yet expanded)
+        if (isTruncated)
+          Padding(
+            padding: const EdgeInsets.only(left: 15, top: 8),
+            child: InkWell(
+              onTap: () {
+                setState(() {
+                  _isExpanded = !_isExpanded;
+                });
+              },
+              child: Text(
+                _isExpanded ? 'Show less' : widget.readMoreText,
+                style: widget.readMoreStyle.copyWith(
+                  color: widget.primaryColor, // Use kPrimaryColor for the link
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
 class PersonTypeForEvent {
   final String name;
   final String desc;

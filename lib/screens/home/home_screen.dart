@@ -54,10 +54,14 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../constants.dart';
 import '../../data_models/home_screen_data.dart';
+import '../../widgets/card_widget.dart';
 import '../hotel/search_hotel_screen.dart';
 import '../hotel/room_detail_screen.dart';
 import '../hotel/search_screen.dart';
 import '../notification/notifications_screen.dart';
+
+import 'package:intl/intl.dart';
+import 'package:get/get.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -75,6 +79,15 @@ class _HomeScreenState extends State<HomeScreen>
   DateTime? _checkOutDate;
   int _guestCount = 1;
   String _selectedCity = '';
+
+  // Flight search variables
+  bool _isRoundTrip = true;
+  DateTime? _flightDepartureDate;
+  DateTime? _flightReturnDate;
+  int _passengerCount = 1;
+  String _departureCity = '';
+  String _destinationCity = '';
+
 
   @override
   void dispose() {
@@ -203,6 +216,607 @@ class _HomeScreenState extends State<HomeScreen>
   }
 //zeeshan
 
+  // Flight Passenger Selector
+  void _showPassengerSelector() {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return Container(
+              padding: EdgeInsets.all(20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Passengers'.tr,
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      IconButton(
+                        icon: Icon(Icons.close),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Passengers'.tr,
+                        style: TextStyle(fontSize: 16),
+                      ),
+                      Row(
+                        children: [
+                          IconButton(
+                            icon: Icon(Icons.remove_circle_outline),
+                            onPressed: _passengerCount > 1
+                                ? () {
+                              setState(() {
+                                _passengerCount--;
+                              });
+                            }
+                                : null,
+                          ),
+                          Text(
+                            '$_passengerCount',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          IconButton(
+                            icon: Icon(Icons.add_circle_outline),
+                            onPressed: () {
+                              setState(() {
+                                _passengerCount++;
+                              });
+                            },
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 20),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        setState(() {});
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Color(0xFF05A8C7),
+                      ),
+                      child: Text('Apply'.tr),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+  void _showDepartureCitySelection(BuildContext context) {
+    final List<String> cities = ['New York', 'London', 'Tokyo', 'Paris', 'Dubai'];
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Select Departure City'),
+          content: Container(
+            width: double.maxFinite,
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: cities.length,
+              itemBuilder: (context, index) {
+                return ListTile(
+                  title: Text(cities[index]),
+                  onTap: () {
+                    setState(() {
+                      _departureCity = cities[index];
+                    });
+                    Navigator.pop(context);
+                  },
+                );
+              },
+            ),
+          ),
+        );
+      },
+    );
+  }
+  void _showCitySelection(BuildContext context) {
+    final List<String> cities = [
+      'New York', 'London', 'Tokyo', 'Paris', 'Dubai',
+      'Sydney', 'Singapore', 'Berlin', 'Barcelona', 'Rome',
+      'Amsterdam', 'Vienna', 'Prague', 'Istanbul', 'Bangkok'
+    ];
+
+    String tempSelected = _selectedCity; // local selection inside bottom sheet
+
+    showModalBottomSheet(
+      context: context,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(16),
+          topRight: Radius.circular(16),
+        ),
+      ),
+      isScrollControlled: true,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter modalSetState) {
+            return Container(
+              padding: EdgeInsets.all(16),
+              height: MediaQuery.of(context).size.height * 0.7,
+              child: Column(
+                children: [
+                  Text(
+                    'Select City or Destination'.tr,
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  SizedBox(height: 16),
+
+                  // Search field
+                  TextField(
+                    decoration: InputDecoration(
+                      hintText: 'Search city...'.tr,
+                      prefixIcon: Icon(Icons.search),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                    ),
+                  ),
+
+                  SizedBox(height: 16),
+
+                  // City list
+                  Expanded(
+                    child: ListView.builder(
+                      itemCount: cities.length,
+                      itemBuilder: (context, index) {
+                        final city = cities[index];
+
+                        return ListTile(
+                          leading: Icon(Icons.location_on, color: Colors.blue),
+                          title: Text(city),
+                          trailing: tempSelected == city
+                              ? Icon(Icons.check, color: Colors.green)
+                              : null,
+                          onTap: () {
+                            // update inside modal
+                            modalSetState(() {
+                              tempSelected = city;
+                            });
+
+                            // update parent widget
+                            setState(() {
+                              _selectedCity = city;
+                            });
+
+                            Navigator.pop(context);
+                          },
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+
+
+  Widget _buildFlightSearchSection(BuildContext context) {
+    String departureDateText = _flightDepartureDate != null
+        ? '${_flightDepartureDate!.day}/${_flightDepartureDate!.month}/${_flightDepartureDate!.year}'
+        : 'dd/mm/yyyy'.tr;
+
+    String returnDateText = _flightReturnDate != null
+        ? '${_flightReturnDate!.day}/${_flightReturnDate!.month}/${_flightReturnDate!.year}'
+        : 'dd/mm/yyyy'.tr;
+
+    String passengerText = _passengerCount == 1
+        ? '1 Passenger'.tr
+        : '$_passengerCount Passengers'.tr;
+
+    return Padding(
+      padding: const EdgeInsets.only(left: 20, right: 20, bottom: 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Trip type selection
+          Row(
+            children: [
+              _buildTripTypeButton(
+                'One-way',
+
+                !_isRoundTrip,
+                    () {
+                  setState(() {
+                    _isRoundTrip = false;
+                  });
+                },
+              ),
+              SizedBox(width: 12),
+              _buildTripTypeButton(
+                'Round-Trip',
+
+                _isRoundTrip,
+                    () {
+                  setState(() {
+                    _isRoundTrip = true;
+                  });
+                },
+              ),
+            ],
+          ),
+          SizedBox(height: 16),
+
+          // From field
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'From'.tr,
+                style: GoogleFonts.spaceGrotesk(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w400,
+                  color: Color(0xff1D2025),
+                ),
+              ),
+              SizedBox(height: 4),
+              GestureDetector(
+                onTap: () {
+                  _showDepartureCitySelection(context);
+                },
+                child: Container(
+                  height: 47,
+                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Color(0xffE5E7EB)),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    children: [
+                      SvgPicture.asset(
+                        'assets/icons/location.svg',
+                        width: 20,
+                        height: 20,
+                        color: Color(0xff6B7280),
+                      ),
+                      SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          _departureCity.isEmpty ? 'Departure city'.tr : _departureCity,
+                          style: GoogleFonts.spaceGrotesk(
+                            fontSize: 14,
+                            color: _departureCity.isEmpty ? Color(0xff6B7280) : Color(0xff1D2025),
+                          ),
+                        ),
+                      ),
+                      Icon(Icons.arrow_drop_down, color: Color(0xff6B7280)),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 12),
+
+          // To field
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'To'.tr,
+                style: GoogleFonts.spaceGrotesk(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w400,
+                  color: Color(0xff1D2025),
+                ),
+              ),
+              SizedBox(height: 4),
+              GestureDetector(
+                onTap: () {
+                  _showDepartureCitySelection(context);
+                },
+                child: Container(
+                  height: 47,
+                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Color(0xffE5E7EB)),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    children: [
+                      SvgPicture.asset(
+                        'assets/icons/location.svg',
+                        width: 20,
+                        height: 20,
+                        color: Color(0xff6B7280),
+                      ),
+                      SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          _destinationCity.isEmpty ? 'Destination city'.tr : _destinationCity,
+                          style: GoogleFonts.spaceGrotesk(
+                            fontSize: 14,
+                            color: _destinationCity.isEmpty ? Color(0xff6B7280) : Color(0xff1D2025),
+                          ),
+                        ),
+                      ),
+                      Icon(Icons.arrow_drop_down, color: Color(0xff6B7280)),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 12),
+
+          // Date selection
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Departure Date'.tr,
+                style: GoogleFonts.spaceGrotesk(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w400,
+                  color: Color(0xff1D2025),
+                ),
+              ),
+              SizedBox(height: 4),
+              Row(
+                children: [
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () async {
+                        final DateTime? picked = await showDatePicker(
+                          context: context,
+                          initialDate: DateTime.now(),
+                          firstDate: DateTime.now(),
+                          lastDate: DateTime(2100),
+                        );
+                        if (picked != null) {
+                          setState(() {
+                            _flightDepartureDate = picked;
+                          });
+                        }
+                      },
+                      child: Container(
+                        height: 47,
+                        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Color(0xffE5E7EB)),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          children: [
+                            SvgPicture.asset(
+                              'assets/icons/calendar.svg',
+                              width: 20,
+                              height: 20,
+                              color: Color(0xff6B7280),
+                            ),
+                            SizedBox(width: 8),
+                            Text(
+                              departureDateText,
+                              style: GoogleFonts.spaceGrotesk(
+                                fontSize: 14,
+                                color: _flightDepartureDate != null
+                                    ? Color(0xff1D2025)
+                                    : Color(0xff6B7280),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  if (_isRoundTrip) SizedBox(width: 12),
+                  if (_isRoundTrip)
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () async {
+                          final DateTime? picked = await showDatePicker(
+                            context: context,
+                            initialDate: _flightDepartureDate ?? DateTime.now(),
+                            firstDate: _flightDepartureDate ?? DateTime.now(),
+                            lastDate: DateTime(2100),
+                          );
+                          if (picked != null) {
+                            setState(() {
+                              _flightReturnDate = picked;
+                            });
+                          }
+                        },
+                        child: Container(
+                          height: 47,
+                          padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Color(0xffE5E7EB)),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            children: [
+                              SvgPicture.asset(
+                                'assets/icons/calendar.svg',
+                                width: 20,
+                                height: 20,
+                                color: Color(0xff6B7280),
+                              ),
+                              SizedBox(width: 8),
+                              Text(
+                                _flightReturnDate != null
+                                    ? '${_flightReturnDate!.day}/${_flightReturnDate!.month}/${_flightReturnDate!.year}'
+                                    : 'Return'.tr,
+                                style: GoogleFonts.spaceGrotesk(
+                                  fontSize: 14,
+                                  color: _flightReturnDate != null
+                                      ? Color(0xff1D2025)
+                                      : Color(0xff6B7280),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ],
+          ),
+          SizedBox(height: 12),
+
+          // Passengers field
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Passengers'.tr,
+                style: GoogleFonts.spaceGrotesk(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w400,
+                  color: Color(0xff1D2025),
+                ),
+              ),
+              SizedBox(height: 4),
+              GestureDetector(
+                onTap: _showPassengerSelector,
+                child: Container(
+                  height: 47,
+                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Color(0xffE5E7EB)),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    children: [
+                      SvgPicture.asset(
+                        'assets/icons/user.svg',
+                        width: 20,
+                        height: 20,
+                        color: Color(0xff6B7280),
+                      ),
+                      SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          passengerText,
+                          style: GoogleFonts.spaceGrotesk(
+                            fontSize: 14,
+                            color: Color(0xff1D2025),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 24),
+
+          // Search Button
+          Container(
+            width: double.infinity,
+            height: 48,
+            child: ElevatedButton(
+              onPressed: () {
+                // You need to get the flight data from somewhere
+                // For example, from a provider
+                final flightProvider = Provider.of<FlightProvider>(context, listen: false);
+                final flightList = flightProvider.flightListPerCategory[6] ?? FlightList();
+
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => FlightListItem(flightList: flightList),
+                  ),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Color(0xFF05A8C7),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                elevation: 0,
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  SvgPicture.asset(
+                    'assets/icons/search.svg',
+                    width: 20,
+                    height: 20,
+                    color: Colors.white,
+                  ),
+                  SizedBox(width: 8),
+                  Text(
+                    'Search Flights'.tr,
+                    style: GoogleFonts.spaceGrotesk(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTripTypeButton(String title, bool isSelected, VoidCallback onTap) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          height: 48,
+          decoration: BoxDecoration(
+            color: isSelected ? Color(0xFF05A8C7) : Color(0xffF1F5F9),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: isSelected ? Color(0xFF05A8C7) : Colors.transparent,
+            ),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              SizedBox(width: 8),
+              Text(
+                title.tr,
+                style: GoogleFonts.spaceGrotesk(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: isSelected ? Colors.white : Color(0xff1D2025),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   // ADD THIS METHOD
   void _showGuestSelector() {
     showModalBottomSheet(
@@ -325,7 +939,7 @@ class _HomeScreenState extends State<HomeScreen>
           // City/Destination Field
           GestureDetector(
             onTap: () {
-
+              _showCitySelection(context);
             },
             child: Container(
               height: 47,
@@ -352,6 +966,7 @@ class _HomeScreenState extends State<HomeScreen>
                       ),
                     ),
                   ),
+
                 ],
               ),
             ),
@@ -361,32 +976,32 @@ class _HomeScreenState extends State<HomeScreen>
             padding: const EdgeInsets.all(8.0),
             child: Column(
               children: [
-               Row(
-                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                 children: [
-                   Text(
-                     'Check-in'.tr,
-                     style: GoogleFonts.spaceGrotesk(
-                       fontSize: 13,
-                       fontWeight: FontWeight.w400,
-                       color: Color(0xff1D2025),
-                     ),
-                   ),
-                   Padding(
-                     padding: const EdgeInsets.only(left: 30),
-                     child: Text(
-                       'Check-out'.tr,
-                       style: GoogleFonts.spaceGrotesk(
-                         fontSize: 13,
-                         fontWeight: FontWeight.w400,
-                         color: Color(0xff1D2025),
-                       ),
-                     ),
-                   ),
-                   SizedBox(height: 4),
-                 ],
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Check-in'.tr,
+                      style: GoogleFonts.spaceGrotesk(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w400,
+                        color: Color(0xff1D2025),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(left: 30),
+                      child: Text(
+                        'Check-out'.tr,
+                        style: GoogleFonts.spaceGrotesk(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w400,
+                          color: Color(0xff1D2025),
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 4),
+                  ],
 
-               )
+                )
 
 
               ],
@@ -600,7 +1215,7 @@ class _HomeScreenState extends State<HomeScreen>
                 ],
               ),
             ),
-            ),
+          ),
 
         ],
       ),
@@ -692,73 +1307,94 @@ class _HomeScreenState extends State<HomeScreen>
     required bool isBestSeller,
   }) {
     return Container(
-      width: 200,
+      width: 300,
+      height: 300, // Even taller
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
         color: Colors.white,
-
+        boxShadow: const [
+          BoxShadow(
+            color: Colors.black12,
+            blurRadius: 6,
+            offset: Offset(0, 3),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Stack(
-            children: [
-              ClipRRect(
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(12),
-                  topRight: Radius.circular(12),
+          // Image section - takes more space
+          Expanded(
+            flex: 2, // Image takes 2/3 of the card
+            child: Stack(
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(12),
+                    topRight: Radius.circular(12),
+                  ),
+                  child: Image.network(
+                    imageUrl,
+                    width: double.infinity,
+                    height: double.infinity,
+                    fit: BoxFit.cover,
+                  ),
                 ),
-                child: Image.network(
-                  imageUrl,
-                  width: 200,
-                  height: 140,
-                  fit: BoxFit.cover,
-                ),
-              ),
-              if (isBestSeller)
-                Positioned(
-                  top: 8,
-                  left: 8,
-                  child: Container(
-                    padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: Colors.orange,
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Text(
-                      'Best Seller'.tr,
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w600,
+                if (isBestSeller)
+                  Positioned(
+                    top: 8,
+                    left: 8,
+                    child: Container(
+                      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.orange,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        'Best Seller'.tr,
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
                   ),
-                ),
-            ],
-          ),
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: GoogleFonts.spaceGrotesk(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xff1D2025),
-                  ),
-                ),
-                SizedBox(height: 4),
-                Text(
-                  subtitle,
-                  style: GoogleFonts.spaceGrotesk(
-                    fontSize: 14,
-                    color: Color(0xff6B7280),
-                  ),
-                ),
               ],
+            ),
+          ),
+
+          // Text section
+          Expanded(
+            flex: 1, // Text takes 1/3 of the card
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    title,
+                    style: GoogleFonts.spaceGrotesk(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xff1D2025),
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  SizedBox(height: 4),
+                  Text(
+                    subtitle,
+                    style: GoogleFonts.spaceGrotesk(
+                      fontSize: 14,
+                      color: Color(0xff6B7280),
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
             ),
           ),
         ],
@@ -960,7 +1596,7 @@ class _HomeScreenState extends State<HomeScreen>
                 return TabBarView(
                   controller: homeProvider.tabController,
                   children: [
-                    // Home tab
+                    // Home tab (index 0)
                     SingleChildScrollView(
                       child: Column(
                         children: [
@@ -970,41 +1606,90 @@ class _HomeScreenState extends State<HomeScreen>
                         ],
                       ),
                     ),
-                    // Hotels tab with search section
+                    // Hotels tab (index 1)
+                    SingleChildScrollView(
+                      child: Column(
+                        children: [
+                          _buildHotelSearchSection(context),
+                          _buildFeaturedDestinations(),
+                        ],
+                      ),
+                    ),
+                    // Tours tab (index 2)
                     Column(
                       children: [
-                        _buildHotelSearchSection(context),
-                        _buildFeaturedDestinations(),
-                        // _buildResultsCount(1, homeProvider, boatProvider,
-                        //     tourProvider, spaceProvider, eventProvider, flightProvider),
-                        // _buildFilterTabs(1),
-                        // Expanded(
-                        //   child: PropertyList(
-                        //       hotelList: homeProvider.hotelListPerCategory[1] ?? HotelList()),
-                        // ),
+                        _buildResultsCount(2, homeProvider, boatProvider,
+                            tourProvider, spaceProvider, eventProvider, flightProvider),
+                        // _buildFilterTabs(2),
+                        Expanded(
+                          child: TourListItem(
+                              tourList: tourProvider.tourListPerCategory[2] ?? TourList()),
+                        ),
                       ],
                     ),
-                    // Other tabs
-                    ...List.generate(categoryDatas.length - 2, (index) {
-                      int tabIndex = index + 2;
-                      return Column(
+                    // Spaces tab (index 3)
+                    Column(
+                      children: [
+                        _buildResultsCount(3, homeProvider, boatProvider,
+                            tourProvider, spaceProvider, eventProvider, flightProvider),
+                        // _buildFilterTabs(3),
+                        Expanded(
+                          child: SpaceListItem(
+                              spaceList: spaceProvider.spaceListPerCategory[3] ?? SpaceList()),
+                        ),
+                      ],
+                    ),
+                    // Cars tab (index 4)
+                    Column(
+                      children: [
+                        _buildResultsCount(4, homeProvider, boatProvider,
+                            tourProvider, spaceProvider, eventProvider, flightProvider),
+                        // _buildFilterTabs(4),
+                        Expanded(
+                          child: CarListItem(
+                              carList: homeProvider.carListPerCategory[4] ?? CarList()),
+                        ),
+                      ],
+                    ),
+                    // Events tab (index 5)
+                    Column(
+                      children: [
+                        _buildResultsCount(5, homeProvider, boatProvider,
+                            tourProvider, spaceProvider, eventProvider, flightProvider),
+                        // _buildFilterTabs(5),
+                        Expanded(
+                          child: EventListItem(
+                              eventList: eventProvider.eventListPerCategory[5] ?? EventList()),
+                        ),
+                      ],
+                    ),
+                    // Flights tab (index 6)
+                    SingleChildScrollView(
+                      child: Column(
                         children: [
-                          _buildResultsCount(tabIndex, homeProvider, boatProvider,
-                              tourProvider, spaceProvider, eventProvider, flightProvider),
-                          _buildFilterTabs(tabIndex),
-                          Expanded(
-                            child: _buildTabContent(
-                                tabIndex,
-                                homeProvider,
-                                boatProvider,
-                                tourProvider,
-                                spaceProvider,
-                                eventProvider,
-                                flightProvider),
-                          ),
+                          _buildFlightSearchSection(context),
+                          _buildFeaturedDestinations(),
+                          // SizedBox(height: 20),
+                          // _buildResultsCount(6, homeProvider, boatProvider,
+                          //     tourProvider, spaceProvider, eventProvider, flightProvider),
+                          // _buildFilterTabs(6),
+                          // FlightListItem(
+                          //     flightList: flightProvider.flightListPerCategory[6] ?? FlightList()),
                         ],
-                      );
-                    }),
+                      ),
+                    ),
+                    // Boats tab (index 7)
+                    Column(
+                      children: [
+                        _buildResultsCount(7, homeProvider, boatProvider,
+                            tourProvider, spaceProvider, eventProvider, flightProvider),
+                        // _buildFilterTabs(7),
+                        Expanded(
+                          child: BoatListItem(
+                              boatList: boatProvider.boatListPerCategory[7] ?? BoatList()),
+                        ),
+                      ],
+                    ),
                   ],
                 );
               },
@@ -1014,6 +1699,255 @@ class _HomeScreenState extends State<HomeScreen>
       },
     );
   }
+// //old code
+//   Widget _buildResultsCount(
+//       int index,
+//       HomeProvider homeProvider,
+//       BoatProvider boatProvider,
+//       TourProvider tourProvider,
+//       SpaceProvider spaceProvider,
+//       EventProvider eventProvider,
+//       FlightProvider flightProvider) {
+//     return Padding(
+//       padding: const EdgeInsets.symmetric(horizontal: 10.0),
+//       child: Column(
+//         crossAxisAlignment: CrossAxisAlignment.start,
+//         children: [
+//           Padding(
+//             padding: const EdgeInsets.symmetric(horizontal: 15),
+//             child: Align(
+//               alignment: Alignment.centerLeft,
+//               child: Text(
+//                 '${_getItemCount(index, homeProvider, boatProvider, tourProvider, spaceProvider, eventProvider, flightProvider)} ${'items found'.tr}'
+//                     .tr,
+//                 style: GoogleFonts.spaceGrotesk(
+//                     fontSize: 14,
+//                     fontWeight: FontWeight.w600,
+//                     color: kPrimaryColor,
+//                   ),
+//               ),
+//             ),
+//           ),
+//           Padding(
+//             padding: const EdgeInsets.symmetric(horizontal: 15),
+//             child: Text(
+//               '${'Showing'.tr} ${_getStartId(index, homeProvider, boatProvider, tourProvider, spaceProvider, eventProvider, flightProvider)} - ${_getEndId(index, homeProvider, boatProvider, tourProvider, spaceProvider, eventProvider, flightProvider)} ${'of'.tr} ${_getItemCount(index, homeProvider, boatProvider, tourProvider, spaceProvider, eventProvider, flightProvider)} ${'items'.tr}',
+//               style: GoogleFonts.spaceGrotesk(
+//                   color: grey,
+//                   fontSize: 12,
+//                   fontWeight: FontWeight.w400,
+//
+//               )),
+//           ),
+//         ],
+//       ),
+//     );
+//   }
+
+  // Widget _buildFilterTabs(int index) {
+  //   return SingleChildScrollView(
+  //     scrollDirection: Axis.horizontal,
+  //     child: Padding(
+  //       padding: EdgeInsets.all(8),
+  //       child: Row(
+  //         mainAxisAlignment: index == 6
+  //             ? MainAxisAlignment.spaceBetween
+  //             : MainAxisAlignment.start,
+  //         children: [
+  //           InkWell(
+  //             onTap: () {
+  //               _showSortingOptions(index);
+  //             },
+  //             child: Container(
+  //               padding: EdgeInsets.symmetric(horizontal: 8, vertical: 9),
+  //               decoration: BoxDecoration(
+  //                 border: Border.all(color: grey),
+  //                 borderRadius: BorderRadius.circular(1),
+  //               ),
+  //               child: Row(
+  //                 children: [
+  //                   Text(selectedSort),
+  //                   SizedBox(width: 5),
+  //                   SvgPicture.asset('assets/icons/arrow_down.svg'),
+  //                 ],
+  //               ),
+  //             ),
+  //           ),
+  //           SizedBox(width: 6),
+  //           if (index != 6)
+  //             InkWell(
+  //               onTap: () {
+  //                 final homeProvider =
+  //                 Provider.of<HomeProvider>(context, listen: false);
+  //                 final tourProvider =
+  //                 Provider.of<TourProvider>(context, listen: false);
+  //                 final spaceProvider =
+  //                 Provider.of<SpaceProvider>(context, listen: false);
+  //
+  //                 final boatProvider =
+  //                 Provider.of<BoatProvider>(context, listen: false);
+  //                 final eventProvider =
+  //                 Provider.of<EventProvider>(context, listen: false);
+  //
+  //                 switch (index) {
+  //                   case 1: // Hotels
+  //                     final hotelList =
+  //                     homeProvider.hotelListPerCategory[index];
+  //                     if (hotelList != null && hotelList.data != null) {
+  //                       log("Number of hotels being sent to map: ${hotelList.data!.length}");
+  //                       Navigator.push(
+  //                         context,
+  //                         MaterialPageRoute(
+  //                           builder: (context) => MapScreen(),
+  //                         ),
+  //                       );
+  //                     }
+  //                     break;
+  //                   case 2: // Tours
+  //                     final tourList = tourProvider.tourListPerCategory[index];
+  //                     if (tourList != null && tourList.data != null) {
+  //                       log("Number of tours being sent to map: ${tourList.data!.length}");
+  //                       Navigator.push(
+  //                         context,
+  //                         MaterialPageRoute(
+  //                           builder: (context) => MapScreenTour(),
+  //                         ),
+  //                       );
+  //                     }
+  //                     break;
+  //                   case 3: // Spaces
+  //                     final spaceList =
+  //                     spaceProvider.spaceListPerCategory[index];
+  //                     if (spaceList != null && spaceList.data != null) {
+  //                       log("Number of spaces being sent to map: ${spaceList.data!.length}");
+  //                       Navigator.push(
+  //                         context,
+  //                         MaterialPageRoute(
+  //                           builder: (context) => MapScreenSpace(),
+  //                         ),
+  //                       );
+  //                     }
+  //                     break;
+  //                   case 4: // Cars
+  //                     final carList = homeProvider.carListPerCategory[index];
+  //                     if (carList != null && carList.data != null) {
+  //                       log("Number of cars being sent to map: ${carList.data!.length}");
+  //                       Navigator.push(
+  //                         context,
+  //                         MaterialPageRoute(
+  //                           builder: (context) => MapScreenCar(),
+  //                         ),
+  //                       );
+  //                     }
+  //                     break;
+  //                   case 5: // Events
+  //                     final eventList =
+  //                     eventProvider.eventListPerCategory[index];
+  //                     if (eventList != null && eventList.data != null) {
+  //                       log("Number of events being sent to map: ${eventList.data!.length}");
+  //                       Navigator.push(
+  //                         context,
+  //                         MaterialPageRoute(
+  //                           builder: (context) => MapScreenEvent(),
+  //                         ),
+  //                       );
+  //                     }
+  //                     break;
+  //                   case 7: // Boats
+  //                     final boatList = boatProvider.boatListPerCategory[index];
+  //                     if (boatList != null && boatList.data != null) {
+  //                       log("Number of boats being sent to map: ${boatList.data!.length}");
+  //                       Navigator.push(
+  //                         context,
+  //                         MaterialPageRoute(
+  //                           builder: (context) => MapScreenBoat(),
+  //                         ),
+  //                       );
+  //                     }
+  //                     break;
+  //                 }
+  //               },
+  //               child: Container(
+  //                 padding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+  //                 decoration: BoxDecoration(
+  //                   border: Border.all(color: grey),
+  //                   borderRadius: BorderRadius.circular(1),
+  //                 ),
+  //                 child: Row(
+  //                   children: [
+  //                     Text('Show on the map'.tr),
+  //                     SizedBox(width: 5),
+  //                     SvgPicture.asset('assets/icons/map_icon.svg'),
+  //                   ],
+  //                 ),
+  //               ),
+  //             ),
+  //           SizedBox(width: index == 6 ? 115 : 6),
+  //           InkWell(
+  //             onTap: () {
+  //               if (index == 1) {
+  //                 Navigator.of(context).push(MaterialPageRoute(
+  //                   builder: (context) {
+  //                     return FilterScreen();
+  //                   },
+  //                 ));
+  //               } else if (index == 2) {
+  //                 Navigator.of(context).push(MaterialPageRoute(
+  //                   builder: (context) {
+  //                     return FilterTourScreen();
+  //                   },
+  //                 ));
+  //               } else if (index == 3) {
+  //                 Navigator.of(context).push(MaterialPageRoute(
+  //                   builder: (context) {
+  //                     return FilterSpaceScreen();
+  //                   },
+  //                 ));
+  //               } else if (index == 4) {
+  //                 Navigator.of(context).push(MaterialPageRoute(
+  //                   builder: (context) {
+  //                     return FilterCarScreen();
+  //                   },
+  //                 ));
+  //               } else if (index == 5) {
+  //                 Navigator.of(context).push(MaterialPageRoute(
+  //                   builder: (context) {
+  //                     return FilterEventScreen();
+  //                   },
+  //                 ));
+  //               } else if (index == 6) {
+  //                 Navigator.of(context).push(MaterialPageRoute(
+  //                   builder: (context) {
+  //                     return FilterFlightScreen();
+  //                   },
+  //                 ));
+  //               } else if (index == 7) {
+  //                 Navigator.of(context).push(MaterialPageRoute(
+  //                   builder: (context) {
+  //                     return FilterBoatScreen();
+  //                   },
+  //                 ));
+  //               }
+  //             },
+  //             child: Container(
+  //               padding: EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+  //               decoration: BoxDecoration(
+  //                 border: Border.all(color: grey),
+  //                 borderRadius: BorderRadius.circular(1),
+  //               ),
+  //               child: Row(
+  //                 children: [
+  //                   Text('Filter'.tr),
+  //                   SvgPicture.asset('assets/icons/filter_icon.svg'),
+  //                 ],
+  //               ),
+  //             ),
+  //           ),
+  //         ],
+  //       ),
+  //     ),
+  //   );
+  // }
 
   Widget _buildResultsCount(
       int index,
@@ -1023,246 +1957,183 @@ class _HomeScreenState extends State<HomeScreen>
       SpaceProvider spaceProvider,
       EventProvider eventProvider,
       FlightProvider flightProvider) {
+
+    // Get location based on category
+    String location = _getLocationForCategory(index, homeProvider, boatProvider,
+        tourProvider, spaceProvider, eventProvider, flightProvider);
+
+    // Get item count
+    int itemCount = _getItemCount(index, homeProvider, boatProvider,
+        tourProvider, spaceProvider, eventProvider, flightProvider);
+
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 10.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 8.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 15),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                '${_getItemCount(index, homeProvider, boatProvider, tourProvider, spaceProvider, eventProvider, flightProvider)} ${'items found'.tr}'
-                    .tr,
-                style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: kPrimaryColor,
-                    fontFamily: 'Inter'.tr),
-              ),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (location.isNotEmpty)
+                  Text(
+                    '$itemCount ${'items found in'.tr} $location',
+                    style: GoogleFonts.spaceGrotesk(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: kPrimaryColor,
+                    ),
+                  ),
+                if (location.isEmpty)
+                  Text(
+                    '$itemCount ${'items found'.tr}',
+                    style: GoogleFonts.spaceGrotesk(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: kPrimaryColor,
+                    ),
+                  ),
+                // SizedBox(height: 4),
+                // Text(
+                //   '${'Showing'.tr} ${_getStartId(index, homeProvider, boatProvider, tourProvider, spaceProvider, eventProvider, flightProvider)} - ${_getEndId(index, homeProvider, boatProvider, tourProvider, spaceProvider, eventProvider, flightProvider)} ${'of'.tr} $itemCount ${'items'.tr}',
+                //   style: GoogleFonts.spaceGrotesk(
+                //     color: grey,
+                //     fontSize: 12,
+                //     fontWeight: FontWeight.w400,
+                //   ),
+                // ),
+              ],
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 15),
-            child: Text(
-              '${'Showing'.tr} ${_getStartId(index, homeProvider, boatProvider, tourProvider, spaceProvider, eventProvider, flightProvider)} - ${_getEndId(index, homeProvider, boatProvider, tourProvider, spaceProvider, eventProvider, flightProvider)} ${'of'.tr} ${_getItemCount(index, homeProvider, boatProvider, tourProvider, spaceProvider, eventProvider, flightProvider)} ${'items'.tr}',
-              style: TextStyle(
-                  color: grey,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w400,
-                  fontFamily: 'Inter'.tr),
+          SizedBox(width: 8),
+          // Filter Icon Button
+          GestureDetector(
+            onTap: () => _navigateToFilterScreen(index),
+            child: Row(
+              children: [
+                SvgPicture.asset(
+                  'assets/icons/filters.svg',
+                  color: Color(0xff05A8C7),
+                ),
+                SizedBox(width: 4),
+                Text(
+                  'Filters'.tr,
+                  style: GoogleFonts.spaceGrotesk(
+                    fontSize: 14,
+                    color: Color(0xff05A8C7),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
       ),
     );
   }
+//zeeshan friday 12.12.25
+// Helper method to get location for each category
+  String _getLocationForCategory(
+      int index,
+      HomeProvider homeProvider,
+      BoatProvider boatProvider,
+      TourProvider tourProvider,
+      SpaceProvider spaceProvider,
+      EventProvider eventProvider,
+      FlightProvider flightProvider) {
 
-  Widget _buildFilterTabs(int index) {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Padding(
-        padding: EdgeInsets.all(8),
-        child: Row(
-          mainAxisAlignment: index == 6
-              ? MainAxisAlignment.spaceBetween
-              : MainAxisAlignment.start,
-          children: [
-            InkWell(
-              onTap: () {
-                _showSortingOptions(index);
-              },
-              child: Container(
-                padding: EdgeInsets.symmetric(horizontal: 8, vertical: 9),
-                decoration: BoxDecoration(
-                  border: Border.all(color: grey),
-                  borderRadius: BorderRadius.circular(1),
-                ),
-                child: Row(
-                  children: [
-                    Text(selectedSort),
-                    SizedBox(width: 5),
-                    SvgPicture.asset('assets/icons/arrow_down.svg'),
-                  ],
-                ),
-              ),
-            ),
-            SizedBox(width: 6),
-            if (index != 6)
-              InkWell(
-                onTap: () {
-                  final homeProvider =
-                  Provider.of<HomeProvider>(context, listen: false);
-                  final tourProvider =
-                  Provider.of<TourProvider>(context, listen: false);
-                  final spaceProvider =
-                  Provider.of<SpaceProvider>(context, listen: false);
+    switch (index) {
+      case 1: // Hotels
+        final data = homeProvider.hotelListPerCategory[index]?.data;
+        if (data != null && data.isNotEmpty) {
+          return  'paris';
+        }
+        return 'Paris';
 
-                  final boatProvider =
-                  Provider.of<BoatProvider>(context, listen: false);
-                  final eventProvider =
-                  Provider.of<EventProvider>(context, listen: false);
+      case 2: // Tours
+        final data = tourProvider.tourListPerCategory[index]?.data;
+        if (data != null && data.isNotEmpty) {
+          return  'england';
+        }
+        return 'England';
 
-                  switch (index) {
-                    case 1: // Hotels
-                      final hotelList =
-                      homeProvider.hotelListPerCategory[index];
-                      if (hotelList != null && hotelList.data != null) {
-                        log("Number of hotels being sent to map: ${hotelList.data!.length}");
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => MapScreen(),
-                          ),
-                        );
-                      }
-                      break;
-                    case 2: // Tours
-                      final tourList = tourProvider.tourListPerCategory[index];
-                      if (tourList != null && tourList.data != null) {
-                        log("Number of tours being sent to map: ${tourList.data!.length}");
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => MapScreenTour(),
-                          ),
-                        );
-                      }
-                      break;
-                    case 3: // Spaces
-                      final spaceList =
-                      spaceProvider.spaceListPerCategory[index];
-                      if (spaceList != null && spaceList.data != null) {
-                        log("Number of spaces being sent to map: ${spaceList.data!.length}");
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => MapScreenSpace(),
-                          ),
-                        );
-                      }
-                      break;
-                    case 4: // Cars
-                      final carList = homeProvider.carListPerCategory[index];
-                      if (carList != null && carList.data != null) {
-                        log("Number of cars being sent to map: ${carList.data!.length}");
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => MapScreenCar(),
-                          ),
-                        );
-                      }
-                      break;
-                    case 5: // Events
-                      final eventList =
-                      eventProvider.eventListPerCategory[index];
-                      if (eventList != null && eventList.data != null) {
-                        log("Number of events being sent to map: ${eventList.data!.length}");
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => MapScreenEvent(),
-                          ),
-                        );
-                      }
-                      break;
-                    case 7: // Boats
-                      final boatList = boatProvider.boatListPerCategory[index];
-                      if (boatList != null && boatList.data != null) {
-                        log("Number of boats being sent to map: ${boatList.data!.length}");
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => MapScreenBoat(),
-                          ),
-                        );
-                      }
-                      break;
-                  }
-                },
-                child: Container(
-                  padding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: grey),
-                    borderRadius: BorderRadius.circular(1),
-                  ),
-                  child: Row(
-                    children: [
-                      Text('Show on the map'.tr),
-                      SizedBox(width: 5),
-                      SvgPicture.asset('assets/icons/map_icon.svg'),
-                    ],
-                  ),
-                ),
-              ),
-            SizedBox(width: index == 6 ? 115 : 6),
-            InkWell(
-              onTap: () {
-                if (index == 1) {
-                  Navigator.of(context).push(MaterialPageRoute(
-                    builder: (context) {
-                      return FilterScreen();
-                    },
-                  ));
-                } else if (index == 2) {
-                  Navigator.of(context).push(MaterialPageRoute(
-                    builder: (context) {
-                      return FilterTourScreen();
-                    },
-                  ));
-                } else if (index == 3) {
-                  Navigator.of(context).push(MaterialPageRoute(
-                    builder: (context) {
-                      return FilterSpaceScreen();
-                    },
-                  ));
-                } else if (index == 4) {
-                  Navigator.of(context).push(MaterialPageRoute(
-                    builder: (context) {
-                      return FilterCarScreen();
-                    },
-                  ));
-                } else if (index == 5) {
-                  Navigator.of(context).push(MaterialPageRoute(
-                    builder: (context) {
-                      return FilterEventScreen();
-                    },
-                  ));
-                } else if (index == 6) {
-                  Navigator.of(context).push(MaterialPageRoute(
-                    builder: (context) {
-                      return FilterFlightScreen();
-                    },
-                  ));
-                } else if (index == 7) {
-                  Navigator.of(context).push(MaterialPageRoute(
-                    builder: (context) {
-                      return FilterBoatScreen();
-                    },
-                  ));
-                }
-              },
-              child: Container(
-                padding: EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-                decoration: BoxDecoration(
-                  border: Border.all(color: grey),
-                  borderRadius: BorderRadius.circular(1),
-                ),
-                child: Row(
-                  children: [
-                    Text('Filter'.tr),
-                    SvgPicture.asset('assets/icons/filter_icon.svg'),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+      case 3: // Spaces
+        final data = spaceProvider.spaceListPerCategory[index]?.data;
+        if (data != null && data.isNotEmpty) {
+          return  'paris';
+        }
+        return 'England';
+
+      case 4: // Cars
+        final data = homeProvider.carListPerCategory[index]?.data;
+        if (data != null && data.isNotEmpty) {
+          return  'dubai';
+        }
+        return 'London';
+
+      case 5: // Events
+        final data = eventProvider.eventListPerCategory[index]?.data;
+        if (data != null && data.isNotEmpty) {
+          return  'london';
+        }
+        return 'Paris';
+
+      case 6: // Flights
+        return ''; // Flights might not have a single location
+
+      case 7: // Boats
+        final data = boatProvider.boatListPerCategory[index]?.data;
+        if (data != null && data.isNotEmpty) {
+          return  'austril;la';
+        }
+        return 'Marina';
+
+      default:
+        return '';
+    }
   }
+
+// Navigate to appropriate filter screen
+  void _navigateToFilterScreen(int index) {
+    switch (index) {
+      case 1: // Hotels
+        Navigator.of(context).push(MaterialPageRoute(
+          builder: (context) => FilterScreen(),
+        ));
+        break;
+      case 2: // Tours
+        Navigator.of(context).push(MaterialPageRoute(
+          builder: (context) => FilterTourScreen(),
+        ));
+        break;
+      case 3: // Spaces
+        Navigator.of(context).push(MaterialPageRoute(
+          builder: (context) => FilterSpaceScreen(),
+        ));
+        break;
+      case 4: // Cars
+        Navigator.of(context).push(MaterialPageRoute(
+          builder: (context) => FilterCarScreen(),
+        ));
+        break;
+      case 5: // Events
+        Navigator.of(context).push(MaterialPageRoute(
+          builder: (context) => FilterEventScreen(),
+        ));
+        break;
+      case 6: // Flights
+        Navigator.of(context).push(MaterialPageRoute(
+          builder: (context) => FilterFlightScreen(),
+        ));
+        break;
+      case 7: // Boats
+        Navigator.of(context).push(MaterialPageRoute(
+          builder: (context) => FilterBoatScreen(),
+        ));
+        break;
+    }
+  }
+//zeeshan friday 12.12.25...end
 
   void _showSortingOptions(int index) {
     showModalBottomSheet(
@@ -1280,7 +2151,7 @@ class _HomeScreenState extends State<HomeScreen>
               children: [
                 Text(
                   'Sort By'.tr,
-                  style: TextStyle(
+                  style: GoogleFonts.spaceGrotesk(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                   ),
@@ -1593,7 +2464,7 @@ class OfferCarousel extends StatelessWidget {
                             ),
                             child: Text(
                               offer.featuredText!,
-                              style: TextStyle(
+                              style: GoogleFonts.spaceGrotesk(
                                   fontSize: 8,
                                   color: Colors.white,
                                   fontWeight: FontWeight.w500),
@@ -1602,7 +2473,7 @@ class OfferCarousel extends StatelessWidget {
                         SizedBox(height: 16),
                         Text(
                           offer.title,
-                          style: TextStyle(
+                          style: GoogleFonts.spaceGrotesk(
                               color: Colors.white,
                               fontSize: 20,
                               fontWeight: FontWeight.w700),
@@ -1610,7 +2481,7 @@ class OfferCarousel extends StatelessWidget {
                         SizedBox(height: 8),
                         Text(
                           offer.desc.replaceAll('<br>', ' '),
-                          style: TextStyle(
+                          style: GoogleFonts.spaceGrotesk(
                             color: Colors.white,
                             fontSize: 10,
                           ),
@@ -1723,7 +2594,7 @@ class MixedItemList extends StatelessWidget {
       children: [
         Text(
           title,
-          style: TextStyle(
+          style: GoogleFonts.spaceGrotesk(
             fontSize: 18,
             fontWeight: FontWeight.bold,
             color: Colors.black,
@@ -1732,7 +2603,7 @@ class MixedItemList extends StatelessWidget {
         SizedBox(height: 4),
         Text(
           subtitle,
-          style: TextStyle(
+          style: GoogleFonts.spaceGrotesk(
             fontSize: 14,
             color: darkgrey,
           ),
@@ -1842,7 +2713,7 @@ class MixedItemList extends StatelessWidget {
           },
         );
       default:
-        print("Unhandled item type: ${item.type}");
+        print("Unhandled item type: ${item.type}".tr);
         return SizedBox.shrink();
     }
   }
@@ -1961,7 +2832,7 @@ class EventListItem extends StatelessWidget {
                 child: EventItem(
                     dataSrc: eventData,
                     press: () {
-                      log("go to event");
+                      log("go to event".tr);
                       Navigator.of(context).push(MaterialPageRoute(
                         builder: (context) {
                           return EventsDetailsScreen(
@@ -1978,8 +2849,10 @@ class EventListItem extends StatelessWidget {
   }
 }
 
-//Property item widget builder
 
+
+//new
+// ================ HOTEL PROPERTY CARD ================
 class PropertyItem extends StatefulWidget {
   const PropertyItem({
     super.key,
@@ -1997,227 +2870,313 @@ class PropertyItem extends StatefulWidget {
 class _PropertyItemState extends State<PropertyItem> {
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    return buildPropertyCard(
+      context: context,
+      images: widget.dataSrc.images,
+      title: widget.dataSrc.propertyName,
+      subtitle: widget.dataSrc.address,
+      rating: double.parse(widget.dataSrc.reviewscore),
+      reviewCount: widget.dataSrc.reviewcount,
+      reviewText: widget.dataSrc.reviewtext,
+      price: widget.dataSrc.price,
+      isWishlist: widget.dataSrc.isWishlist,
+      isFeatured: true,
+      discount: 0,
       onTap: widget.press,
-      child: Container(
-        decoration: BoxDecoration(
-          border: Border.all(
-            color: kColor1,
-            width: 1,
-          ),
-          borderRadius: BorderRadius.circular(5),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Stack(
-              children: [
-                ImageCarouselWithDots(
-                  images: widget.dataSrc.images,
-                ),
-                Positioned(
-                    top: 12,
-                    right: 12,
-                    child: InkWell(
-                      onTap: () async {
-                        log("fav 1");
+      onWishlistTap: _handleWishlistTap,
+      type: 'hotel'.tr,
+      id: widget.dataSrc.id.toString(),
+      badgeText: 'HOTEL'.tr,
+      badgeColor: Colors.blue,
+      priceSuffix: '/night'.tr,
+      features: null,
+    );
+  }
 
-                        // Retrieve the token from SharedPreferences
-                        final prefs = await SharedPreferences.getInstance();
-                        final token = prefs.getString('userToken');
+  Future<void> _handleWishlistTap() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('userToken'.tr);
 
-                        if (token == null) {
-                          // Show the custom bottom sheet
-                          showModalBottomSheet(
-                            context: context,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.only(
-                                topLeft: Radius.circular(16),
-                                topRight: Radius.circular(16),
-                              ),
-                            ),
-                            builder: (context) => CustomBottomSheet(
-                              title: 'Log in to add to',
-                              content: 'wishlists',
-                              onCancel: () {
-                                Navigator.of(context)
-                                    .pop(); // Close the bottom sheet
-                              },
-                              onLogin: () {
-                                // Close the bottom sheet
-                                Navigator.of(context).pushReplacement(
-                                  MaterialPageRoute(
-                                      builder: (context) => SignInScreen()),
-                                ); // Navigate to SignInScreen
-                              },
-                            ),
-                          );
-                          return; // Exit the function if token is null
-                        }
+    if (token == null) {
+      showLoginBottomSheet(context);
+      return;
+    }
 
-                        // Proceed with adding to wishlist if token is not null
-                        final homeProvider =
-                        Provider.of<HomeProvider>(context, listen: false);
-                        final success = await homeProvider.addToWishlist(
-                          widget.dataSrc.id.toString(),
-                          'hotel',
-                        );
-                        homeProvider.homelistapi(0);
-                        homeProvider.fetchHotelDetails(widget.dataSrc.id);
-                        await homeProvider.hotellistapi(1, searchParams: {});
+    final homeProvider = Provider.of<HomeProvider>(context, listen: false);
+    final success = await homeProvider.addToWishlist(
+      widget.dataSrc.id.toString(),
+      'hotel'.tr,
+    );
 
-                        if (success == "Added to wishlist") {
-                          setState(() {
-                            widget.dataSrc.isWishlist = true;
-                          });
-                        } else if (success == "Removed from wishlist") {
-                          setState(() {
-                            widget.dataSrc.isWishlist = false;
-                          });
-                        }
-                        // ignore: use_build_context_synchronously
+    homeProvider.homelistapi(0);
+    homeProvider.fetchHotelDetails(widget.dataSrc.id);
+    await homeProvider.hotellistapi(1, searchParams: {});
 
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text(success)),
-                        );
-                      },
-                      child: SvgPicture.asset(
-                        widget.dataSrc.isWishlist
-                            ? 'assets/icons/like.svg'
-                            : 'assets/icons/heart.svg',
-                        width: 24,
-                        height: 20,
-                      ),
-                    )),
-                Positioned(
-                  bottom: 8,
-                  left: 8,
-                  child: Container(
-                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                    child: Row(
-                      children: List.generate(
-                        5,
-                            (index) => Icon(
-                          index <
-                              double.parse(widget.dataSrc.reviewscore)
-                                  .round()
-                              ? Icons.star
-                              : Icons.star_border,
-                          color: flutterpads,
-                          size: 20,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  SizedBox(
-                    width: 250,
-                    child: Text(
-                      widget.dataSrc.propertyName,
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontFamily: 'Inter'.tr,
-                        fontSize: 14,
-                      ),
-                      maxLines: 3,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    widget.dataSrc.address,
-                    style: TextStyle(fontFamily: 'Inter'.tr, color: darkgrey),
-                  ),
-                  const SizedBox(height: 4),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
-                        children: [
-                          Text(
-                            '${widget.dataSrc.reviewscore}/5',
-                            style: TextStyle(
-                              fontFamily: 'Inter'.tr,
-                              fontWeight: FontWeight.w400,
-                              color: flutterpads,
-                              fontSize: 14,
-                            ),
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            widget.dataSrc.reviewtext,
-                            style: TextStyle(
-                              fontFamily: 'Inter'.tr,
-                              color: flutterpads,
-                              fontWeight: FontWeight.w400,
-                              fontSize: 14,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '${widget.dataSrc.reviewcount} reviews'.tr,
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontFamily: 'Inter'.tr,
-                          color: darkgrey,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      Text(
-                        "from ".tr,
-                        style: TextStyle(
-                          fontFamily: 'Inter'.tr,
-                          fontWeight: FontWeight.w500,
-                          decoration: TextDecoration.underline,
-                          decorationThickness: 1.5,
-                          decorationColor: Colors.black,
-                        ),
-                      ),
-                      Text(
-                        "\$${widget.dataSrc.price}",
-                        style: TextStyle(
-                          fontFamily: 'Inter'.tr,
-                          fontWeight: FontWeight.w600,
-                          decoration: TextDecoration.underline,
-                          decorationThickness: 1.5,
-                          decorationColor: Colors.black,
-                        ),
-                      ),
-                      Text(
-                        "/night".tr,
-                        style: TextStyle(
-                          color: darkgrey,
-                          fontFamily: 'Inter'.tr,
-                          decoration: TextDecoration.underline,
-                          decorationThickness: 1.5,
-                          decorationColor: Colors.black,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-          ],
+    if (success == "Added to wishlist".tr) {
+      setState(() {
+        widget.dataSrc.isWishlist = true;
+      });
+    } else if (success == "Removed from wishlist".tr) {
+      setState(() {
+        widget.dataSrc.isWishlist = false;
+      });
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(success),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
         ),
       ),
     );
   }
 }
+
+
+
+//Property item widget builder
+// *****************this is old code of property item*******************************
+
+// class PropertyItem extends StatefulWidget {
+//   const PropertyItem({
+//     super.key,
+//     required this.dataSrc,
+//     required this.press,
+//   });
+//
+//   final PropertyData dataSrc;
+//   final VoidCallback press;
+//
+//   @override
+//   State<PropertyItem> createState() => _PropertyItemState();
+// }
+
+// class _PropertyItemState extends State<PropertyItem> {
+//   @override
+//   Widget build(BuildContext context) {
+//     return GestureDetector(
+//       onTap: widget.press,
+//       child: Container(
+//         decoration: BoxDecoration(
+//           border: Border.all(
+//             color: kColor1,
+//             width: 1,
+//           ),
+//           borderRadius: BorderRadius.circular(5),
+//         ),
+//         child: Column(
+//           crossAxisAlignment: CrossAxisAlignment.start,
+//           children: [
+//             Stack(
+//               children: [
+//                 ImageCarouselWithDots(
+//                   images: widget.dataSrc.images,
+//                 ),
+//                 Positioned(
+//                     top: 12,
+//                     right: 12,
+//                     child: InkWell(
+//                       onTap: () async {
+//                         log("fav 1");
+//
+//                         // Retrieve the token from SharedPreferences
+//                         final prefs = await SharedPreferences.getInstance();
+//                         final token = prefs.getString('userToken');
+//
+//                         if (token == null) {
+//                           // Show the custom bottom sheet
+//                           showModalBottomSheet(
+//                             context: context,
+//                             shape: RoundedRectangleBorder(
+//                               borderRadius: BorderRadius.only(
+//                                 topLeft: Radius.circular(16),
+//                                 topRight: Radius.circular(16),
+//                               ),
+//                             ),
+//                             builder: (context) => CustomBottomSheet(
+//                               title: 'Log in to add to',
+//                               content: 'wishlists',
+//                               onCancel: () {
+//                                 Navigator.of(context)
+//                                     .pop(); // Close the bottom sheet
+//                               },
+//                               onLogin: () {
+//                                 // Close the bottom sheet
+//                                 Navigator.of(context).pushReplacement(
+//                                   MaterialPageRoute(
+//                                       builder: (context) => SignInScreen()),
+//                                 ); // Navigate to SignInScreen
+//                               },
+//                             ),
+//                           );
+//                           return; // Exit the function if token is null
+//                         }
+//
+//                         // Proceed with adding to wishlist if token is not null
+//                         final homeProvider =
+//                         Provider.of<HomeProvider>(context, listen: false);
+//                         final success = await homeProvider.addToWishlist(
+//                           widget.dataSrc.id.toString(),
+//                           'hotel',
+//                         );
+//                         homeProvider.homelistapi(0);
+//                         homeProvider.fetchHotelDetails(widget.dataSrc.id);
+//                         await homeProvider.hotellistapi(1, searchParams: {});
+//
+//                         if (success == "Added to wishlist") {
+//                           setState(() {
+//                             widget.dataSrc.isWishlist = true;
+//                           });
+//                         } else if (success == "Removed from wishlist") {
+//                           setState(() {
+//                             widget.dataSrc.isWishlist = false;
+//                           });
+//                         }
+//                         // ignore: use_build_context_synchronously
+//
+//                         ScaffoldMessenger.of(context).showSnackBar(
+//                           SnackBar(content: Text(success)),
+//                         );
+//                       },
+//                       child: SvgPicture.asset(
+//                         widget.dataSrc.isWishlist
+//                             ? 'assets/icons/like.svg'
+//                             : 'assets/icons/heart.svg',
+//                         width: 24,
+//                         height: 20,
+//                       ),
+//                     )),
+//                 Positioned(
+//                   bottom: 8,
+//                   left: 8,
+//                   child: Container(
+//                     padding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+//                     child: Row(
+//                       children: List.generate(
+//                         5,
+//                             (index) => Icon(
+//                           index <
+//                               double.parse(widget.dataSrc.reviewscore)
+//                                   .round()
+//                               ? Icons.star
+//                               : Icons.star_border,
+//                           color: flutterpads,
+//                           size: 20,
+//                         ),
+//                       ),
+//                     ),
+//                   ),
+//                 ),
+//               ],
+//             ),
+//             const SizedBox(height: 16),
+//             Padding(
+//               padding: const EdgeInsets.symmetric(horizontal: 8),
+//               child: Column(
+//                 crossAxisAlignment: CrossAxisAlignment.start,
+//                 children: [
+//                   SizedBox(
+//                     width: 250,
+//                     child: Text(
+//                       widget.dataSrc.propertyName,
+//                       style: TextStyle(
+//                         fontWeight: FontWeight.w600,
+//                         fontFamily: 'Inter'.tr,
+//                         fontSize: 14,
+//                       ),
+//                       maxLines: 3,
+//                     ),
+//                   ),
+//                   const SizedBox(height: 4),
+//                   Text(
+//                     widget.dataSrc.address,
+//                     style: TextStyle(fontFamily: 'Inter'.tr, color: darkgrey),
+//                   ),
+//                   const SizedBox(height: 4),
+//                   Row(
+//                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
+//                     children: [
+//                       Row(
+//                         children: [
+//                           Text(
+//                             '${widget.dataSrc.reviewscore}/5',
+//                             style: TextStyle(
+//                               fontFamily: 'Inter'.tr,
+//                               fontWeight: FontWeight.w400,
+//                               color: flutterpads,
+//                               fontSize: 14,
+//                             ),
+//                           ),
+//                           const SizedBox(width: 4),
+//                           Text(
+//                             widget.dataSrc.reviewtext,
+//                             style: TextStyle(
+//                               fontFamily: 'Inter'.tr,
+//                               color: flutterpads,
+//                               fontWeight: FontWeight.w400,
+//                               fontSize: 14,
+//                             ),
+//                           ),
+//                         ],
+//                       ),
+//                       const SizedBox(height: 4),
+//                       Text(
+//                         '${widget.dataSrc.reviewcount} reviews'.tr,
+//                         style: TextStyle(
+//                           fontSize: 10,
+//                           fontFamily: 'Inter'.tr,
+//                           color: darkgrey,
+//                         ),
+//                       ),
+//                     ],
+//                   ),
+//                   const SizedBox(height: 4),
+//                   Row(
+//                     children: [
+//                       Text(
+//                         "from ".tr,
+//                         style: TextStyle(
+//                           fontFamily: 'Inter'.tr,
+//                           fontWeight: FontWeight.w500,
+//                           decoration: TextDecoration.underline,
+//                           decorationThickness: 1.5,
+//                           decorationColor: Colors.black,
+//                         ),
+//                       ),
+//                       Text(
+//                         "\$${widget.dataSrc.price}",
+//                         style: TextStyle(
+//                           fontFamily: 'Inter'.tr,
+//                           fontWeight: FontWeight.w600,
+//                           decoration: TextDecoration.underline,
+//                           decorationThickness: 1.5,
+//                           decorationColor: Colors.black,
+//                         ),
+//                       ),
+//                       Text(
+//                         "/night".tr,
+//                         style: TextStyle(
+//                           color: darkgrey,
+//                           fontFamily: 'Inter'.tr,
+//                           decoration: TextDecoration.underline,
+//                           decorationThickness: 1.5,
+//                           decorationColor: Colors.black,
+//                         ),
+//                       ),
+//                     ],
+//                   ),
+//                 ],
+//               ),
+//             ),
+//             const SizedBox(height: 16),
+//           ],
+//         ),
+//       ),
+//     );
+//   }
+// }
 
 class TourListItem extends StatelessWidget {
   final TourList tourList;
@@ -2345,49 +3304,263 @@ class BoatListItem extends StatelessWidget {
   }
 }
 
+
+
+
+
 class FlightListItem extends StatelessWidget {
   final FlightList flightList;
+  final String? departureCity;
+  final String? destinationCity;
+  final VoidCallback? onBackPressed;
 
-  const FlightListItem({super.key, required this.flightList});
+  const FlightListItem({
+    super.key,
+    required this.flightList,
+    this.departureCity,
+    this.destinationCity,
+    this.onBackPressed,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Expanded(
-          child: ListView.builder(
-            padding: const EdgeInsets.only(
-              left: 20,
-              right: 20,
-              top: 20,
-            ),
-            scrollDirection: Axis.vertical,
-            shrinkWrap: true,
-            itemCount: flightList.data?.length ?? 0,
-            itemBuilder: (context, index) {
-              var flightData = FlightData.fromFlight(flightList.data![index]);
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 32.0),
-                child: FlightItem(
-                  dataSrc: flightData,
-                  press: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => FlightDetailsScreen(
-                        flightId: flightList.data![index].id ?? 1,
+    final flights = flightList.data ?? [];
+    final totalFlights = flightList.total ?? flights.length;
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(
+          'Available Flights'.tr,
+          style: GoogleFonts.spaceGrotesk(
+            color: Colors.black,
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        centerTitle: true,
+        backgroundColor: Colors.white,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back, color: Colors.black),
+          onPressed: () => Navigator.pop(context),
+        ),
+
+      ),
+      body: flights.isEmpty
+          ? _buildEmptyState()
+          : Column(
+        children: [
+          // Header with search summary
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+
+              Row(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(left: 20),
+                    child: Align(
+                      alignment: Alignment.topLeft,
+                      child: Text(
+                        '${flights.length} flights available'.tr,
+                        style: GoogleFonts.spaceGrotesk(
+                          fontSize: 14,
+                          color: Colors.grey[600],
+                        ),
                       ),
                     ),
                   ),
-                ),
-              );
-            },
+                  SizedBox(width: 190),
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.of(context).push(MaterialPageRoute(
+                        builder: (context) => FilterFlightScreen(),
+                      ));
+                    },
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        SvgPicture.asset(
+                          'assets/icons/filters.svg',
+                          color: Color(0xff05A8C7),
+                        ),
+                        SizedBox(width: 4),
+                        Text(
+                          'Filters'.tr,
+                          style: GoogleFonts.spaceGrotesk(
+                            fontSize: 14,
+                            color: Color(0xff05A8C7),
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
+          SizedBox(height: 10,),
+          // Flight list
+          Expanded(
+            child: ListView.builder(
+              itemCount: flights.length,
+              itemBuilder: (context, index) {
+                final flight = flights[index];
+                return Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
+                  child: buildPropertyCard(
+                    context: context,
+                    images: flight.airlineImageUrl != null
+                        ? [flight.airlineImageUrl!]
+                        : [],
+                    title: flight.title ?? 'Flight ${flight.code ?? ''}',
+                    subtitle: flight.airline?.name ?? 'Airline',
+                    rating: flight.reviewScore != null
+                        ? double.tryParse(flight.reviewScore!) ?? 0.0
+                        : 0.0,
+                    reviewCount: 0,
+                    reviewText: '',
+                    price: flight.minPrice != null
+                        ? double.tryParse(flight.minPrice!) ?? 0.0
+                        : 0.0,
+                    isWishlist: false,
+                    isFeatured: false,
+                    discount: 0,
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => FlightDetailsScreen(
+                          flightId: flight.id ?? 0,
+                        ),
+                      ),
+                    ),
+                    onWishlistTap: null,
+                    type: 'flight',
+                    id: flight.id?.toString() ?? '0',
+                    badgeText: 'FLIGHT',
+                    badgeColor: Colors.blueAccent,
+                    priceSuffix: '',
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFlightImagePlaceholder(String? airlineName) {
+    return Container(
+      height: 180,
+      color: Colors.blueAccent.withOpacity(0.1),
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.flight,
+              size: 48,
+              color: Colors.blueAccent.withOpacity(0.3),
+            ),
+            if (airlineName != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 8.0),
+                child: Text(
+                  airlineName,
+                  style: GoogleFonts.spaceGrotesk(
+                    color: Colors.blueAccent.withOpacity(0.6),
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+          ],
         ),
-      ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.airplanemode_inactive,
+              size: 80,
+              color: Colors.grey[300],
+            ),
+            SizedBox(height: 20),
+            Text(
+              'No Flights Found'.tr,
+              style: GoogleFonts.spaceGrotesk(
+                fontSize: 24,
+                fontWeight: FontWeight.w600,
+                color: Colors.grey[700],
+              ),
+            ),
+            SizedBox(height: 12),
+            Text(
+              'We couldn\'t find any flights matching your search criteria.'.tr,
+              textAlign: TextAlign.center,
+              style: GoogleFonts.spaceGrotesk(
+                fontSize: 16,
+                color: Colors.grey[600],
+              ),
+            ),
+            SizedBox(height: 8),
+            Text(
+              'Try adjusting your search parameters.'.tr,
+              textAlign: TextAlign.center,
+              style: GoogleFonts.spaceGrotesk(
+                fontSize: 14,
+                color: Colors.grey[500],
+              ),
+            ),
+            SizedBox(height: 30),
+            ElevatedButton(
+              onPressed: () {
+                if (onBackPressed != null) {
+                  onBackPressed!();
+                } else {
+
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Color(0xff05A8C7),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                padding: EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+              ),
+              child: Text(
+                'Modify Search'.tr,
+                style: GoogleFonts.spaceGrotesk(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
 
+
+
+
+
+//new code**********************
+// ================ OFFER ITEM CARD ================
 class OfferItem extends StatelessWidget {
   final home_item.Offer offer;
   final VoidCallback press;
@@ -2397,14 +3570,106 @@ class OfferItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      title: Text(offer.title),
-      subtitle: Text(offer.desc),
+    // Create a simple card for offers
+    return GestureDetector(
       onTap: press,
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(CardStyle.borderRadius),
+          color: Colors.white,
+          boxShadow: const [
+            BoxShadow(
+              color: CardStyle.shadowColor,
+              blurRadius: 16,
+              offset: Offset(0, 4),
+            ),
+          ],
+          border: Border.all(
+            color: Colors.grey.shade200,
+            width: 1,
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(CardStyle.contentPadding),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Offer Icon
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: Colors.amber.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  Icons.local_offer,
+                  color: Colors.amber,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 12),
+              // Offer Details
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      offer.title,
+                      style:  GoogleFonts.spaceGrotesk(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+
+                        color: Colors.black87,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      offer.desc,
+                      style: GoogleFonts.spaceGrotesk(
+                        fontSize: 14,
+
+                        color: Colors.grey.shade600,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+              // Arrow indicator
+              const Icon(
+                Icons.chevron_right,
+                color: Colors.grey,
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
 
+//old code
+// class OfferItem extends StatelessWidget {
+//   final home_item.Offer offer;
+//   final VoidCallback press;
+//
+//   const OfferItem({Key? key, required this.offer, required this.press})
+//       : super(key: key);
+//
+//   @override
+//   Widget build(BuildContext context) {
+//     return ListTile(
+//       title: Text(offer.title),
+//       subtitle: Text(offer.desc),
+//       onTap: press,
+//     );
+//   }
+// }
+
+//new code*******************************
+// ================ DESTINATION ITEM CARD ================
 class DestinationItem extends StatelessWidget {
   final home_item.Location location;
   final VoidCallback press;
@@ -2414,72 +3679,184 @@ class DestinationItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: press,
-      child: Container(
-        decoration: BoxDecoration(
-          border: Border.all(color: Colors.grey[300]!),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            ClipRRect(
-              borderRadius: BorderRadius.vertical(top: Radius.circular(8)),
-              child: Image.network(
-                location.imgUrl.isNotEmpty
-                    ? location.imgUrl
-                    : (location.bannerImgUrl ?? ''),
-                width: double.infinity,
-                height: 250,
-                fit: BoxFit.cover,
-              ),
+    void _navigateToDestination() {
+      press(); // Use the provided press callback
+    }
+
+    // Get the image URL
+    final imageUrl = location.imgUrl.isNotEmpty
+        ? location.imgUrl
+        : (location.bannerImgUrl ?? '');
+
+    // Create custom image widget
+    final customImage = ClipRRect(
+      borderRadius: const BorderRadius.only(
+        topLeft: Radius.circular(CardStyle.borderRadius),
+        topRight: Radius.circular(CardStyle.borderRadius),
+      ),
+      child: Image.network(
+        imageUrl,
+        width: double.infinity,
+        height: 180,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          return Container(
+            width: double.infinity,
+            height: 180,
+            color: Colors.grey.shade200,
+            child: const Icon(
+              Icons.location_on,
+              color: Colors.grey,
+              size: 48,
             ),
-            SizedBox(height: 20),
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: Text(
-                          location.name,
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                          maxLines: 2,
-                        ),
-                      ),
-                      Text(
-                        '${location.spaceCount} Spaces',
-                        style: TextStyle(fontSize: 12),
-                      ),
-                      SizedBox(width: 8),
-                      Text(
-                        '${location.tourCount} Tours',
-                        style: TextStyle(fontSize: 12),
-                      ),
-                      SizedBox(
-                        width: 4,
-                      ),
-                      Text(
-                        '${location.hotelCount} Hotels',
-                        style: TextStyle(fontSize: 12),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 10),
-                ],
+          );
+        },
+      ),
+    );
+
+
+
+    return buildPropertyCard(
+      context: context,
+      images: [], // Empty since we use custom image
+      title: location.name,
+      subtitle: '', // No subtitle for destinations
+      rating: 0.0,
+      reviewCount: 0,
+      reviewText: '',
+      price: 0, // No price for destinations
+      isWishlist: false,
+      isFeatured: false,
+      discount: 0,
+      onTap: _navigateToDestination,
+      onWishlistTap: null,
+      type: 'destination'.tr,
+      id: location.id?.toString() ?? '0',
+      badgeText: 'DESTINATION'.tr,
+      badgeColor: Colors.deepOrange,
+      priceSuffix: '',
+
+
+    );
+  }
+
+  Widget _buildStatItem({
+    required IconData icon,
+    required String value,
+    required String label,
+  }) {
+    return Column(
+      children: [
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 14,
+              color: Colors.grey.shade600,
+            ),
+            const SizedBox(width: 4),
+            Text(
+              value,
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: Colors.black87,
               ),
             ),
           ],
         ),
-      ),
+        const SizedBox(height: 2),
+        Text(
+          label.tr,
+          style: TextStyle(
+            fontSize: 10,
+            color: Colors.grey.shade600,
+          ),
+        ),
+      ],
     );
   }
 }
+
+
+//old code
+// class DestinationItem extends StatelessWidget {
+//   final home_item.Location location;
+//   final VoidCallback press;
+//
+//   const DestinationItem({Key? key, required this.location, required this.press})
+//       : super(key: key);
+//
+//   @override
+//   Widget build(BuildContext context) {
+//     return GestureDetector(
+//       onTap: press,
+//       child: Container(
+//         decoration: BoxDecoration(
+//           border: Border.all(color: Colors.grey[300]!),
+//           borderRadius: BorderRadius.circular(8),
+//         ),
+//         child: Column(
+//           crossAxisAlignment: CrossAxisAlignment.start,
+//           children: [
+//             ClipRRect(
+//               borderRadius: BorderRadius.vertical(top: Radius.circular(8)),
+//               child: Image.network(
+//                 location.imgUrl.isNotEmpty
+//                     ? location.imgUrl
+//                     : (location.bannerImgUrl ?? ''),
+//                 width: double.infinity,
+//                 height: 250,
+//                 fit: BoxFit.cover,
+//               ),
+//             ),
+//             SizedBox(height: 20),
+//             Padding(
+//               padding: const EdgeInsets.all(8.0),
+//               child: Column(
+//                 crossAxisAlignment: CrossAxisAlignment.start,
+//                 children: [
+//                   Row(
+//                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
+//                     children: [
+//                       Expanded(
+//                         child: Text(
+//                           location.name,
+//                           style: TextStyle(
+//                             fontSize: 16,
+//                             fontWeight: FontWeight.bold,
+//                           ),
+//                           overflow: TextOverflow.ellipsis,
+//                           maxLines: 2,
+//                         ),
+//                       ),
+//                       Text(
+//                         '${location.spaceCount} Spaces',
+//                         style: TextStyle(fontSize: 12),
+//                       ),
+//                       SizedBox(width: 8),
+//                       Text(
+//                         '${location.tourCount} Tours',
+//                         style: TextStyle(fontSize: 12),
+//                       ),
+//                       SizedBox(
+//                         width: 4,
+//                       ),
+//                       Text(
+//                         '${location.hotelCount} Hotels',
+//                         style: TextStyle(fontSize: 12),
+//                       ),
+//                     ],
+//                   ),
+//                   SizedBox(height: 10),
+//                 ],
+//               ),
+//             ),
+//           ],
+//         ),
+//       ),
+//     );
+//   }
+// }
+

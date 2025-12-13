@@ -26,11 +26,23 @@ List<CategoryData> categoryDatas = [
     category: "Hotels".tr,
     id: 1,
   ),
+  if (enableFlight)
+    CategoryData(
+      kIcon: 'assets/icons/flights.svg',
+      category: "Flight".tr,
+      id: 6,
+    ),
   CategoryData(
     kIcon: 'assets/icons/home.svg',
     category: "Home".tr,
     id: 0,
   ),
+  if (enableEvent)
+    CategoryData(
+      kIcon: 'assets/icons/event.svg',
+      category: "Event".tr,
+      id: 5,
+    ),
   if (enableTour)
   CategoryData(
     kIcon: 'assets/icons/homestay.svg',
@@ -49,18 +61,8 @@ List<CategoryData> categoryDatas = [
     category: "Car".tr,
     id: 4,
   ),
-  if (enableEvent)
-  CategoryData(
-    kIcon: 'assets/icons/event.svg',
-    category: "Event".tr,
-    id: 5,
-  ),
-  if (enableFlight)
-  CategoryData(
-    kIcon: 'assets/icons/flights.svg',
-    category: "Flight".tr,
-    id: 6,
-  ),
+
+
   if (enableBoat)
   CategoryData(
     kIcon: 'assets/icons/boat.svg',
