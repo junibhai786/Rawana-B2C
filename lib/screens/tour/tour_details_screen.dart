@@ -2,6 +2,7 @@
 
 import 'dart:developer';
 
+import 'package:google_fonts/google_fonts.dart';
 import 'package:moonbnd/Provider/home_provider.dart';
 import 'package:moonbnd/Provider/tour_provider.dart';
 import 'package:moonbnd/constants.dart';
@@ -124,6 +125,31 @@ class _TourPageState extends State<TourPage> {
     final item = Provider.of<TourProvider>(context, listen: true);
     log("${item.tourDetail?.data?.gallery?.length} message tour");
     return Scaffold(
+      appBar: AppBar(
+        leading:  //back button
+        InkWell(
+          onTap: () {
+            Navigator.pop(context);
+          },
+          child: Padding(
+            padding: const EdgeInsets.only(left: 12),
+            child: Container(
+              height: 32,
+              width: 32,
+              decoration: BoxDecoration(
+                color: Color(0xffF1F5F9),
+                shape: BoxShape.circle,
+
+              ),
+              child: Icon(
+                Icons.arrow_back_ios_new_outlined,
+                color: Colors.black,
+                size: 18,
+              ),
+            ),
+          ),
+        ),
+      ),
       body: loading
           ? Center(child: CircularProgressIndicator(color: kSecondaryColor))
           : SafeArea(
@@ -131,6 +157,9 @@ class _TourPageState extends State<TourPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+
+                    buildTourDetails(),
+                    SizedBox(height: 10),
                     Stack(
                       children: [
                         //haven
@@ -142,21 +171,42 @@ class _TourPageState extends State<TourPage> {
                                 currentPage = value;
                               });
                             },
-                            itemCount:
-                                item.tourDetail?.data?.gallery?.length ?? 0,
+                            itemCount: item.tourDetail?.data?.gallery?.length ?? 0,
                             itemBuilder: (context, index) => Image.network(
-                              item.tourDetail?.data?.bannerImage ?? '',
+                              item.tourDetail?.data?.gallery?[index] ?? item.tourDetail?.data?.bannerImage ?? '',
                               fit: BoxFit.cover,
                               width: double.infinity,
                               height: double.infinity,
                               errorBuilder: (context, error, stackTrace) {
                                 return Image.asset(
                                   'assets/haven/tour_descripation.png',
-                                  width: 400,
-                                  height: 200,
                                   fit: BoxFit.cover,
                                 );
                               },
+                            ),
+                          ),
+                        ),
+
+                        // Image counter at bottom right (matches room detail screen)
+                        Positioned(
+                          bottom: 12,
+                          right: 12,
+                          child: Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(5),
+                              color: Colors.black38, // Solid black like room detail screen
+                            ),
+                            child: Text(
+                              '${currentPage + 1} / ${item.tourDetail?.data?.gallery?.length}',
+                              style: GoogleFonts.spaceGrotesk(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w500,
+                                fontSize: 12,
+                              ),
                             ),
                           ),
                         ),
@@ -166,134 +216,112 @@ class _TourPageState extends State<TourPage> {
                             padding: EdgeInsets.symmetric(
                               vertical: 12,
                             ),
-                            child: Row(
-                              children: [
-                                //back button
-                                InkWell(
-                                  onTap: () {
-                                    Navigator.pop(context);
-                                  },
-                                  child: Padding(
-                                    padding: const EdgeInsets.only(left: 12),
-                                    child: Container(
-                                      height: 32,
-                                      width: 32,
-                                      decoration: BoxDecoration(
-                                        color: Colors.white,
-                                        borderRadius: BorderRadius.circular(50),
-                                      ),
-                                      child: Icon(
-                                        Icons.arrow_back,
-                                        color: kPrimaryColor,
-                                        size: 18,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-
-                                Spacer(),
-
-                                //share button
-                                Padding(
-                                  padding: EdgeInsets.only(right: 12),
-                                  child: InkWell(
-                                    onTap: () {
-                                      Share.share(
-                                          'Check out this tour: ${item.tourDetail?.data?.shareUrl}');
-                                    },
-                                    child: Container(
-                                      height: 32,
-                                      width: 32,
-                                      decoration: BoxDecoration(
-                                        color: Colors.white,
-                                        borderRadius: BorderRadius.circular(50),
-                                      ),
-                                      child: Icon(
-                                        Icons.share,
-                                        color: kPrimaryColor,
-                                        size: 18,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-
-                                SizedBox(width: 12),
-
-                                //favorite button
-                                InkWell(
-                                  onTap: () async {
-                                    log("message");
-                                    final homeProvider =
-                                        Provider.of<HomeProvider>(context,
-                                            listen: false);
-                                    final tourProvider =
-                                        Provider.of<TourProvider>(context,
-                                            listen: false);
-                                    final success =
-                                        await homeProvider.addToWishlist(
-                                      '${widget.tourId}',
-                                      'tour',
-                                    );
-                                    // ignore: use_build_context_synchronously
-                                    Provider.of<TourProvider>(context,
-                                            listen: false)
-                                        .fetchTourDetails(widget.tourId);
-
-                                    await tourProvider
-                                        .tourlistapi(2, searchParams: {});
-
-                                    if (success == "Added to wishlist") {
-                                      setState(() {
-                                        item.tourDetail?.data?.isWishlist =
-                                            true;
-                                      });
-                                    } else if (success ==
-                                        "Removed from wishlist") {
-                                      setState(() {
-                                        item.tourDetail?.data?.isWishlist =
-                                            false;
-                                      });
-                                    }
-
-                                    // Notify listeners to rebuild the widget
-
-                                    // ignore: use_build_context_synchronously
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(content: Text(success)),
-                                    );
-                                  },
-                                  child: Padding(
-                                    padding: EdgeInsets.only(right: 12),
-                                    child: Container(
-                                      height: 32,
-                                      width: 32,
-                                      decoration: BoxDecoration(
-                                        color: Colors.white,
-                                        borderRadius: BorderRadius.circular(50),
-                                      ),
-                                      child: Icon(
-                                        item.tourDetail?.data?.isWishlist ==
-                                                true
-                                            ? Icons.favorite
-                                            : Icons.favorite_border,
-                                        color:
-                                            item.tourDetail?.data?.isWishlist ==
-                                                    true
-                                                ? Colors.red
-                                                : kPrimaryColor,
-                                        size: 18,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
+                            // child: Row(
+                            //   children: [
+                            //
+                            //
+                            //     //
+                            //     // //share button
+                            //     // Padding(
+                            //     //   padding: EdgeInsets.only(right: 12),
+                            //     //   child: InkWell(
+                            //     //     onTap: () {
+                            //     //       Share.share(
+                            //     //           'Check out this tour: ${item.tourDetail?.data?.shareUrl}');
+                            //     //     },
+                            //     //     child: Container(
+                            //     //       height: 32,
+                            //     //       width: 32,
+                            //     //       decoration: BoxDecoration(
+                            //     //         color: Colors.white,
+                            //     //         borderRadius: BorderRadius.circular(50),
+                            //     //       ),
+                            //     //       child: Icon(
+                            //     //         Icons.share,
+                            //     //         color: kPrimaryColor,
+                            //     //         size: 18,
+                            //     //       ),
+                            //     //     ),
+                            //     //   ),
+                            //     // ),
+                            //     //
+                            //     // SizedBox(width: 12),
+                            //
+                            //     //favorite button
+                            //     // InkWell(
+                            //     //   onTap: () async {
+                            //     //     log("message");
+                            //     //     final homeProvider =
+                            //     //         Provider.of<HomeProvider>(context,
+                            //     //             listen: false);
+                            //     //     final tourProvider =
+                            //     //         Provider.of<TourProvider>(context,
+                            //     //             listen: false);
+                            //     //     final success =
+                            //     //         await homeProvider.addToWishlist(
+                            //     //       '${widget.tourId}',
+                            //     //       'tour',
+                            //     //     );
+                            //     //     // ignore: use_build_context_synchronously
+                            //     //     Provider.of<TourProvider>(context,
+                            //     //             listen: false)
+                            //     //         .fetchTourDetails(widget.tourId);
+                            //     //
+                            //     //     await tourProvider
+                            //     //         .tourlistapi(2, searchParams: {});
+                            //     //
+                            //     //     if (success == "Added to wishlist") {
+                            //     //       setState(() {
+                            //     //         item.tourDetail?.data?.isWishlist =
+                            //     //             true;
+                            //     //       });
+                            //     //     } else if (success ==
+                            //     //         "Removed from wishlist") {
+                            //     //       setState(() {
+                            //     //         item.tourDetail?.data?.isWishlist =
+                            //     //             false;
+                            //     //       });
+                            //     //     }
+                            //     //
+                            //     //     // Notify listeners to rebuild the widget
+                            //     //
+                            //     //     // ignore: use_build_context_synchronously
+                            //     //     ScaffoldMessenger.of(context).showSnackBar(
+                            //     //       SnackBar(content: Text(success)),
+                            //     //     );
+                            //     //   },
+                            //     //   child: Padding(
+                            //     //     padding: EdgeInsets.only(right: 12),
+                            //     //     child: Container(
+                            //     //       height: 32,
+                            //     //       width: 32,
+                            //     //       decoration: BoxDecoration(
+                            //     //         color: Colors.white,
+                            //     //         borderRadius: BorderRadius.circular(50),
+                            //     //       ),
+                            //     //       child: Icon(
+                            //     //         item.tourDetail?.data?.isWishlist ==
+                            //     //                 true
+                            //     //             ? Icons.favorite
+                            //     //             : Icons.favorite_border,
+                            //     //         color:
+                            //     //             item.tourDetail?.data?.isWishlist ==
+                            //     //                     true
+                            //     //                 ? Colors.red
+                            //     //                 : kPrimaryColor,
+                            //     //         size: 18,
+                            //     //       ),
+                            //     //     ),
+                            //     //   ),
+                            //     // ),
+                            //   ],
+                            // ),
                           ),
                         ),
 
                         Positioned(
                           bottom: 12,
-                          right: 12,
+                          left: 12,
                           child: GestureDetector(
                             onTap: () async {
                               await launch(item.tourDetail?.data?.video ?? "");
@@ -318,11 +346,11 @@ class _TourPageState extends State<TourPage> {
                                   ),
                                   Text(
                                     'Tour Video'.tr,
-                                    style: TextStyle(
+                                    style: GoogleFonts.spaceGrotesk(
                                       color: Colors.white,
                                       fontWeight: FontWeight.w500,
                                       fontSize: 12,
-                                      fontFamily: 'Inter'.tr,
+
                                     ),
                                   ),
                                 ],
@@ -337,43 +365,85 @@ class _TourPageState extends State<TourPage> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          buildTourDetails(),
-                          SizedBox(height: 16),
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
+
+                              Column(
+                                mainAxisAlignment: MainAxisAlignment.end,
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      buildIconText('assets/haven/group.png', "Group size",
+                                          item.tourDetail?.data?.maxPeople?.toString() ?? ""),
+
+                                      buildIconText('assets/haven/location.png', "Location",
+                                          item.tourDetail?.data?.location?.name ?? ""),
+                                    ],
+                                  ),
+
+                                  Row(
+                                    children: [
+                                      buildIconText('assets/haven/time.png', "Duration",
+                                          item.tourDetail?.data?.duration ?? ""),
+                                      SizedBox(width: 80,),
+                                      buildIconText('assets/haven/tour_type.png', "Tour type",
+                                          item.tourDetail?.data?.category?.name ?? ""),
+                                    ],
+                                  )
+
+                                ],
+                              ),
+                              SizedBox(height: 8),
+                              Divider(
+                                thickness: 1,
+                              ),
                               Text(
                                 'Overview'.tr,
-                                style: TextStyle(
-                                  color: kPrimaryColor,
+                                style: GoogleFonts.spaceGrotesk(
+                                  color: Colors.black,
                                   fontSize: 18,
-                                  fontFamily: 'Inter'.tr,
+
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
+                              // SizedBox(height: 8),
+                              // SizedBox(
+                              //   height: 220,
+                              //   width: double.infinity,
+                              //   child: PageView.builder(
+                              //     onPageChanged: (value) {
+                              //       setState(() {
+                              //         currentPage = value;
+                              //       });
+                              //     },
+                              //     itemCount:
+                              //         item.tourDetail?.data?.gallery?.length ??
+                              //             0,
+                              //     itemBuilder: (context, index) =>
+                              //         SliderContent(
+                              //       imageUrl: item.tourDetail?.data
+                              //               ?.gallery?[index] ??
+                              //           '',
+                              //     ),
+                              //   ),
+                              // ),
                               SizedBox(height: 8),
-                              SizedBox(
-                                height: 220,
-                                width: double.infinity,
-                                child: PageView.builder(
-                                  onPageChanged: (value) {
-                                    setState(() {
-                                      currentPage = value;
-                                    });
-                                  },
-                                  itemCount:
-                                      item.tourDetail?.data?.gallery?.length ??
-                                          0,
-                                  itemBuilder: (context, index) =>
-                                      SliderContent(
-                                    imageUrl: item.tourDetail?.data
-                                            ?.gallery?[index] ??
-                                        '',
-                                  ),
+                              ExpandableHtmlContent(
+                                content: item.tourDetail?.data?.content ?? "".tr,
+                                primaryColor: kPrimaryColor,
+                                textStyle: GoogleFonts.spaceGrotesk(
+                                  fontWeight: FontWeight.w400, // Regular
+                                  fontSize: 14,
+                                  height: 21 / 14, // line-height
+                                  letterSpacing: 0,
+                                  color: const Color(0xFF65758B), // #65758B
                                 ),
+                                readMoreText: 'Read more'.tr, // .tr ONLY here
                               ),
-                              SizedBox(height: 8),
-                              HtmlWidget(item.tourDetail?.data?.content ?? ""),
+                              // HtmlWidget(item.tourDetail?.data?.content ?? ""),
                               SizedBox(height: 8),
                               Divider(thickness: 1),
                             ],
@@ -389,9 +459,9 @@ class _TourPageState extends State<TourPage> {
                               children: [
                                 Text(
                                   'Travel Styles'.tr,
-                                  style: TextStyle(
+                                  style: GoogleFonts.spaceGrotesk(
                                       fontSize: 18,
-                                      fontWeight: FontWeight.bold),
+                                      fontWeight: FontWeight.bold,color: Colors.black),
                                 ),
                                 SizedBox(height: 14),
                                 if (item.tourDetail?.data?.terms?.length != 0)
@@ -408,9 +478,9 @@ class _TourPageState extends State<TourPage> {
                                 SizedBox(height: 20),
                                 Text(
                                   'Facilities'.tr,
-                                  style: TextStyle(
+                                  style: GoogleFonts.spaceGrotesk(
                                       fontSize: 18,
-                                      fontWeight: FontWeight.bold),
+                                      fontWeight: FontWeight.bold,color: Colors.black),
                                 ),
                                 SizedBox(height: 14),
                                 if (item.tourDetail?.data?.terms?.length != 0)
@@ -429,8 +499,8 @@ class _TourPageState extends State<TourPage> {
                           SizedBox(height: 16),
                           if (item.tourDetail?.data?.faqs != null)
                             Text('FAQ\'s'.tr,
-                                style: TextStyle(
-                                    fontSize: 18, fontWeight: FontWeight.bold)),
+                                style: GoogleFonts.spaceGrotesk(
+                                    fontSize: 18, fontWeight: FontWeight.bold,color: Colors.black)),
                           // SizedBox(height: 20),
 
                           ...(item.tourDetail?.data?.faqs ?? []).map((element) {
@@ -439,55 +509,50 @@ class _TourPageState extends State<TourPage> {
                                   element.title ?? "", element.content ?? "");
                             }
                           }),
-                          SizedBox(height: 19),
-                          Text(
-                            'Location'.tr,
-                            style: TextStyle(
-                                fontSize: 18, fontWeight: FontWeight.bold),
-                          ),
-                          SizedBox(height: 14),
-                          Text(item.tourDetail?.data?.location?.name ?? ""),
-                          SizedBox(height: 8),
-                          SizedBox(
-                            height: 200,
-                            child: GoogleMap(
-                              onMapCreated: _onMapCreated,
-                              markers: setMarkers!,
-                              initialCameraPosition: CameraPosition(
-                                target: LatLng(
-                                    double.parse(
-                                        item.tourDetail?.data?.mapLat ?? "0"),
-                                    double.parse(
-                                        item.tourDetail?.data?.mapLng ?? "0")),
-                                zoom: double.parse(
-                                    item.tourDetail?.data?.mapZoom.toString() ??
-                                        "12"),
-                              ),
-                            ),
-                          ),
-                          SizedBox(height: 16),
-                          SizedBox(
-                            height: 32,
-                          ),
+                          // SizedBox(height: 19),
+                          // Text(
+                          //   'Location'.tr,
+                          //   style: TextStyle(
+                          //       fontSize: 18, fontWeight: FontWeight.bold),
+                          // ),
+                          // SizedBox(height: 14),
+                          // Text(item.tourDetail?.data?.location?.name ?? ""),
+                          // SizedBox(height: 8),
+                          // SizedBox(
+                          //   height: 200,
+                          //   child: GoogleMap(
+                          //     onMapCreated: _onMapCreated,
+                          //     markers: setMarkers!,
+                          //     initialCameraPosition: CameraPosition(
+                          //       target: LatLng(
+                          //           double.parse(
+                          //               item.tourDetail?.data?.mapLat ?? "0"),
+                          //           double.parse(
+                          //               item.tourDetail?.data?.mapLng ?? "0")),
+                          //       zoom: double.parse(
+                          //           item.tourDetail?.data?.mapZoom.toString() ??
+                          //               "12"),
+                          //     ),
+                          //   ),
+                          // ),
+                          // SizedBox(height: 16),
+                          // SizedBox(
+                          //   height: 32,
+                          // ),
 
-                          Divider(
-                            thickness: 1,
-                            indent: 20,
-                            endIndent: 20,
-                          ),
                           _buildRatingSection(item.tourDetail!),
                           SizedBox(height: 16),
                           _buildRatingBars(item.tourDetail!),
                           SizedBox(height: 5),
-                          Divider(thickness: 1),
+
                           ...(item.tourDetail?.data?.reviewLists?.data ?? [])
                               .map((review) => _buildReviewItem(review)),
                           SizedBox(height: 5),
                           Divider(thickness: 1),
                           Text(
                             'Write a Review'.tr,
-                            style: TextStyle(
-                                fontSize: 18, fontWeight: FontWeight.bold),
+                            style: GoogleFonts.spaceGrotesk(
+                                fontSize: 18, fontWeight: FontWeight.bold,color:Colors.black),
                           ),
                           SizedBox(height: 5),
                           _buildReviewWidget(),
@@ -512,14 +577,14 @@ class _TourPageState extends State<TourPage> {
                   Text(
                       "\$${item.tourDetail?.data?.salePrice == 0 ? item.tourDetail?.data?.price : item.tourDetail?.data?.salePrice}",
                       style:
-                          TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                          GoogleFonts.spaceGrotesk(fontSize: 20, fontWeight: FontWeight.bold)),
                   if (item.tourDetail?.data?.salePrice != 0)
                     Text(
                         item.tourDetail?.data?.salePrice == 0
                             ? "\$${item.tourDetail?.data?.salePrice}"
                             : "\$${item.tourDetail?.data?.price}",
                         style:
-                            TextStyle(decoration: TextDecoration.lineThrough)),
+                            GoogleFonts.spaceGrotesk(decoration: TextDecoration.lineThrough)),
                 ],
               ),
               ElevatedButton(
@@ -572,69 +637,181 @@ class _TourPageState extends State<TourPage> {
 
   Widget _buildFAQItem(String question, String answer) {
     return ExpansionTile(
-      title: Text(question),
+      title: Text(question,style: GoogleFonts.spaceGrotesk(),),
       children: [
         Padding(
           padding: EdgeInsets.all(8.0),
-          child: Text(answer),
+          child: Text(answer,style: GoogleFonts.spaceGrotesk(color: Colors.black38),),
         ),
       ],
     );
   }
-
   Widget _buildRatingSection(tour_data.TourDetailModal tourDetail) {
-    log("${tourDetail.data?.reviewScore?.scoreTotal} scorechecing");
-    return Container(
-      width: double.infinity,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
+    const Color textColor = Colors.white;
+
+    return Column(
         children: [
           Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Text(
-                '${tourDetail.data?.reviewScore?.scoreTotal ?? '0'}/5',
-                style: TextStyle(fontSize: 48, fontWeight: FontWeight.bold),
-                textAlign: TextAlign.center,
+              // Guest Review Text above the container (centered)
+              Padding(
+                padding: const EdgeInsets.only(right: 210),
+                child: Text(
+                  'Guest Review'.tr,
+                  style: GoogleFonts.spaceGrotesk(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 18,
+                    color: Color(0xff1D2025),
+                  ),
+                ),
               ),
-              SizedBox(height: 8),
-              Text(
-                // ignore: unnecessary_string_interpolations
-                '${tourDetail.data?.reviewScore?.scoreText ?? 'Very Good'}',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
-              ),
-              Text(
-                'Based on ${tourDetail.data?.reviewScore?.totalReview ?? 0} reviews'
-                    .tr,
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 14, color: Colors.grey),
+              const SizedBox(height: 8),
+              Center(
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF05A8C7),
+                    borderRadius: BorderRadius.circular(10.0), // Rounded corners
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 100.0,vertical: 6),
+
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Column(
+                        children: [
+                          Text(
+                            '${tourDetail.data?.reviewScore?.scoreTotal ?? '0'}/5',
+                            style: GoogleFonts.spaceGrotesk(
+                              fontWeight: FontWeight.w700, // Bold
+                              fontSize: 36,
+                              height: 40 / 36, // line-height
+                              letterSpacing: 0,
+                              color: textColor,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+
+                          const SizedBox(height: 4),
+                          Text(
+                            (tourDetail.data?.reviewScore?.scoreText ?? 'Very Good').tr,
+                            textAlign: TextAlign.center,
+                            style: GoogleFonts.spaceGrotesk(
+                              fontWeight: FontWeight.w400, // Regular
+                              fontSize: 14,
+                              height: 20 / 14,
+                              letterSpacing: 0,
+                              color: textColor,
+                            ),
+                          ),
+                          Text(
+                            'Based on ${tourDetail.data?.reviewScore?.totalReview ?? 0} reviews'
+                                .tr,
+                            textAlign: TextAlign.center,
+                            style: GoogleFonts.spaceGrotesk( fontWeight: FontWeight.w400, // Regular
+                              fontSize: 14,
+                              height: 20 / 14,
+                              letterSpacing: 0,
+                              color: textColor,),
+                          ),
+
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ],
-          ),
-          SizedBox(height: 16),
-          // Add rating bars here
-        ],
-      ),
-    );
+          )]);
   }
+  // Widget _buildRatingSection(tour_data.TourDetailModal tourDetail) {
+  //   log("${tourDetail.data?.reviewScore?.scoreTotal} scorechecing");
+  //   return Container(
+  //     width: double.infinity,
+  //     child: Column(
+  //       crossAxisAlignment: CrossAxisAlignment.center,
+  //       children: [
+  //         Column(
+  //           crossAxisAlignment: CrossAxisAlignment.center,
+  //           children: [
+  //             Text(
+  //               '${tourDetail.data?.reviewScore?.scoreTotal ?? '0'}/5',
+  //               style: TextStyle(fontSize: 48, fontWeight: FontWeight.bold),
+  //               textAlign: TextAlign.center,
+  //             ),
+  //             SizedBox(height: 8),
+  //             Text(
+  //               // ignore: unnecessary_string_interpolations
+  //               '${tourDetail.data?.reviewScore?.scoreText ?? 'Very Good'}',
+  //               textAlign: TextAlign.center,
+  //               style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
+  //             ),
+  //             Text(
+  //               'Based on ${tourDetail.data?.reviewScore?.totalReview ?? 0} reviews'
+  //                   .tr,
+  //               textAlign: TextAlign.center,
+  //               style: TextStyle(fontSize: 14, color: Colors.grey),
+  //             ),
+  //           ],
+  //         ),
+  //         SizedBox(height: 16),
+  //         // Add rating bars here
+  //       ],
+  //     ),
+  //   );
+  // }
+
 
   Widget _buildRatingBars(tour_data.TourDetailModal tourDetail) {
     final rateScores = tourDetail.data?.reviewScore?.rateScore ?? [];
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 15),
-      child: Column(
-        children: [
-          for (var score in rateScores)
-            _buildRatingBar(
-              "${score.title}",
-              (score.percent)!.toDouble() / 100,
-              score.total ?? 0,
-            ),
+
+    return Container(
+      // 1. Card Styling - matches your room detail screen
+      margin: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 8.0),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12.0),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.15),
+            spreadRadius: 1,
+            blurRadius: 5,
+            offset: const Offset(0, 2),
+          ),
         ],
+      ),
+      // 2. Inner Padding and Content
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
+        child: Column(
+          children: [
+            for (var score in rateScores)
+              _buildRatingBar(
+                score.title ?? '',
+                (score.percent ?? 0).toDouble() / 100,
+                score.total ?? 0,
+              ),
+          ],
+        ),
       ),
     );
   }
+  // Widget _buildRatingBars(tour_data.TourDetailModal tourDetail) {
+  //   final rateScores = tourDetail.data?.reviewScore?.rateScore ?? [];
+  //   return Padding(
+  //     padding: const EdgeInsets.symmetric(horizontal: 15),
+  //     child: Column(
+  //       children: [
+  //         for (var score in rateScores)
+  //           _buildRatingBar(
+  //             "${score.title}",
+  //             (score.percent)!.toDouble() / 100,
+  //             score.total ?? 0,
+  //           ),
+  //       ],
+  //     ),
+  //   );
+  // }
 
   Widget _buildRatingBar(String title, double ratio, int totalScore) {
     return Padding(
@@ -646,7 +823,7 @@ class _TourPageState extends State<TourPage> {
           Expanded(
             flex: 2,
             child: Text(title,
-                style: TextStyle(fontFamily: 'Inter'.tr, fontSize: 14)),
+                style: GoogleFonts.spaceGrotesk( fontSize: 14,color: Color(0xff65758B))),
           ),
           Expanded(
             flex: 5,
@@ -674,72 +851,227 @@ class _TourPageState extends State<TourPage> {
           ),
           SizedBox(width: 8),
           Text('$totalScore',
-              style: TextStyle(fontFamily: 'Inter'.tr, fontSize: 14)),
+              style: GoogleFonts.spaceGrotesk( fontSize: 14,  color: Color(0xff65758B),)),
         ],
       ),
     );
   }
 
+  // Widget _buildRatingBar(String title, double ratio, int totalScore) {
+  //   return Padding(
+  //     padding: EdgeInsets.symmetric(vertical: 4),
+  //     child: Row(
+  //       children: [
+  //         // SvgPicture.asset("assets/icons/staricon.svg"),
+  //         // SizedBox(width: 4),
+  //         Expanded(
+  //           flex: 2,
+  //           child: Text(title,
+  //               style: TextStyle(fontFamily: 'Inter'.tr, fontSize: 14)),
+  //         ),
+  //         Expanded(
+  //           flex: 5,
+  //           child: Stack(
+  //             children: [
+  //               Container(
+  //                 height: 4,
+  //                 decoration: BoxDecoration(
+  //                   color: Colors.grey[300],
+  //                   borderRadius: BorderRadius.circular(4),
+  //                 ),
+  //               ),
+  //               FractionallySizedBox(
+  //                 widthFactor: ratio,
+  //                 child: Container(
+  //                   height: 4,
+  //                   decoration: BoxDecoration(
+  //                     color: kSecondaryColor,
+  //                     borderRadius: BorderRadius.circular(4),
+  //                   ),
+  //                 ),
+  //               ),
+  //             ],
+  //           ),
+  //         ),
+  //         SizedBox(width: 8),
+  //         Text('$totalScore',
+  //             style: TextStyle(fontFamily: 'Inter'.tr, fontSize: 14)),
+  //       ],
+  //     ),
+  //   );
+  // }
+
   Widget _buildReviewItem(ReviewData review) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 15),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              CircleAvatar(
-                backgroundImage: NetworkImage(review.author?.avatarUrl ?? ''),
-                radius: 20,
-              ),
-              SizedBox(width: 12),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(review.author?.name ?? '',
-                      style: TextStyle(
-                          fontFamily: 'Inter'.tr,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold)),
-                  Text(review.author?.lastName ?? '',
-                      style: TextStyle(
-                          fontFamily: 'Inter'.tr, color: Colors.grey)),
-                ],
-              ),
-            ],
-          ),
-          SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.start,
-            children: [
-              Row(
-                children: List.generate(
-                  5,
-                  (index) => Icon(
-                    Icons.star,
-                    color: index < (review.rateNumber ?? 0)
-                        ? kPrimaryColor
-                        : Colors.grey,
-                    size: 18,
-                  ),
-                ),
-              ),
-              SizedBox(width: 8),
-              Text(
-                  DateFormat('dd MMM yyyy').format(DateTime.parse(
-                      review.createdAt ?? DateTime.now().toString())),
-                  style: TextStyle(fontFamily: 'Inter'.tr, color: Colors.grey)),
-            ],
-          ),
-          SizedBox(height: 8),
-          Text(
-            review.content ?? '',
-            style: TextStyle(fontFamily: 'Inter'.tr, color: Colors.grey[600]),
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
+      decoration: BoxDecoration(
+        color: Color(0xffFFFFFF),
+        borderRadius: BorderRadius.circular(12.0),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.15),
+            blurRadius: 5,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                CircleAvatar(
+                  backgroundImage: NetworkImage(review.author?.avatarUrl ?? ''),
+                  radius: 20,
+                ),
+                const SizedBox(width: 12),
+
+                // ★ FIX: Give bounded width to this Column
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+
+                      /// NAME + DATE ROW FIXED
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Flexible(
+                            child: Text(
+                              review.author?.name ?? '',
+                              style:  GoogleFonts.spaceGrotesk(
+
+                                  fontWeight: FontWeight.w500, // "Medium" in Figma = w500
+                                  fontSize: 14,
+                                  height: 20 / 14, // line-height = 20px
+                                  letterSpacing: 0,
+                                  color: Color(0xff1D2025)
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          Text(
+                            DateFormat('dd MMM yyyy').format(
+                              DateTime.parse(
+                                review.createdAt ?? DateTime.now().toString(),
+                              ),
+                            ),
+                            style:  GoogleFonts.spaceGrotesk(
+
+                              fontWeight: FontWeight.w400, // Regular
+                              fontSize: 12,
+                              height: 16 / 12, // exact line-height from Figma
+                              letterSpacing: 0,
+                              color: Color(0xff65758B),
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 4),
+
+                      Row(
+                        children: List.generate(
+                          5,
+                              (index) => Icon(
+                            Icons.star,
+                            color: index < (review.rateNumber ?? 0)
+                                ? Colors.yellow // Changed from kPrimaryColor to yellow for stars
+                                : Colors.grey,
+                            size: 18,
+                          ),
+                        ),
+                      )
+                    ],
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 8),
+
+            Text(
+              review.content ?? '',
+              style: GoogleFonts.spaceGrotesk(
+
+                fontWeight: FontWeight.w400, // Regular
+                fontSize: 14,
+                height: 21 / 14, // Figma line-height (21px)
+                letterSpacing: 0,
+                color: Color(0xff65758B),
+              ),
+            )
+
+          ],
+        ),
+      ),
     );
   }
+
+
+  // Widget _buildReviewItem(ReviewData review) {
+  //   return Padding(
+  //     padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 15),
+  //     child: Column(
+  //       crossAxisAlignment: CrossAxisAlignment.start,
+  //       children: [
+  //         Row(
+  //           children: [
+  //             CircleAvatar(
+  //               backgroundImage: NetworkImage(review.author?.avatarUrl ?? ''),
+  //               radius: 20,
+  //             ),
+  //             SizedBox(width: 12),
+  //             Column(
+  //               crossAxisAlignment: CrossAxisAlignment.start,
+  //               children: [
+  //                 Text(review.author?.name ?? '',
+  //                     style: TextStyle(
+  //                         fontFamily: 'Inter'.tr,
+  //                         fontSize: 16,
+  //                         fontWeight: FontWeight.bold)),
+  //                 Text(review.author?.lastName ?? '',
+  //                     style: TextStyle(
+  //                         fontFamily: 'Inter'.tr, color: Colors.grey)),
+  //               ],
+  //             ),
+  //           ],
+  //         ),
+  //         SizedBox(height: 8),
+  //         Row(
+  //           mainAxisAlignment: MainAxisAlignment.start,
+  //           children: [
+  //             Row(
+  //               children: List.generate(
+  //                 5,
+  //                 (index) => Icon(
+  //                   Icons.star,
+  //                   color: index < (review.rateNumber ?? 0)
+  //                       ? kPrimaryColor
+  //                       : Colors.grey,
+  //                   size: 18,
+  //                 ),
+  //               ),
+  //             ),
+  //             SizedBox(width: 8),
+  //             Text(
+  //                 DateFormat('dd MMM yyyy').format(DateTime.parse(
+  //                     review.createdAt ?? DateTime.now().toString())),
+  //                 style: TextStyle(fontFamily: 'Inter'.tr, color: Colors.grey)),
+  //           ],
+  //         ),
+  //         SizedBox(height: 8),
+  //         Text(
+  //           review.content ?? '',
+  //           style: TextStyle(fontFamily: 'Inter'.tr, color: Colors.grey[600]),
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
 
   Widget _buildReviewWidget() {
     final _formKey = GlobalKey<FormState>();
@@ -766,9 +1098,11 @@ class _TourPageState extends State<TourPage> {
                 decoration: InputDecoration(
                   labelText: 'Title'.tr,
                   border: OutlineInputBorder(
-                    borderSide: BorderSide(color: kColor1),
+                    borderSide: BorderSide.none,
                   ),
-                  labelStyle: TextStyle(color: grey),
+                  filled: true, // Add this
+                  fillColor: Color(0xFFF5F5F5),
+                  labelStyle: GoogleFonts.spaceGrotesk(color: grey),
                 ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
@@ -783,9 +1117,11 @@ class _TourPageState extends State<TourPage> {
                 decoration: InputDecoration(
                   labelText: 'Review Content'.tr,
                   border: OutlineInputBorder(
-                    borderSide: BorderSide(color: kColor1),
+                    borderSide: BorderSide.none,
                   ),
-                  labelStyle: TextStyle(color: grey),
+                  filled: true, // Add this
+                  fillColor: Color(0xFFF5F5F5),
+                  labelStyle: GoogleFonts.spaceGrotesk(color: grey),
                 ),
                 maxLines: 3,
                 validator: (value) {
@@ -814,7 +1150,7 @@ class _TourPageState extends State<TourPage> {
                               children: [
                                 SizedBox(height: 5),
                                 Text(entry.key,
-                                    style: TextStyle(
+                                    style: GoogleFonts.spaceGrotesk(
                                         fontWeight: FontWeight.w400,
                                         color: grey,
                                         fontSize: 14)),
@@ -864,7 +1200,7 @@ class _TourPageState extends State<TourPage> {
                           ),
                         ),
                         builder: (context) => CustomBottomSheet(
-                          title: 'Log in to leave a review',
+                          title: 'Log in to leave a review'.tr,
                           content: '',
                           onCancel: () {
                             Navigator.of(context)
@@ -953,7 +1289,7 @@ class _TourPageState extends State<TourPage> {
         SizedBox(
           width: 8,
         ),
-        Text(text),
+        Text(text,style: GoogleFonts.spaceGrotesk(color: Colors.black38),),
       ],
     );
   }
@@ -963,101 +1299,113 @@ class _TourPageState extends State<TourPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          item.tourDetail?.data?.title ?? "",
-          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-        ),
-        Text(item.tourDetail?.data?.location?.name ?? "",
-            style: TextStyle(color: Colors.grey)),
-        SizedBox(height: 16),
-        Divider(
-          thickness: 1,
-        ),
-        SizedBox(height: 16),
-        Row(
-          children: [
-            Container(
-              margin: EdgeInsets.only(top: 10),
-              child: CircleAvatar(
-                backgroundImage: NetworkImage(
-                    item.tourDetail?.data?.vendor?.avatarUrl ?? ""),
-                radius: 25,
-              ),
-            ),
-            SizedBox(width: 8),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+        Padding(
+          padding: const EdgeInsets.only(left: 16),
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start, // Make sure text aligns left
               children: [
-                SizedBox(
-                  height: 8,
+                Text(
+                  item.tourDetail?.data?.title ?? "",
+                  style: GoogleFonts.spaceGrotesk(fontSize: 24, fontWeight: FontWeight.bold),
                 ),
-                Text('Rented by'.tr,
-                    style: TextStyle(
-                        color: grey,
-                        fontFamily: 'Inter'.tr,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500)),
-                SizedBox(
-                  height: 8,
+                SizedBox(height: 10),
+                Row(
+                  children: [
+                    SvgPicture.asset(
+                      'assets/icons/location.svg',
+                      width: 16,
+                      height: 16,
+                      color: Color(0xff65758B),
+                    ),
+                    SizedBox(width: 8),
+                    Expanded(
+                      child:  Text(item.tourDetail?.data?.location?.name ?? "",
+                          style: GoogleFonts.spaceGrotesk(color: Colors.grey)),
+                    ),
+                  ],
                 ),
-                RichText(
-                  text: TextSpan(
-                    children: [
-                      TextSpan(
-                        text: item.tourDetail?.data?.vendor?.name ?? "vendor",
-                        style: TextStyle(
-                            fontFamily: 'Inter'.tr,
-                            color: kPrimaryColor,
-                            fontWeight: FontWeight.w500,
-                            fontSize: 16),
-                      ),
-                      TextSpan(
-                        text:
-                            ' · Member since ${DateFormat('dd/MM/yy').format(DateTime.parse(item.tourDetail?.data?.vendor?.createdAt ?? DateTime.now().toString()))}'
-                                .tr,
-                        style: TextStyle(
-                            color: grey,
-                            fontFamily: 'Inter'.tr,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w400),
-                      ),
-                    ],
+                SizedBox(height: 10),
+                Text(
+                  '${item.tourDetail?.data?.reviewScore?.totalReview ?? 0} Reviews',
+                  style: GoogleFonts.spaceGrotesk(
+                    fontWeight: FontWeight.w400,
+                    fontSize: 13,
+                    color: const Color(0xFF65758B),
                   ),
                 ),
               ],
             ),
-          ],
+          ),
         ),
-        SizedBox(
-          height: 15,
-        ),
-        Divider(
-          thickness: 1,
-        ),
-        SizedBox(
-          height: 15,
-        ),
-        Column(
-          mainAxisAlignment: MainAxisAlignment.end,
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            buildIconText('assets/haven/time.png', "Duration",
-                item.tourDetail?.data?.duration ?? ""),
-            SizedBox(height: 8),
-            buildIconText('assets/haven/tour_type.png', "Tour type",
-                item.tourDetail?.data?.category?.name ?? ""),
-            SizedBox(height: 8),
-            buildIconText('assets/haven/group.png', "Group size",
-                item.tourDetail?.data?.maxPeople?.toString() ?? ""),
-            SizedBox(height: 8),
-            buildIconText('assets/haven/location.png', "Location",
-                item.tourDetail?.data?.location?.name ?? ""),
-          ],
-        ),
-        SizedBox(height: 8),
-        Divider(
-          thickness: 1,
-        ),
+
+        // Text(
+        //   item.tourDetail?.data?.title ?? "",
+        //   style: GoogleFonts.spaceGrotesk(fontSize: 24, fontWeight: FontWeight.bold),
+        // ),
+        // Text(item.tourDetail?.data?.location?.name ?? "",
+        //     style: TextStyle(color: Colors.grey)),
+        // SizedBox(height: 16),
+        // Divider(
+        //   thickness: 1,
+        // ),
+        // SizedBox(height: 16),
+        // Row(
+        //   children: [
+        //     Container(
+        //       margin: EdgeInsets.only(top: 10),
+        //       child: CircleAvatar(
+        //         backgroundImage: NetworkImage(
+        //             item.tourDetail?.data?.vendor?.avatarUrl ?? ""),
+        //         radius: 25,
+        //       ),
+        //     ),
+        //     SizedBox(width: 8),
+        //     Column(
+        //       crossAxisAlignment: CrossAxisAlignment.start,
+        //       children: [
+        //         SizedBox(
+        //           height: 8,
+        //         ),
+        //         Text('Rented by'.tr,
+        //             style: TextStyle(
+        //                 color: grey,
+        //                 fontFamily: 'Inter'.tr,
+        //                 fontSize: 12,
+        //                 fontWeight: FontWeight.w500)),
+        //         SizedBox(
+        //           height: 8,
+        //         ),
+        //         RichText(
+        //           text: TextSpan(
+        //             children: [
+        //               TextSpan(
+        //                 text: item.tourDetail?.data?.vendor?.name ?? "vendor",
+        //                 style: TextStyle(
+        //                     fontFamily: 'Inter'.tr,
+        //                     color: kPrimaryColor,
+        //                     fontWeight: FontWeight.w500,
+        //                     fontSize: 16),
+        //               ),
+        //               TextSpan(
+        //                 text:
+        //                     ' · Member since ${DateFormat('dd/MM/yy').format(DateTime.parse(item.tourDetail?.data?.vendor?.createdAt ?? DateTime.now().toString()))}'
+        //                         .tr,
+        //                 style: TextStyle(
+        //                     color: grey,
+        //                     fontFamily: 'Inter'.tr,
+        //                     fontSize: 13,
+        //                     fontWeight: FontWeight.w400),
+        //               ),
+        //             ],
+        //           ),
+        //         ),
+        //       ],
+        //     ),
+        //   ],
+        // ),
+
       ],
     );
   }
@@ -1075,7 +1423,7 @@ class _TourPageState extends State<TourPage> {
           children: [
             Text(text),
             SizedBox(height: 8),
-            Text(subtext, style: TextStyle(color: Colors.grey, fontSize: 12)),
+            Text(subtext, style: GoogleFonts.spaceGrotesk(color: Colors.grey, fontSize: 12)),
           ],
         ),
       ],
@@ -1113,7 +1461,7 @@ class _TourPageState extends State<TourPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text("Included/Excluded".tr,
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+              style: GoogleFonts.spaceGrotesk(fontSize: 20, fontWeight: FontWeight.bold,color: Colors.black,)),
           SizedBox(height: 8),
           ...item.tourDetail?.data?.include
                   ?.map(
@@ -1141,7 +1489,7 @@ class _TourPageState extends State<TourPage> {
         Expanded(
           child: Text(
             text,
-            style: TextStyle(
+            style: GoogleFonts.spaceGrotesk(
               fontSize: 14,
               fontWeight: FontWeight.w300,
               color: grey,
@@ -1224,8 +1572,8 @@ class _TourPageState extends State<TourPage> {
                                         alignment: Alignment.center,
                                         child: Text(
                                           'Book'.tr,
-                                          style: TextStyle(
-                                            fontFamily: 'Inter'.tr,
+                                          style: GoogleFonts.spaceGrotesk(
+
                                             color: isBookTab
                                                 ? kSecondaryColor
                                                 : grey,
@@ -1265,8 +1613,8 @@ class _TourPageState extends State<TourPage> {
                                         alignment: Alignment.center,
                                         child: Text(
                                           'Enquiry'.tr,
-                                          style: TextStyle(
-                                            fontFamily: 'Inter'.tr,
+                                          style: GoogleFonts.spaceGrotesk(
+
                                             color: !isBookTab
                                                 ? kSecondaryColor
                                                 : grey,
@@ -1312,11 +1660,11 @@ class _TourPageState extends State<TourPage> {
                                       child: Text(
                                         'From \$${txTourDetail?.data?.salePrice == 0 ? txTourDetail?.data?.price : txTourDetail?.data?.salePrice}'
                                             .tr,
-                                        style: TextStyle(
+                                        style: GoogleFonts.spaceGrotesk(
                                           fontSize: 20,
-                                          fontFamily: 'Inter'.tr,
+
                                           fontWeight: FontWeight.w600,
-                                          color: kPrimaryColor,
+                                          color: Colors.black,
                                         ),
                                       )),
                                 ),
@@ -1375,9 +1723,9 @@ class _TourPageState extends State<TourPage> {
                                                   children: [
                                                     Text(
                                                       "Start Date".tr,
-                                                      style: TextStyle(
-                                                        fontFamily: 'Inter'.tr,
-                                                        color: kPrimaryColor,
+                                                      style: GoogleFonts.spaceGrotesk(
+
+                                                        color: Colors.black,
                                                         fontSize: 12,
                                                       ),
                                                     ),
@@ -1400,7 +1748,7 @@ class _TourPageState extends State<TourPage> {
                                                                 .format(
                                                                     checkInDateHere!)
                                                             : 'Select date'.tr,
-                                                        style: TextStyle(
+                                                        style: GoogleFonts.spaceGrotesk(
                                                           color:
                                                               checkInDateHere !=
                                                                       null
@@ -1477,10 +1825,9 @@ class _TourPageState extends State<TourPage> {
                                                       CrossAxisAlignment.center,
                                                   children: [
                                                     Text("End Date".tr,
-                                                        style: TextStyle(
-                                                          fontFamily:
-                                                              'Inter'.tr,
-                                                          color: kPrimaryColor,
+                                                        style: GoogleFonts.spaceGrotesk(
+
+                                                          color: Colors.black,
                                                           fontSize: 12,
                                                         )),
                                                     SizedBox(height: 5),
@@ -1540,11 +1887,11 @@ class _TourPageState extends State<TourPage> {
                                             children: [
                                               Text(
                                                 "Guests".tr,
-                                                style: TextStyle(
+                                                style: GoogleFonts.spaceGrotesk(
                                                     fontSize: 12,
-                                                    fontFamily: 'Inter'.tr,
+
                                                     fontWeight: FontWeight.w600,
-                                                    color: kPrimaryColor),
+                                                    color: Colors.black),
                                               ),
                                               SizedBox(height: 10),
                                               Container(
@@ -1571,9 +1918,8 @@ class _TourPageState extends State<TourPage> {
                                                           children: [
                                                             Text(
                                                               "Adults".tr,
-                                                              style: TextStyle(
-                                                                fontFamily:
-                                                                    'Inter'.tr,
+                                                              style: GoogleFonts.spaceGrotesk(
+
                                                                 fontSize: 14,
                                                               ),
                                                             ),
@@ -1629,9 +1975,8 @@ class _TourPageState extends State<TourPage> {
                                                                 child: Text(
                                                                   "$adults",
                                                                   style:
-                                                                      TextStyle(
-                                                                    fontFamily:
-                                                                        'Inter',
+                                                                  GoogleFonts.spaceGrotesk(
+
                                                                     fontSize:
                                                                         16,
                                                                     fontWeight:
@@ -1702,9 +2047,8 @@ class _TourPageState extends State<TourPage> {
                                                           children: [
                                                             Text(
                                                               "Children".tr,
-                                                              style: TextStyle(
-                                                                fontFamily:
-                                                                    'Inter'.tr,
+                                                              style: GoogleFonts.spaceGrotesk(
+
                                                                 fontSize: 14,
                                                               ),
                                                             ),
@@ -1761,9 +2105,8 @@ class _TourPageState extends State<TourPage> {
                                                                 child: Text(
                                                                   "$children",
                                                                   style:
-                                                                      TextStyle(
-                                                                    fontFamily:
-                                                                        'Inter',
+                                                                  GoogleFonts.spaceGrotesk(
+
                                                                     fontSize:
                                                                         16,
                                                                     fontWeight:
@@ -1910,9 +2253,9 @@ class _TourPageState extends State<TourPage> {
                                   padding: EdgeInsets.symmetric(horizontal: 15),
                                   alignment: Alignment.centerLeft,
                                   child: Text("Extra Prices:".tr,
-                                      style: TextStyle(
-                                          fontFamily: 'Inter'.tr,
-                                          color: kPrimaryColor,
+                                      style: GoogleFonts.spaceGrotesk(
+
+                                          color: Colors.black,
                                           fontSize: 16,
                                           fontWeight: FontWeight.w700)),
                                 ),
@@ -2331,7 +2674,7 @@ class _TourPageState extends State<TourPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text("Itinerary".tr,
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+              style: GoogleFonts.spaceGrotesk(fontSize: 20, fontWeight: FontWeight.bold,color: Colors.black,)),
           SizedBox(height: 8),
           Container(
             height: 200,
@@ -2373,7 +2716,7 @@ class _TourPageState extends State<TourPage> {
                               ),
                               child: Text(
                                 itinerary?.title ?? "",
-                                style: TextStyle(
+                                style: GoogleFonts.spaceGrotesk(
                                   color: Colors.white,
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -2382,7 +2725,7 @@ class _TourPageState extends State<TourPage> {
                             SizedBox(height: 4),
                             Text(
                               itinerary?.desc ?? "",
-                              style: TextStyle(
+                              style: GoogleFonts.spaceGrotesk(
                                 color: Colors.white,
                                 fontSize: 16,
                               ),

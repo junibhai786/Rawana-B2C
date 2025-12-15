@@ -2,6 +2,7 @@
 
 import 'dart:developer';
 
+import 'package:google_fonts/google_fonts.dart';
 import 'package:moonbnd/Provider/home_provider.dart';
 import 'package:moonbnd/constants.dart';
 import 'package:moonbnd/modals/car_detail_model.dart';
@@ -123,6 +124,29 @@ class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
     final item = Provider.of<HomeProvider>(context, listen: true);
     log("${item.carDetail?.data?.terms?.length} lengthhhhh");
     return Scaffold(
+      appBar: AppBar(
+        leading:  InkWell(
+          onTap: () {
+            Navigator.pop(context);
+          },
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: 12),
+            child: Container(
+              height: 32,
+              width: 32,
+              decoration: BoxDecoration(
+                color: Color(0xffF1F5F9),
+               shape: BoxShape.circle
+              ),
+              child: Icon(
+                Icons.arrow_back_ios_new_outlined,
+                color: Colors.black,
+                size: 18,
+              ),
+            ),
+          ),
+        ),
+      ),
       body: loading
           ? Center(child: CircularProgressIndicator(color: kSecondaryColor))
           : SafeArea(
@@ -130,6 +154,47 @@ class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    Padding(
+                      padding: const EdgeInsets.only(left: 16),
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start, // Make sure text aligns left
+                          children: [
+                            Text(
+                              item.carDetail?.data?.title ?? "",
+                              style: GoogleFonts.spaceGrotesk(fontSize: 24, fontWeight: FontWeight.bold),
+                            ),
+                            SizedBox(height: 10),
+                            Row(
+                              children: [
+                                SvgPicture.asset(
+                                  'assets/icons/location.svg',
+                                  width: 16,
+                                  height: 16,
+                                  color: Color(0xff65758B),
+                                ),
+                                SizedBox(width: 8),
+                                Expanded(
+                                  child:  Text(item.carDetail?.data?.location?.name ?? "",
+                                      style: GoogleFonts.spaceGrotesk(color: Colors.grey)),
+                                ),
+                              ],
+                            ),
+                            SizedBox(height: 10),
+                            Text(
+                              '${item.carDetail?.data?.reviewScore?.totalReview ?? 0} Reviews',
+                              style: GoogleFonts.spaceGrotesk(
+                                fontWeight: FontWeight.w400,
+                                fontSize: 13,
+                                color: const Color(0xFF65758B),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 10),
                     Stack(
                       children: [
                         //haven
@@ -155,119 +220,99 @@ class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
                             padding: EdgeInsets.symmetric(
                               vertical: 12,
                             ),
-                            child: Row(
-                              children: [
-                                //back button
-                                InkWell(
-                                  onTap: () {
-                                    Navigator.pop(context);
-                                  },
-                                  child: Padding(
-                                    padding: EdgeInsets.symmetric(horizontal: 12),
-                                    child: Container(
-                                      height: 32,
-                                      width: 32,
-                                      decoration: BoxDecoration(
-                                        color: Colors.white,
-                                        borderRadius: BorderRadius.circular(50),
-                                      ),
-                                      child: Icon(
-                                        Icons.arrow_back,
-                                        color: kPrimaryColor,
-                                        size: 18,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-            
-                                Spacer(),
-            
-                                //share button
-                                InkWell(
-                                  onTap: () async {
-                                    await Share.share(
-                                        'Check out my booking details: ${item.carDetail?.data?.shareUrl}'
-                                            .tr);
-                                  },
-                                  child: Padding(
-                                    padding: EdgeInsets.only(right: 12),
-                                    child: Container(
-                                      height: 32,
-                                      width: 32,
-                                      decoration: BoxDecoration(
-                                        color: Colors.white,
-                                        borderRadius: BorderRadius.circular(50),
-                                      ),
-                                      child: Icon(
-                                        Icons.share,
-                                        color: kPrimaryColor,
-                                        size: 18,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-            
-                                //favorite button
-                                InkWell(
-                                  onTap: () async {
-                                    log("message");
-                                    final homeProvider =
-                                        Provider.of<HomeProvider>(context,
-                                            listen: false);
-                                    final success =
-                                        await homeProvider.addToWishlist(
-                                      '${widget.carId}',
-                                      'car',
-                                    );
-                                    homeProvider.fetchCarDetails(widget.carId);
-            
-                                    await homeProvider
-                                        .carlistapi(4, searchParams: {});
-            
-                                    if (success == "Added to wishlist") {
-                                      setState(() {
-                                        item.carDetail?.data?.isInWishlist = true;
-                                      });
-                                    } else if (success ==
-                                        "Removed from wishlist") {
-                                      setState(() {
-                                        item.carDetail?.data?.isInWishlist =
-                                            false;
-                                      });
-                                    }
-            
-                                    // Notify listeners to rebuild the widget
-            
-                                    // ignore: use_build_context_synchronously
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(content: Text(success)),
-                                    );
-                                  },
-                                  child: Padding(
-                                    padding: EdgeInsets.only(right: 12),
-                                    child: Container(
-                                      height: 32,
-                                      width: 32,
-                                      decoration: BoxDecoration(
-                                        color: Colors.white,
-                                        borderRadius: BorderRadius.circular(50),
-                                      ),
-                                      child: Icon(
-                                        item.carDetail?.data?.isInWishlist == true
-                                            ? Icons.favorite
-                                            : Icons.favorite_border,
-                                        color:
-                                            item.carDetail?.data?.isInWishlist ==
-                                                    true
-                                                ? Colors.red
-                                                : kPrimaryColor,
-                                        size: 18,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
+                            // child: Row(
+                            //   children: [
+                            //     //back button
+                            //
+                            //
+                            //     Spacer(),
+                            //
+                            //     //share button
+                            //     InkWell(
+                            //       onTap: () async {
+                            //         await Share.share(
+                            //             'Check out my booking details: ${item.carDetail?.data?.shareUrl}'
+                            //                 .tr);
+                            //       },
+                            //       child: Padding(
+                            //         padding: EdgeInsets.only(right: 12),
+                            //         child: Container(
+                            //           height: 32,
+                            //           width: 32,
+                            //           decoration: BoxDecoration(
+                            //             color: Colors.white,
+                            //             borderRadius: BorderRadius.circular(50),
+                            //           ),
+                            //           child: Icon(
+                            //             Icons.share,
+                            //             color: kPrimaryColor,
+                            //             size: 18,
+                            //           ),
+                            //         ),
+                            //       ),
+                            //     ),
+                            //
+                            //     //favorite button
+                            //     InkWell(
+                            //       onTap: () async {
+                            //         log("message");
+                            //         final homeProvider =
+                            //             Provider.of<HomeProvider>(context,
+                            //                 listen: false);
+                            //         final success =
+                            //             await homeProvider.addToWishlist(
+                            //           '${widget.carId}',
+                            //           'car',
+                            //         );
+                            //         homeProvider.fetchCarDetails(widget.carId);
+                            //
+                            //         await homeProvider
+                            //             .carlistapi(4, searchParams: {});
+                            //
+                            //         if (success == "Added to wishlist") {
+                            //           setState(() {
+                            //             item.carDetail?.data?.isInWishlist = true;
+                            //           });
+                            //         } else if (success ==
+                            //             "Removed from wishlist") {
+                            //           setState(() {
+                            //             item.carDetail?.data?.isInWishlist =
+                            //                 false;
+                            //           });
+                            //         }
+                            //
+                            //         // Notify listeners to rebuild the widget
+                            //
+                            //         // ignore: use_build_context_synchronously
+                            //         ScaffoldMessenger.of(context).showSnackBar(
+                            //           SnackBar(content: Text(success)),
+                            //         );
+                            //       },
+                            //       child: Padding(
+                            //         padding: EdgeInsets.only(right: 12),
+                            //         child: Container(
+                            //           height: 32,
+                            //           width: 32,
+                            //           decoration: BoxDecoration(
+                            //             color: Colors.white,
+                            //             borderRadius: BorderRadius.circular(50),
+                            //           ),
+                            //           child: Icon(
+                            //             item.carDetail?.data?.isInWishlist == true
+                            //                 ? Icons.favorite
+                            //                 : Icons.favorite_border,
+                            //             color:
+                            //                 item.carDetail?.data?.isInWishlist ==
+                            //                         true
+                            //                     ? Colors.red
+                            //                     : kPrimaryColor,
+                            //             size: 18,
+                            //           ),
+                            //         ),
+                            //       ),
+                            //     ),
+                            //   ],
+                            // ),
                           ),
                         ),
             
@@ -281,18 +326,18 @@ class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
                               vertical: 4,
                             ),
                             decoration: BoxDecoration(
-                              color: kPrimaryColor,
+                              color: Colors.black38,
                               borderRadius: BorderRadius.all(
                                 Radius.circular(5),
                               ),
                             ),
                             child: Text(
                               '${currentPage + 1} / ${item.carDetail?.data?.gallery?.length}',
-                              style: TextStyle(
+                              style: GoogleFonts.spaceGrotesk(
                                 color: Colors.white,
                                 fontWeight: FontWeight.w500,
                                 fontSize: 12,
-                                fontFamily: 'Inter'.tr,
+
                               ),
                             ),
                           ),
@@ -326,11 +371,11 @@ class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
                                   ),
                                   Text(
                                     'Car Video'.tr,
-                                    style: TextStyle(
+                                    style: GoogleFonts.spaceGrotesk(
                                       color: Colors.white,
                                       fontWeight: FontWeight.w500,
                                       fontSize: 12,
-                                      fontFamily: 'Inter'.tr,
+
                                     ),
                                   ),
                                 ],
@@ -345,80 +390,80 @@ class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            item.carDetail?.data?.title ?? "",
-                            style: TextStyle(
-                                fontSize: 24, fontWeight: FontWeight.bold),
-                          ),
-                          Text(
-                            item.carDetail?.data?.location?.name ?? "",
-                          ),
+                          // Text(
+                          //   item.carDetail?.data?.title ?? "",
+                          //   style: TextStyle(
+                          //       fontSize: 24, fontWeight: FontWeight.bold),
+                          // ),
+                          // Text(
+                          //   item.carDetail?.data?.location?.name ?? "",
+                          // ),
             
-                          Divider(
-                            thickness: 1,
-                          ),
-                          SizedBox(height: 9),
-                          Row(
-                            children: [
-                              Container(
-                                margin: EdgeInsets.only(top: 10),
-                                child: CircleAvatar(
-                                  backgroundImage: NetworkImage(
-                                      item.carDetail?.data?.vendor?.avatarUrl ??
-                                          ""),
-                                  radius: 25,
-                                ),
-                              ),
-                              SizedBox(width: 8),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  SizedBox(
-                                    height: 8,
-                                  ),
-                                  Text('Rented by'.tr,
-                                      style: TextStyle(
-                                          color: grey,
-                                          fontFamily: 'Inter'.tr,
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w500)),
-                                  SizedBox(
-                                    height: 8,
-                                  ),
-                                  RichText(
-                                    text: TextSpan(
-                                      children: [
-                                        TextSpan(
-                                          text: item.carDetail?.data?.vendor
-                                                  ?.name ??
-                                              "",
-                                          style: TextStyle(
-                                              fontFamily: 'Inter'.tr,
-                                              color: kPrimaryColor,
-                                              fontWeight: FontWeight.w500,
-                                              fontSize: 16),
-                                        ),
-                                        TextSpan(
-                                          text: ' · Member since Feb 2023'.tr,
-                                          style: TextStyle(
-                                              color: grey,
-                                              fontFamily: 'Inter'.tr,
-                                              fontSize: 13,
-                                              fontWeight: FontWeight.w400),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                          SizedBox(
-                            height: 15,
-                          ),
-                          Divider(
-                            thickness: 1,
-                          ),
+                          // Divider(
+                          //   thickness: 1,
+                          // ),
+                          // SizedBox(height: 9),
+                          // Row(
+                          //   children: [
+                          //     Container(
+                          //       margin: EdgeInsets.only(top: 10),
+                          //       child: CircleAvatar(
+                          //         backgroundImage: NetworkImage(
+                          //             item.carDetail?.data?.vendor?.avatarUrl ??
+                          //                 ""),
+                          //         radius: 25,
+                          //       ),
+                          //     ),
+                          //     SizedBox(width: 8),
+                          //     Column(
+                          //       crossAxisAlignment: CrossAxisAlignment.start,
+                          //       children: [
+                          //         SizedBox(
+                          //           height: 8,
+                          //         ),
+                          //         Text('Rented by'.tr,
+                          //             style: TextStyle(
+                          //                 color: grey,
+                          //                 fontFamily: 'Inter'.tr,
+                          //                 fontSize: 12,
+                          //                 fontWeight: FontWeight.w500)),
+                          //         SizedBox(
+                          //           height: 8,
+                          //         ),
+                          //         RichText(
+                          //           text: TextSpan(
+                          //             children: [
+                          //               TextSpan(
+                          //                 text: item.carDetail?.data?.vendor
+                          //                         ?.name ??
+                          //                     "",
+                          //                 style: TextStyle(
+                          //                     fontFamily: 'Inter'.tr,
+                          //                     color: kPrimaryColor,
+                          //                     fontWeight: FontWeight.w500,
+                          //                     fontSize: 16),
+                          //               ),
+                          //               TextSpan(
+                          //                 text: ' · Member since Feb 2023'.tr,
+                          //                 style: TextStyle(
+                          //                     color: grey,
+                          //                     fontFamily: 'Inter'.tr,
+                          //                     fontSize: 13,
+                          //                     fontWeight: FontWeight.w400),
+                          //               ),
+                          //             ],
+                          //           ),
+                          //         ),
+                          //       ],
+                          //     ),
+                          //   ],
+                          // ),
+                          // SizedBox(
+                          //   height: 15,
+                          // ),
+                          // Divider(
+                          //   thickness: 1,
+                          // ),
                           Padding(
                             padding: EdgeInsets.symmetric(
                                 horizontal: 8.0, vertical: 8.0),
@@ -427,26 +472,38 @@ class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
                               children: [
                                 Text(
                                   'Description'.tr,
-                                  style: TextStyle(
-                                    color: kPrimaryColor,
+                                  style: GoogleFonts.spaceGrotesk(
+                                    color: Colors.black,
                                     fontSize: 18,
-                                    fontFamily: 'Inter'.tr,
+
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),
                                 SizedBox(height: 8),
-                                Container(
-                                  height: 200,
-                                  child: Image.network(
-                                    item.carDetail?.data?.image ?? "",
-                                    width: 400,
-                                    height: 200,
-                                    fit: BoxFit.cover,
+                                // Container(
+                                //   height: 200,
+                                //   child: Image.network(
+                                //     item.carDetail?.data?.image ?? "",
+                                //     width: 400,
+                                //     height: 200,
+                                //     fit: BoxFit.cover,
+                                //   ),
+                                // ),
+                                // SizedBox(height: 8),
+                                SizedBox(height: 8),
+                                ExpandableHtmlContent(
+                                  content: item.carDetail?.data?.content ?? "".tr,
+                                  primaryColor: kPrimaryColor,
+                                  textStyle: GoogleFonts.spaceGrotesk(
+                                    fontWeight: FontWeight.w400, // Regular
+                                    fontSize: 14,
+                                    height: 21 / 14, // line-height
+                                    letterSpacing: 0,
+                                    color: const Color(0xFF65758B), // #65758B
                                   ),
+                                  readMoreText: 'Read more'.tr, // .tr ONLY here
                                 ),
-                                SizedBox(height: 8),
-                                SizedBox(height: 8),
-                                HtmlWidget(item.carDetail?.data?.content ?? ""),
+                                // HtmlWidget(item.carDetail?.data?.content ?? ""),
                               ],
                             ),
                           ),
@@ -455,8 +512,8 @@ class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
                           if (item.carDetail?.data?.terms?.length != 0)
                             Text(
                               'Car Features'.tr,
-                              style: TextStyle(
-                                  fontSize: 18, fontWeight: FontWeight.bold),
+                              style: GoogleFonts.spaceGrotesk(
+                                  fontSize: 18, fontWeight: FontWeight.bold,color: Colors.black),
                             ),
                           SizedBox(height: 14),
             
@@ -469,8 +526,8 @@ class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
                             SizedBox(height: 26),
                           if (item.carDetail?.data?.faqs?.length != 0)
                             Text('FAQ\'s'.tr,
-                                style: TextStyle(
-                                    fontSize: 18, fontWeight: FontWeight.bold)),
+                                style: GoogleFonts.spaceGrotesk(
+                                    fontSize: 18, fontWeight: FontWeight.bold,color: Colors.black)),
                           SizedBox(height: 20),
             
                           ...(item.carDetail?.data?.faqs ?? []).map((element) {
@@ -480,41 +537,41 @@ class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
                             }
                           }).toList(),
                           SizedBox(height: 19),
-                          Text(
-                            'Location'.tr,
-                            style: TextStyle(
-                                fontSize: 18, fontWeight: FontWeight.bold),
-                          ),
-                          SizedBox(height: 10),
-                          Text(item.carDetail?.data?.location?.name ?? ""),
-                          SizedBox(height: 10),
-                          Container(
-                            height: 200,
-                            child: GoogleMap(
-                              onMapCreated: _onMapCreated,
-                              markers: setMarkers!,
-                              initialCameraPosition: CameraPosition(
-                                target: LatLng(
-                                    double.parse(
-                                        item.carDetail?.data?.mapLat ?? "10"),
-                                    double.parse(
-                                        item.carDetail?.data?.mapLng ?? "10")),
-                                zoom: double.parse(
-                                    item.carDetail?.data?.mapZoom.toString() ??
-                                        "12"),
-                              ),
-                            ),
-                          ),
-                          SizedBox(height: 16),
-                          SizedBox(
-                            height: 32,
-                          ),
-            
-                          Divider(
-                            thickness: 1,
-                            indent: 20,
-                            endIndent: 20,
-                          ),
+                          // Text(
+                          //   'Location'.tr,
+                          //   style: TextStyle(
+                          //       fontSize: 18, fontWeight: FontWeight.bold),
+                          // ),
+                          // SizedBox(height: 10),
+                          // Text(item.carDetail?.data?.location?.name ?? ""),
+                          // SizedBox(height: 10),
+                          // Container(
+                          //   height: 200,
+                          //   child: GoogleMap(
+                          //     onMapCreated: _onMapCreated,
+                          //     markers: setMarkers!,
+                          //     initialCameraPosition: CameraPosition(
+                          //       target: LatLng(
+                          //           double.parse(
+                          //               item.carDetail?.data?.mapLat ?? "10"),
+                          //           double.parse(
+                          //               item.carDetail?.data?.mapLng ?? "10")),
+                          //       zoom: double.parse(
+                          //           item.carDetail?.data?.mapZoom.toString() ??
+                          //               "12"),
+                          //     ),
+                          //   ),
+                          // ),
+                          // SizedBox(height: 16),
+                          // SizedBox(
+                          //   height: 32,
+                          // ),
+                          //
+                          // Divider(
+                          //   thickness: 1,
+                          //   indent: 20,
+                          //   endIndent: 20,
+                          // ),
                           //review slider
                           SizedBox(height: 12),
                           _buildRatingSection(item.carDetail!),
@@ -537,8 +594,8 @@ class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
                           Padding(
                             padding: EdgeInsets.symmetric(horizontal: 20),
                             child: Text("Write a Review".tr,
-                                style: TextStyle(
-                                    color: kPrimaryColor,
+                                style: GoogleFonts.spaceGrotesk(
+                                    color: Colors.black,
                                     fontSize: 18,
                                     fontWeight: FontWeight.w600)),
                           ),
@@ -575,14 +632,14 @@ class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
                   Text(
                       "\$${item.carDetail?.data?.salePrice == 0 ? item.carDetail?.data?.price : item.carDetail?.data?.salePrice}",
                       style:
-                          TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                      GoogleFonts.spaceGrotesk(fontSize: 20, fontWeight: FontWeight.bold)),
                   if (item.carDetail?.data?.salePrice != 0)
                     Text(
                         item.carDetail?.data?.salePrice == 0
                             ? "\$${item.carDetail?.data?.salePrice}"
                             : "\$${item.carDetail?.data?.price}",
                         style:
-                            TextStyle(decoration: TextDecoration.lineThrough)),
+                        GoogleFonts.spaceGrotesk(decoration: TextDecoration.lineThrough)),
                 ],
               ),
               ElevatedButton(
@@ -1538,7 +1595,7 @@ class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
           SizedBox(
             width: 8,
           ),
-          Text(text),
+          Text(text,style: GoogleFonts.spaceGrotesk(color: Colors.black38),),
         ],
       ),
     );
@@ -1546,69 +1603,183 @@ class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
 
   Widget _buildFAQItem(String question, String answer) {
     return ExpansionTile(
-      title: Text(question),
+      title: Text(question,style: GoogleFonts.spaceGrotesk(),),
       children: [
         Padding(
           padding: EdgeInsets.all(16.0),
-          child: Text(answer),
+          child: Text(answer,style: GoogleFonts.spaceGrotesk(color: Colors.black38)),
         ),
       ],
     );
   }
 
   Widget _buildRatingSection(CarDetailModal carDetail) {
-    log("${carDetail.data?.reviewScore?.scoreTotal} scorechecing");
-    return Container(
-      width: double.infinity,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
+    const Color textColor = Colors.white;
+
+    return Column(
         children: [
           Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Text(
-                '${carDetail.data?.reviewScore?.scoreTotal ?? '0'}/5',
-                style: TextStyle(fontSize: 48, fontWeight: FontWeight.bold),
-                textAlign: TextAlign.center,
+              // Guest Review Text above the container (centered)
+              Padding(
+                padding: const EdgeInsets.only(right: 210),
+                child: Text(
+                  'Guest Review'.tr,
+                  style: GoogleFonts.spaceGrotesk(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 18,
+                    color: Color(0xff1D2025),
+                  ),
+                ),
               ),
-              SizedBox(height: 8),
-              Text(
-                // ignore: unnecessary_string_interpolations
-                '${carDetail.data?.reviewScore?.scoreText ?? 'Very Good'}',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
-              ),
-              Text(
-                'Based on ${carDetail.data?.reviewScore?.totalReview ?? 0} reviews'
-                    .tr,
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 14, color: Colors.grey),
+              const SizedBox(height: 8),
+              Center(
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF05A8C7),
+                    borderRadius: BorderRadius.circular(10.0), // Rounded corners
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 100.0,vertical: 6),
+
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Column(
+                        children: [
+                          Text(
+                            '${carDetail.data?.reviewScore?.scoreTotal ?? '0'}/5',
+                            style: GoogleFonts.spaceGrotesk(
+                              fontWeight: FontWeight.w700, // Bold
+                              fontSize: 36,
+                              height: 40 / 36, // line-height
+                              letterSpacing: 0,
+                              color: textColor,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+
+                          const SizedBox(height: 4),
+                          Text(
+                            (carDetail.data?.reviewScore?.scoreText ?? 'Very Good').tr,
+                            textAlign: TextAlign.center,
+                            style: GoogleFonts.spaceGrotesk(
+                              fontWeight: FontWeight.w400, // Regular
+                              fontSize: 14,
+                              height: 20 / 14,
+                              letterSpacing: 0,
+                              color: textColor,
+                            ),
+                          ),
+                          Text(
+                            'Based on ${carDetail.data?.reviewScore?.totalReview ?? 0} reviews'
+                                .tr,
+                            textAlign: TextAlign.center,
+                            style: GoogleFonts.spaceGrotesk( fontWeight: FontWeight.w400, // Regular
+                              fontSize: 14,
+                              height: 20 / 14,
+                              letterSpacing: 0,
+                              color: textColor,),
+                          ),
+
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ],
+          )]);
+  }
+
+  // Widget _buildRatingSection(CarDetailModal carDetail) {
+  //   log("${carDetail.data?.reviewScore?.scoreTotal} scorechecing");
+  //   return Container(
+  //     width: double.infinity,
+  //     child: Column(
+  //       crossAxisAlignment: CrossAxisAlignment.center,
+  //       children: [
+  //         Column(
+  //           crossAxisAlignment: CrossAxisAlignment.center,
+  //           children: [
+  //             Text(
+  //               '${carDetail.data?.reviewScore?.scoreTotal ?? '0'}/5',
+  //               style: TextStyle(fontSize: 48, fontWeight: FontWeight.bold),
+  //               textAlign: TextAlign.center,
+  //             ),
+  //             SizedBox(height: 8),
+  //             Text(
+  //               // ignore: unnecessary_string_interpolations
+  //               '${carDetail.data?.reviewScore?.scoreText ?? 'Very Good'}',
+  //               textAlign: TextAlign.center,
+  //               style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
+  //             ),
+  //             Text(
+  //               'Based on ${carDetail.data?.reviewScore?.totalReview ?? 0} reviews'
+  //                   .tr,
+  //               textAlign: TextAlign.center,
+  //               style: TextStyle(fontSize: 14, color: Colors.grey),
+  //             ),
+  //           ],
+  //         ),
+  //         SizedBox(height: 16),
+  //         // Add rating bars here
+  //       ],
+  //     ),
+  //   );
+  // }
+
+  Widget _buildRatingBars(CarDetailModal carDetail) {
+    final rateScores = carDetail.data?.reviewScore?.rateScore ?? [];
+
+    return Container(
+      // 1. Card Styling - matches your room detail screen
+      margin: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 8.0),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12.0),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.15),
+            spreadRadius: 1,
+            blurRadius: 5,
+            offset: const Offset(0, 2),
           ),
-          SizedBox(height: 16),
-          // Add rating bars here
         ],
+      ),
+      // 2. Inner Padding and Content
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
+        child: Column(
+          children: [
+            for (var score in rateScores)
+              _buildRatingBar(
+                score.title ?? '',
+                (score.percent ?? 0).toDouble() / 100,
+                score.total ?? 0,
+              ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildRatingBars(CarDetailModal carDetail) {
-    final rateScores = carDetail.data?.reviewScore?.rateScore ?? [];
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 15),
-      child: Column(
-        children: [
-          for (var score in rateScores)
-            _buildRatingBar(
-              "${score.title}",
-              (score.percent)!.toDouble() / 100,
-              score.total ?? 0,
-            ),
-        ],
-      ),
-    );
-  }
+  // Widget _buildRatingBars(CarDetailModal carDetail) {
+  //   final rateScores = carDetail.data?.reviewScore?.rateScore ?? [];
+  //   return Padding(
+  //     padding: const EdgeInsets.symmetric(horizontal: 15),
+  //     child: Column(
+  //       children: [
+  //         for (var score in rateScores)
+  //           _buildRatingBar(
+  //             "${score.title}",
+  //             (score.percent)!.toDouble() / 100,
+  //             score.total ?? 0,
+  //           ),
+  //       ],
+  //     ),
+  //   );
+  // }
 
   Widget _buildRatingBar(String title, double ratio, int totalScore) {
     return Padding(
@@ -1620,7 +1791,7 @@ class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
           Expanded(
             flex: 2,
             child: Text(title,
-                style: TextStyle(fontFamily: 'Inter'.tr, fontSize: 14)),
+                style: GoogleFonts.spaceGrotesk( fontSize: 14,color: Color(0xff65758B))),
           ),
           Expanded(
             flex: 5,
@@ -1648,72 +1819,227 @@ class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
           ),
           SizedBox(width: 8),
           Text('$totalScore',
-              style: TextStyle(fontFamily: 'Inter'.tr, fontSize: 14)),
+              style: GoogleFonts.spaceGrotesk( fontSize: 14,  color: Color(0xff65758B),)),
         ],
       ),
     );
   }
 
+
+  // Widget _buildRatingBar(String title, double ratio, int totalScore) {
+  //   return Padding(
+  //     padding: EdgeInsets.symmetric(vertical: 4),
+  //     child: Row(
+  //       children: [
+  //         // SvgPicture.asset("assets/icons/staricon.svg"),
+  //         // SizedBox(width: 4),
+  //         Expanded(
+  //           flex: 2,
+  //           child: Text(title,
+  //               style: TextStyle(fontFamily: 'Inter'.tr, fontSize: 14)),
+  //         ),
+  //         Expanded(
+  //           flex: 5,
+  //           child: Stack(
+  //             children: [
+  //               Container(
+  //                 height: 4,
+  //                 decoration: BoxDecoration(
+  //                   color: Colors.grey[300],
+  //                   borderRadius: BorderRadius.circular(4),
+  //                 ),
+  //               ),
+  //               FractionallySizedBox(
+  //                 widthFactor: ratio,
+  //                 child: Container(
+  //                   height: 4,
+  //                   decoration: BoxDecoration(
+  //                     color: kSecondaryColor,
+  //                     borderRadius: BorderRadius.circular(4),
+  //                   ),
+  //                 ),
+  //               ),
+  //             ],
+  //           ),
+  //         ),
+  //         SizedBox(width: 8),
+  //         Text('$totalScore',
+  //             style: TextStyle(fontFamily: 'Inter'.tr, fontSize: 14)),
+  //       ],
+  //     ),
+  //   );
+  // }
+
   Widget _buildReviewItem(ReviewData review) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 15),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              CircleAvatar(
-                backgroundImage: NetworkImage(review.author?.avatarUrl ?? ''),
-                radius: 20,
-              ),
-              SizedBox(width: 12),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(review.author?.name ?? '',
-                      style: TextStyle(
-                          fontFamily: 'Inter'.tr,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold)),
-                  // Text(review.author?.lastName ?? '',
-                  //     style: TextStyle(
-                  //         fontFamily: 'Inter'.tr, color: Colors.grey)),
-                ],
-              ),
-            ],
-          ),
-          SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.start,
-            children: [
-              Row(
-                children: List.generate(
-                  5,
-                  (index) => Icon(
-                    Icons.star,
-                    color: index < (review.rateNumber ?? 0)
-                        ? kPrimaryColor
-                        : Colors.grey,
-                    size: 18,
-                  ),
-                ),
-              ),
-              SizedBox(width: 8),
-              Text(
-                  DateFormat('dd MMM yyyy').format(DateTime.parse(
-                      review.createdAt ?? DateTime.now().toString())),
-                  style: TextStyle(fontFamily: 'Inter'.tr, color: Colors.grey)),
-            ],
-          ),
-          SizedBox(height: 8),
-          Text(
-            review.content ?? '',
-            style: TextStyle(fontFamily: 'Inter'.tr, color: Colors.grey[600]),
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
+      decoration: BoxDecoration(
+        color: Color(0xffFFFFFF),
+        borderRadius: BorderRadius.circular(12.0),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.15),
+            blurRadius: 5,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                CircleAvatar(
+                  backgroundImage: NetworkImage(review.author?.avatarUrl ?? ''),
+                  radius: 20,
+                ),
+                const SizedBox(width: 12),
+
+                // ★ FIX: Give bounded width to this Column
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+
+                      /// NAME + DATE ROW FIXED
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Flexible(
+                            child: Text(
+                              review.author?.name ?? '',
+                              style:  GoogleFonts.spaceGrotesk(
+
+                                  fontWeight: FontWeight.w500, // "Medium" in Figma = w500
+                                  fontSize: 14,
+                                  height: 20 / 14, // line-height = 20px
+                                  letterSpacing: 0,
+                                  color: Color(0xff1D2025)
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          Text(
+                            DateFormat('dd MMM yyyy').format(
+                              DateTime.parse(
+                                review.createdAt ?? DateTime.now().toString(),
+                              ),
+                            ),
+                            style:  GoogleFonts.spaceGrotesk(
+
+                              fontWeight: FontWeight.w400, // Regular
+                              fontSize: 12,
+                              height: 16 / 12, // exact line-height from Figma
+                              letterSpacing: 0,
+                              color: Color(0xff65758B),
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 4),
+
+                      Row(
+                        children: List.generate(
+                          5,
+                              (index) => Icon(
+                            Icons.star,
+                            color: index < (review.rateNumber ?? 0)
+                                ? Colors.yellow // Changed from kPrimaryColor to yellow for stars
+                                : Colors.grey,
+                            size: 18,
+                          ),
+                        ),
+                      )
+                    ],
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 8),
+
+            Text(
+              review.content ?? '',
+              style: GoogleFonts.spaceGrotesk(
+
+                fontWeight: FontWeight.w400, // Regular
+                fontSize: 14,
+                height: 21 / 14, // Figma line-height (21px)
+                letterSpacing: 0,
+                color: Color(0xff65758B),
+              ),
+            )
+
+          ],
+        ),
+      ),
     );
   }
+
+  // Widget _buildReviewItem(ReviewData review) {
+  //   return Padding(
+  //     padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 15),
+  //     child: Column(
+  //       crossAxisAlignment: CrossAxisAlignment.start,
+  //       children: [
+  //         Row(
+  //           children: [
+  //             CircleAvatar(
+  //               backgroundImage: NetworkImage(review.author?.avatarUrl ?? ''),
+  //               radius: 20,
+  //             ),
+  //             SizedBox(width: 12),
+  //             Column(
+  //               crossAxisAlignment: CrossAxisAlignment.start,
+  //               children: [
+  //                 Text(review.author?.name ?? '',
+  //                     style: TextStyle(
+  //                         fontFamily: 'Inter'.tr,
+  //                         fontSize: 16,
+  //                         fontWeight: FontWeight.bold)),
+  //                 // Text(review.author?.lastName ?? '',
+  //                 //     style: TextStyle(
+  //                 //         fontFamily: 'Inter'.tr, color: Colors.grey)),
+  //               ],
+  //             ),
+  //           ],
+  //         ),
+  //         SizedBox(height: 8),
+  //         Row(
+  //           mainAxisAlignment: MainAxisAlignment.start,
+  //           children: [
+  //             Row(
+  //               children: List.generate(
+  //                 5,
+  //                 (index) => Icon(
+  //                   Icons.star,
+  //                   color: index < (review.rateNumber ?? 0)
+  //                       ? kPrimaryColor
+  //                       : Colors.grey,
+  //                   size: 18,
+  //                 ),
+  //               ),
+  //             ),
+  //             SizedBox(width: 8),
+  //             Text(
+  //                 DateFormat('dd MMM yyyy').format(DateTime.parse(
+  //                     review.createdAt ?? DateTime.now().toString())),
+  //                 style: TextStyle(fontFamily: 'Inter'.tr, color: Colors.grey)),
+  //           ],
+  //         ),
+  //         SizedBox(height: 8),
+  //         Text(
+  //           review.content ?? '',
+  //           style: TextStyle(fontFamily: 'Inter'.tr, color: Colors.grey[600]),
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
 
   Widget _buildReviewWidget(CarDetailModal carDetail) {
     final _formKey = GlobalKey<FormState>();
@@ -1740,8 +2066,10 @@ class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
                 decoration: InputDecoration(
                   labelText: 'Title'.tr,
                   border: OutlineInputBorder(
-                    borderSide: BorderSide(color: kColor1),
+                    borderSide: BorderSide.none,
                   ),
+                  filled: true, // Add this
+                  fillColor: Color(0xFFF5F5F5),
                   labelStyle: TextStyle(color: grey),
                 ),
                 validator: (value) {
@@ -1757,8 +2085,10 @@ class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
                 decoration: InputDecoration(
                   labelText: 'Review Content'.tr,
                   border: OutlineInputBorder(
-                    borderSide: BorderSide(color: kColor1),
+                    borderSide: BorderSide.none,
                   ),
+                  filled: true, // Add this
+                  fillColor: Color(0xFFF5F5F5),
                   labelStyle: TextStyle(color: grey),
                 ),
                 maxLines: 3,

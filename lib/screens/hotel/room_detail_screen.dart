@@ -2023,19 +2023,19 @@ Widget _buildExtraServicesWidget(
               children: [
                 Text(
                   "Total Room".tr,
-                  style: TextStyle(
+                  style: GoogleFonts.spaceGrotesk(
                       fontSize: 12,
                       fontWeight: FontWeight.w400,
-                      fontFamily: 'Inter',
+
                       color: grey),
                 ),
                 Text(
                   (selectedRooms.values.fold(0, (sum, qty) => sum + qty))
                       .toString(),
-                  style: TextStyle(
+                  style: GoogleFonts.spaceGrotesk(
                       fontSize: 12,
                       fontWeight: FontWeight.w400,
-                      fontFamily: 'Inter',
+
                       color: kPrimaryColor),
                 ),
               ],
@@ -2053,11 +2053,11 @@ Widget _buildExtraServicesWidget(
                   )
                       .name ??
                       "Service fee".tr,
-                  style: TextStyle(
+                  style: GoogleFonts.spaceGrotesk(
                       color: kPrimaryColor,
                       fontSize: 12,
                       fontWeight: FontWeight.w400,
-                      fontFamily: 'Inter'),
+                     ),
                 ),
                 Text(
                   "\$${double.parse(hotelDetail.data?.bookingFee?.firstWhere(
@@ -2065,10 +2065,10 @@ Widget _buildExtraServicesWidget(
                     orElse: () =>
                         BookingFee(name: "Service fee", price: "0"),
                   ).price ?? "0").toStringAsFixed(2)}",
-                  style: TextStyle(
+                  style: GoogleFonts.spaceGrotesk(
                       fontSize: 12,
                       fontWeight: FontWeight.w400,
-                      fontFamily: 'Inter',
+
                       color: grey),
                 ),
               ],

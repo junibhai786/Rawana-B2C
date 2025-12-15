@@ -2,6 +2,7 @@
 
 import 'dart:developer';
 
+import 'package:google_fonts/google_fonts.dart';
 import 'package:moonbnd/Provider/boat_provider.dart';
 import 'package:moonbnd/Provider/home_provider.dart';
 import 'package:moonbnd/modals/boat_detail_model.dart';
@@ -120,6 +121,31 @@ class _CarRentalDetailsScreenState extends State<BoatDetailsScreen> {
     final item = Provider.of<BoatProvider>(context, listen: true);
 
     return Scaffold(
+      appBar: AppBar(
+        leading:  //back button
+        InkWell(
+          onTap: () {
+            Navigator.pop(context);
+          },
+          child: Padding(
+            padding:
+            EdgeInsets.symmetric(horizontal: 12),
+            child: Container(
+              height: 32,
+              width: 32,
+              decoration: BoxDecoration(
+                color: Color(0xffF1F5F9),
+               shape: BoxShape.circle
+              ),
+              child: Icon(
+                Icons.arrow_back_ios_new_outlined,
+                color: Colors.black,
+                size: 18,
+              ),
+            ),
+          ),
+        ), 
+      ),
       body: loading
           ? Center(child: CircularProgressIndicator(color: kSecondaryColor))
           : SafeArea(
@@ -127,6 +153,47 @@ class _CarRentalDetailsScreenState extends State<BoatDetailsScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    Padding(
+                      padding: const EdgeInsets.only(left: 16),
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start, // Make sure text aligns left
+                          children: [
+                            Text(
+                              item.boatDetail?.data?.title ?? "",
+                              style: GoogleFonts.spaceGrotesk(fontSize: 24, fontWeight: FontWeight.bold),
+                            ),
+                            SizedBox(height: 10),
+                            Row(
+                              children: [
+                                SvgPicture.asset(
+                                  'assets/icons/location.svg',
+                                  width: 16,
+                                  height: 16,
+                                  color: Color(0xff65758B),
+                                ),
+                                SizedBox(width: 8),
+                                Expanded(
+                                  child:  Text(item.boatDetail?.data?.location?.name ?? "",
+                                      style: GoogleFonts.spaceGrotesk(color: Colors.grey)),
+                                ),
+                              ],
+                            ),
+                            SizedBox(height: 10),
+                            Text(
+                              '${item.boatDetail?.data?.reviewScore?.totalReview ?? 0} Reviews',
+                              style: GoogleFonts.spaceGrotesk(
+                                fontWeight: FontWeight.w400,
+                                fontSize: 13,
+                                color: const Color(0xFF65758B),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 10),
                     Stack(
                       children: [
                         //haven
@@ -153,122 +220,100 @@ class _CarRentalDetailsScreenState extends State<BoatDetailsScreen> {
                             padding: EdgeInsets.symmetric(
                               vertical: 12,
                             ),
-                            child: Row(
-                              children: [
-                                //back button
-                                InkWell(
-                                  onTap: () {
-                                    Navigator.pop(context);
-                                  },
-                                  child: Padding(
-                                    padding:
-                                        EdgeInsets.symmetric(horizontal: 12),
-                                    child: Container(
-                                      height: 32,
-                                      width: 32,
-                                      decoration: BoxDecoration(
-                                        color: Colors.white,
-                                        borderRadius: BorderRadius.circular(50),
-                                      ),
-                                      child: Icon(
-                                        Icons.arrow_back,
-                                        color: kPrimaryColor,
-                                        size: 18,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-
-                                Spacer(),
-
-                                //share button
-                                InkWell(
-                                  onTap: () async {
-                                    await Share.share(
-                                        '${item.boatDetail?.data.shareUrl}');
-                                  },
-                                  child: Padding(
-                                    padding: EdgeInsets.only(right: 12),
-                                    child: Container(
-                                      height: 32,
-                                      width: 32,
-                                      decoration: BoxDecoration(
-                                        color: Colors.white,
-                                        borderRadius: BorderRadius.circular(50),
-                                      ),
-                                      child: Icon(
-                                        Icons.share,
-                                        color: kPrimaryColor,
-                                        size: 18,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-
-                                //favorite button
-                                InkWell(
-                                  onTap: () async {
-                                    final homeProvider =
-                                        Provider.of<HomeProvider>(context,
-                                            listen: false);
-                                    final boatProvider =
-                                        Provider.of<BoatProvider>(context,
-                                            listen: false);
-
-                                    final success =
-                                        await homeProvider.addToWishlist(
-                                      widget.boatId.toString(),
-                                      'boat',
-                                    );
-
-                                    await boatProvider
-                                        .fetchBoatDetails(widget.boatId);
-
-                                    if (success == "Added to wishlist") {
-                                      setState(() {
-                                        item.boatDetail?.data.isInWishlist =
-                                            true;
-                                      });
-                                    } else if (success ==
-                                        "Removed from wishlist") {
-                                      setState(() {
-                                        item.boatDetail?.data.isInWishlist =
-                                            false;
-                                      });
-                                    }
-                                    await boatProvider
-                                        .boatlistapi(7, searchParams: {});
-                                    // ignore: use_build_context_synchronously
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(content: Text(success)),
-                                    );
-                                  },
-                                  child: Padding(
-                                    padding: EdgeInsets.only(right: 12),
-                                    child: Container(
-                                      height: 32,
-                                      width: 32,
-                                      decoration: BoxDecoration(
-                                        color: Colors.white,
-                                        borderRadius: BorderRadius.circular(50),
-                                      ),
-                                      child: Icon(
-                                        item.boatDetail?.data.isInWishlist ==
-                                                true
-                                            ? Icons.favorite
-                                            : Icons.favorite_border,
-                                        color: item.boatDetail?.data
-                                                    .isInWishlist ==
-                                                true
-                                            ? Colors.red
-                                            : kPrimaryColor,
-                                        size: 18,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
+                            // child: Row(
+                            //   children: [
+                            //
+                            //
+                            //     Spacer(),
+                            //
+                            //     //share button
+                            //     InkWell(
+                            //       onTap: () async {
+                            //         await Share.share(
+                            //             '${item.boatDetail?.data.shareUrl}');
+                            //       },
+                            //       child: Padding(
+                            //         padding: EdgeInsets.only(right: 12),
+                            //         child: Container(
+                            //           height: 32,
+                            //           width: 32,
+                            //           decoration: BoxDecoration(
+                            //             color: Colors.white,
+                            //             borderRadius: BorderRadius.circular(50),
+                            //           ),
+                            //           child: Icon(
+                            //             Icons.share,
+                            //             color: kPrimaryColor,
+                            //             size: 18,
+                            //           ),
+                            //         ),
+                            //       ),
+                            //     ),
+                            //
+                            //     //favorite button
+                            //     InkWell(
+                            //       onTap: () async {
+                            //         final homeProvider =
+                            //             Provider.of<HomeProvider>(context,
+                            //                 listen: false);
+                            //         final boatProvider =
+                            //             Provider.of<BoatProvider>(context,
+                            //                 listen: false);
+                            //
+                            //         final success =
+                            //             await homeProvider.addToWishlist(
+                            //           widget.boatId.toString(),
+                            //           'boat',
+                            //         );
+                            //
+                            //         await boatProvider
+                            //             .fetchBoatDetails(widget.boatId);
+                            //
+                            //         if (success == "Added to wishlist") {
+                            //           setState(() {
+                            //             item.boatDetail?.data.isInWishlist =
+                            //                 true;
+                            //           });
+                            //         } else if (success ==
+                            //             "Removed from wishlist") {
+                            //           setState(() {
+                            //             item.boatDetail?.data.isInWishlist =
+                            //                 false;
+                            //           });
+                            //         }
+                            //         await boatProvider
+                            //             .boatlistapi(7, searchParams: {});
+                            //         // ignore: use_build_context_synchronously
+                            //         ScaffoldMessenger.of(context).showSnackBar(
+                            //           SnackBar(content: Text(success)),
+                            //         );
+                            //       },
+                            //       child: Padding(
+                            //         padding: EdgeInsets.only(right: 12),
+                            //         child: Container(
+                            //           height: 32,
+                            //           width: 32,
+                            //           decoration: BoxDecoration(
+                            //             color: Colors.white,
+                            //             borderRadius: BorderRadius.circular(50),
+                            //           ),
+                            //           child: Icon(
+                            //             item.boatDetail?.data.isInWishlist ==
+                            //                     true
+                            //                 ? Icons.favorite
+                            //                 : Icons.favorite_border,
+                            //             color: item.boatDetail?.data
+                            //                         .isInWishlist ==
+                            //                     true
+                            //                 ? Colors.red
+                            //                 : kPrimaryColor,
+                            //             size: 18,
+                            //           ),
+                            //         ),
+                            //       ),
+                            //     ),
+                            //   ],
+                            // ),
                           ),
                         ),
                         //slider navigation
@@ -281,18 +326,18 @@ class _CarRentalDetailsScreenState extends State<BoatDetailsScreen> {
                               vertical: 4,
                             ),
                             decoration: BoxDecoration(
-                              color: kPrimaryColor,
+                              color: Colors.black38,
                               borderRadius: BorderRadius.all(
                                 Radius.circular(5),
                               ),
                             ),
                             child: Text(
                               '${currentPage + 1} / ${item.boatDetail?.data.gallery.length}',
-                              style: TextStyle(
+                              style: GoogleFonts.spaceGrotesk(
                                 color: Colors.white,
                                 fontWeight: FontWeight.w500,
                                 fontSize: 12,
-                                fontFamily: 'Inter'.tr,
+
                               ),
                             ),
                           ),
@@ -326,11 +371,11 @@ class _CarRentalDetailsScreenState extends State<BoatDetailsScreen> {
                                   ),
                                   Text(
                                     'Boat Video'.tr,
-                                    style: TextStyle(
+                                    style: GoogleFonts.spaceGrotesk(
                                       color: Colors.white,
                                       fontWeight: FontWeight.w500,
                                       fontSize: 12,
-                                      fontFamily: 'Inter'.tr,
+
                                     ),
                                   ),
                                 ],
@@ -345,80 +390,82 @@ class _CarRentalDetailsScreenState extends State<BoatDetailsScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            item.boatDetail?.data.title ?? "",
-                            style: TextStyle(
-                                fontSize: 24, fontWeight: FontWeight.bold),
-                          ),
-                          Text(
-                            item.boatDetail?.data.location.name ?? "",
-                          ),
 
-                          Divider(
-                            thickness: 1,
-                          ),
-                          SizedBox(height: 9),
-                          Row(
-                            children: [
-                              Container(
-                                margin: EdgeInsets.only(top: 10),
-                                child: CircleAvatar(
-                                  backgroundImage: NetworkImage(
-                                      item.boatDetail?.data.vendor?.avatarUrl ??
-                                          ""),
-                                  radius: 25,
-                                ),
-                              ),
-                              SizedBox(width: 8),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  SizedBox(
-                                    height: 8,
-                                  ),
-                                  Text('Rented by'.tr,
-                                      style: TextStyle(
-                                          color: grey,
-                                          fontFamily: 'Inter'.tr,
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w500)),
-                                  SizedBox(
-                                    height: 8,
-                                  ),
-                                  RichText(
-                                    text: TextSpan(
-                                      children: [
-                                        TextSpan(
-                                          text: item.boatDetail?.data.vendor
-                                                  ?.name ??
-                                              "",
-                                          style: TextStyle(
-                                              fontFamily: 'Inter'.tr,
-                                              color: kPrimaryColor,
-                                              fontWeight: FontWeight.w500,
-                                              fontSize: 16),
-                                        ),
-                                        TextSpan(
-                                          text: ' · Member since Feb 2023'.tr,
-                                          style: TextStyle(
-                                              color: grey,
-                                              fontFamily: 'Inter'.tr,
-                                              fontSize: 13,
-                                              fontWeight: FontWeight.w400),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                          SizedBox(
-                            height: 15,
-                          ),
-                          Divider(
-                            thickness: 1,
-                          ),
+
+                          // Text(
+                          //   item.boatDetail?.data.title ?? "",
+                          //   style: TextStyle(
+                          //       fontSize: 24, fontWeight: FontWeight.bold),
+                          // ),
+                          // Text(
+                          //   item.boatDetail?.data.location.name ?? "",
+                          // ),
+
+                          // Divider(
+                          //   thickness: 1,
+                          // ),
+                          // SizedBox(height: 9),
+                          // Row(
+                          //   children: [
+                          //     Container(
+                          //       margin: EdgeInsets.only(top: 10),
+                          //       child: CircleAvatar(
+                          //         backgroundImage: NetworkImage(
+                          //             item.boatDetail?.data.vendor?.avatarUrl ??
+                          //                 ""),
+                          //         radius: 25,
+                          //       ),
+                          //     ),
+                          //     SizedBox(width: 8),
+                          //     Column(
+                          //       crossAxisAlignment: CrossAxisAlignment.start,
+                          //       children: [
+                          //         SizedBox(
+                          //           height: 8,
+                          //         ),
+                          //         Text('Rented by'.tr,
+                          //             style: TextStyle(
+                          //                 color: grey,
+                          //                 fontFamily: 'Inter'.tr,
+                          //                 fontSize: 12,
+                          //                 fontWeight: FontWeight.w500)),
+                          //         SizedBox(
+                          //           height: 8,
+                          //         ),
+                          //         RichText(
+                          //           text: TextSpan(
+                          //             children: [
+                          //               TextSpan(
+                          //                 text: item.boatDetail?.data.vendor
+                          //                         ?.name ??
+                          //                     "",
+                          //                 style: TextStyle(
+                          //                     fontFamily: 'Inter'.tr,
+                          //                     color: kPrimaryColor,
+                          //                     fontWeight: FontWeight.w500,
+                          //                     fontSize: 16),
+                          //               ),
+                          //               TextSpan(
+                          //                 text: ' · Member since Feb 2023'.tr,
+                          //                 style: TextStyle(
+                          //                     color: grey,
+                          //                     fontFamily: 'Inter'.tr,
+                          //                     fontSize: 13,
+                          //                     fontWeight: FontWeight.w400),
+                          //               ),
+                          //             ],
+                          //           ),
+                          //         ),
+                          //       ],
+                          //     ),
+                          //   ],
+                          // ),
+                          // SizedBox(
+                          //   height: 15,
+                          // ),
+                          // Divider(
+                          //   thickness: 1,
+                          // ),
                           Padding(
                             padding: EdgeInsets.symmetric(
                                 horizontal: 8.0, vertical: 8.0),
@@ -427,26 +474,38 @@ class _CarRentalDetailsScreenState extends State<BoatDetailsScreen> {
                               children: [
                                 Text(
                                   'Description'.tr,
-                                  style: TextStyle(
-                                    color: kPrimaryColor,
+                                  style: GoogleFonts.spaceGrotesk(
+                                    color: Colors.black,
                                     fontSize: 18,
-                                    fontFamily: 'Inter'.tr,
+
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),
                                 SizedBox(height: 8),
-                                Container(
-                                  height: 200,
-                                  child: Image.network(
-                                    item.boatDetail?.data.image ?? "",
-                                    width: 400,
-                                    height: 200,
-                                    fit: BoxFit.cover,
+                                // Container(
+                                //   height: 200,
+                                //   child: Image.network(
+                                //     item.boatDetail?.data.image ?? "",
+                                //     width: 400,
+                                //     height: 200,
+                                //     fit: BoxFit.cover,
+                                //   ),
+                                // ),
+                                // SizedBox(height: 8),
+                                // SizedBox(height: 8),
+                                // HtmlWidget(item.boatDetail?.data.content ?? ""),
+                                ExpandableHtmlContent(
+                                  content: item.boatDetail?.data?.content ?? "".tr,
+                                  primaryColor: kPrimaryColor,
+                                  textStyle: GoogleFonts.spaceGrotesk(
+                                    fontWeight: FontWeight.w400, // Regular
+                                    fontSize: 14,
+                                    height: 21 / 14, // line-height
+                                    letterSpacing: 0,
+                                    color: const Color(0xFF65758B), // #65758B
                                   ),
+                                  readMoreText: 'Read more'.tr, // .tr ONLY here
                                 ),
-                                SizedBox(height: 8),
-                                SizedBox(height: 8),
-                                HtmlWidget(item.boatDetail?.data.content ?? ""),
                               ],
                             ),
                           ),
@@ -457,8 +516,8 @@ class _CarRentalDetailsScreenState extends State<BoatDetailsScreen> {
                               item.boatDetail!.data.terms.isNotEmpty)
                             Text(
                               'Boat Features'.tr,
-                              style: TextStyle(
-                                  fontSize: 18, fontWeight: FontWeight.bold),
+                              style: GoogleFonts.spaceGrotesk(
+                                  fontSize: 18, fontWeight: FontWeight.bold,color: Colors.black),
                             ),
                           if (item.boatDetail?.data.terms == null ||
                               item.boatDetail!.data.terms.isNotEmpty)
@@ -475,8 +534,8 @@ class _CarRentalDetailsScreenState extends State<BoatDetailsScreen> {
                             SizedBox(height: 26),
                           if (item.boatDetail?.data.faqs.length != 0)
                             Text('FAQ\'s'.tr,
-                                style: TextStyle(
-                                    fontSize: 18, fontWeight: FontWeight.bold)),
+                                style: GoogleFonts.spaceGrotesk(
+                                    fontSize: 18, fontWeight: FontWeight.bold,color: Colors.black)),
                           if (item.boatDetail?.data.faqs.length != 0)
                             SizedBox(height: 20),
 
@@ -486,42 +545,42 @@ class _CarRentalDetailsScreenState extends State<BoatDetailsScreen> {
                                   element.title, element.content);
                             }
                           }),
-                          SizedBox(height: 19),
-                          Text(
-                            'Location'.tr,
-                            style: TextStyle(
-                                fontSize: 18, fontWeight: FontWeight.bold),
-                          ),
-                          SizedBox(height: 10),
-                          Text(item.boatDetail?.data.location.name ?? ""),
-                          SizedBox(height: 10),
-                          Container(
-                            height: 200,
-                            child: GoogleMap(
-                              onMapCreated: _onMapCreated,
-                              markers: setMarkers!,
-                              initialCameraPosition: CameraPosition(
-                                target: LatLng(
-                                    double.parse(
-                                        item.boatDetail?.data.mapLat ?? "0"),
-                                    double.parse(
-                                        item.boatDetail?.data.mapLng ?? "0")),
-                                zoom: double.parse(
-                                    item.boatDetail?.data.mapZoom.toString() ??
-                                        "12"),
-                              ),
-                            ),
-                          ),
-                          SizedBox(height: 16),
-                          SizedBox(
-                            height: 32,
-                          ),
-
-                          Divider(
-                            thickness: 1,
-                            indent: 20,
-                            endIndent: 20,
-                          ),
+                          // SizedBox(height: 19),
+                          // Text(
+                          //   'Location'.tr,
+                          //   style: TextStyle(
+                          //       fontSize: 18, fontWeight: FontWeight.bold),
+                          // ),
+                          // SizedBox(height: 10),
+                          // Text(item.boatDetail?.data.location.name ?? ""),
+                          // SizedBox(height: 10),
+                          // Container(
+                          //   height: 200,
+                          //   child: GoogleMap(
+                          //     onMapCreated: _onMapCreated,
+                          //     markers: setMarkers!,
+                          //     initialCameraPosition: CameraPosition(
+                          //       target: LatLng(
+                          //           double.parse(
+                          //               item.boatDetail?.data.mapLat ?? "0"),
+                          //           double.parse(
+                          //               item.boatDetail?.data.mapLng ?? "0")),
+                          //       zoom: double.parse(
+                          //           item.boatDetail?.data.mapZoom.toString() ??
+                          //               "12"),
+                          //     ),
+                          //   ),
+                          // ),
+                          // SizedBox(height: 16),
+                          // SizedBox(
+                          //   height: 32,
+                          // ),
+                          //
+                          // Divider(
+                          //   thickness: 1,
+                          //   indent: 20,
+                          //   endIndent: 20,
+                          // ),
                           //review slider
                           SizedBox(height: 12),
                           _buildRatingSection(item.boatDetail!),
@@ -544,8 +603,8 @@ class _CarRentalDetailsScreenState extends State<BoatDetailsScreen> {
                           Padding(
                             padding: EdgeInsets.symmetric(horizontal: 20),
                             child: Text("Write a Review".tr,
-                                style: TextStyle(
-                                    color: kPrimaryColor,
+                                style: GoogleFonts.spaceGrotesk(
+                                    color: Colors.black,
                                     fontSize: 18,
                                     fontWeight: FontWeight.w600)),
                           ),
@@ -582,14 +641,14 @@ class _CarRentalDetailsScreenState extends State<BoatDetailsScreen> {
                   Text(
                       "\$${item.boatDetail?.data.salePrice == 0 ? item.boatDetail?.data.price : item.boatDetail?.data.salePrice}",
                       style:
-                          TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                      GoogleFonts.spaceGrotesk(fontSize: 20, fontWeight: FontWeight.bold)),
                   if (item.boatDetail?.data.salePrice != 0)
                     Text(
                         item.boatDetail?.data.salePrice == 0
                             ? "\$${item.boatDetail?.data.salePrice}"
                             : "\$${item.boatDetail?.data.price}",
                         style:
-                            TextStyle(decoration: TextDecoration.lineThrough)),
+                        GoogleFonts.spaceGrotesk(decoration: TextDecoration.lineThrough)),
                 ],
               ),
               ElevatedButton(
@@ -629,10 +688,10 @@ class _CarRentalDetailsScreenState extends State<BoatDetailsScreen> {
                       context, item.boatDetail); // Call the modal sheet method
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue,
+                  backgroundColor: Color(0xff05A8C7),
                   padding: EdgeInsets.symmetric(horizontal: 32, vertical: 16),
                 ),
-                child: Text('Book Now'.tr),
+                child: Text('Book Now'.tr,style: GoogleFonts.spaceGrotesk(),),
               ),
             ],
           ),
@@ -786,8 +845,8 @@ class _CarRentalDetailsScreenState extends State<BoatDetailsScreen> {
                                         alignment: Alignment.center,
                                         child: Text(
                                           'Book'.tr,
-                                          style: TextStyle(
-                                            fontFamily: 'Inter'.tr,
+                                          style: GoogleFonts.spaceGrotesk(
+                                           
                                             color: isBookTab
                                                 ? kSecondaryColor
                                                 : grey,
@@ -812,8 +871,8 @@ class _CarRentalDetailsScreenState extends State<BoatDetailsScreen> {
                                         alignment: Alignment.center,
                                         child: Text(
                                           'Enquiry'.tr,
-                                          style: TextStyle(
-                                            fontFamily: 'Inter'.tr,
+                                          style: GoogleFonts.spaceGrotesk(
+
                                             color: !isBookTab
                                                 ? kSecondaryColor
                                                 : grey,
@@ -861,9 +920,9 @@ class _CarRentalDetailsScreenState extends State<BoatDetailsScreen> {
                                           child: Text(
                                             '\$${txBoatDetail?.data.pricePerHour}/hour'
                                                 .tr,
-                                            style: TextStyle(
+                                            style: GoogleFonts.spaceGrotesk(
                                               fontSize: 20,
-                                              fontFamily: 'Inter'.tr,
+
                                               fontWeight: FontWeight.w600,
                                               color: kPrimaryColor,
                                             ),
@@ -873,9 +932,9 @@ class _CarRentalDetailsScreenState extends State<BoatDetailsScreen> {
                                           alignment: Alignment.centerLeft,
                                           child: Text(
                                             '\$${txBoatDetail?.data.pricePerDay}/day',
-                                            style: TextStyle(
+                                            style: GoogleFonts.spaceGrotesk(
                                               fontSize: 20,
-                                              fontFamily: 'Inter'.tr,
+
                                               fontWeight: FontWeight.w600,
                                               color: kPrimaryColor,
                                             ),
@@ -926,8 +985,8 @@ class _CarRentalDetailsScreenState extends State<BoatDetailsScreen> {
                                                   children: [
                                                     Text(
                                                       "Start Date".tr,
-                                                      style: TextStyle(
-                                                        fontFamily: 'Inter'.tr,
+                                                      style: GoogleFonts.spaceGrotesk(
+
                                                         color: kPrimaryColor,
                                                         fontSize: 12,
                                                       ),
@@ -951,7 +1010,7 @@ class _CarRentalDetailsScreenState extends State<BoatDetailsScreen> {
                                                                 .format(
                                                                     startDate!)
                                                             : 'Select date'.tr,
-                                                        style: TextStyle(
+                                                        style: GoogleFonts.spaceGrotesk(
                                                           color:
                                                               startDate != null
                                                                   ? Colors.black
@@ -1020,9 +1079,9 @@ class _CarRentalDetailsScreenState extends State<BoatDetailsScreen> {
                                               horizontal: 15),
                                           alignment: Alignment.centerLeft,
                                           child: Text("Start Time".tr,
-                                              style: TextStyle(
-                                                  fontFamily: 'Inter'.tr,
-                                                  color: kPrimaryColor,
+                                              style: GoogleFonts.spaceGrotesk(
+
+                                                  color: Colors.black,
                                                   fontSize: 16,
                                                   fontWeight: FontWeight.w700)),
                                         ),
@@ -1111,9 +1170,9 @@ class _CarRentalDetailsScreenState extends State<BoatDetailsScreen> {
                                   padding: EdgeInsets.symmetric(horizontal: 15),
                                   alignment: Alignment.centerLeft,
                                   child: Text("Extra Prices:".tr,
-                                      style: TextStyle(
-                                          fontFamily: 'Inter'.tr,
-                                          color: kPrimaryColor,
+                                      style: GoogleFonts.spaceGrotesk(
+
+                                          color: Colors.black,
                                           fontSize: 16,
                                           fontWeight: FontWeight.w700)),
                                 ),
@@ -1150,9 +1209,9 @@ class _CarRentalDetailsScreenState extends State<BoatDetailsScreen> {
 
                                                 setState1(() {});
                                               }),
-                                          Text(element.name ?? ""),
+                                          Text(element.name ?? "",style: GoogleFonts.spaceGrotesk(),),
                                           Spacer(),
-                                          Text("\$${element.price}"),
+                                          Text("\$${element.price}",style: GoogleFonts.spaceGrotesk(),),
                                         ],
                                       ),
                                     );
@@ -1188,13 +1247,13 @@ class _CarRentalDetailsScreenState extends State<BoatDetailsScreen> {
                                     child: Row(
                                       children: [
                                         Text("Total".tr,
-                                            style: TextStyle(
+                                            style: GoogleFonts.spaceGrotesk(
                                                 fontSize: 20,
                                                 fontWeight: FontWeight.bold)),
                                         Spacer(),
                                         Text(
                                             "\$${totalValue + total + extraPriceValue}",
-                                            style: TextStyle(
+                                            style: GoogleFonts.spaceGrotesk(
                                                 fontSize: 20,
                                                 fontWeight: FontWeight.bold)),
                                       ],
@@ -1321,7 +1380,7 @@ class _CarRentalDetailsScreenState extends State<BoatDetailsScreen> {
                                           children: [
                                             Text(
                                               'Enquiry'.tr,
-                                              style: TextStyle(
+                                              style: GoogleFonts.spaceGrotesk(
                                                 fontSize: 20,
                                                 fontWeight: FontWeight.bold,
                                               ),
@@ -1336,7 +1395,7 @@ class _CarRentalDetailsScreenState extends State<BoatDetailsScreen> {
                                             labelText: 'Name*'.tr,
                                             border: OutlineInputBorder(),
                                           ),
-                                          style: TextStyle(height: 1),
+                                          style: GoogleFonts.spaceGrotesk(height: 1),
                                           validator: (value) {
                                             if (value == null ||
                                                 value.isEmpty) {
@@ -1355,7 +1414,7 @@ class _CarRentalDetailsScreenState extends State<BoatDetailsScreen> {
                                             labelText: 'Email*'.tr,
                                             border: OutlineInputBorder(),
                                           ),
-                                          style: TextStyle(height: 1),
+                                          style: GoogleFonts.spaceGrotesk(height: 1),
                                           validator: (value) {
                                             if (value == null ||
                                                 value.isEmpty) {
@@ -1378,7 +1437,7 @@ class _CarRentalDetailsScreenState extends State<BoatDetailsScreen> {
                                             labelText: 'Phone*'.tr,
                                             border: OutlineInputBorder(),
                                           ),
-                                          style: TextStyle(height: 1),
+                                          style: GoogleFonts.spaceGrotesk(height: 1),
                                           validator: (value) {
                                             if (value == null ||
                                                 value.isEmpty) {
@@ -1401,7 +1460,7 @@ class _CarRentalDetailsScreenState extends State<BoatDetailsScreen> {
                                             labelText: 'Note*'.tr,
                                             border: OutlineInputBorder(),
                                           ),
-                                          style: TextStyle(height: 1),
+                                          style: GoogleFonts.spaceGrotesk(height: 1),
                                           validator: (value) {
                                             if (value == null ||
                                                 value.isEmpty) {
@@ -1466,10 +1525,10 @@ class _CarRentalDetailsScreenState extends State<BoatDetailsScreen> {
                                             ),
                                             child: Text(
                                               'Send Now'.tr,
-                                              style: TextStyle(
+                                              style: GoogleFonts.spaceGrotesk(
                                                 color: kBackgroundColor,
                                                 fontSize: 16,
-                                                fontFamily: 'Inter',
+
                                                 fontWeight: FontWeight.w700,
                                               ),
                                             ),
@@ -1532,14 +1591,14 @@ class _CarRentalDetailsScreenState extends State<BoatDetailsScreen> {
               children: [
                 Text(
                   type.desc,
-                  style: TextStyle(
-                    fontFamily: 'Inter',
+                  style: GoogleFonts.spaceGrotesk(
+
                     fontWeight: FontWeight.w500,
                   ),
                 ),
                 Text(
                   "\$${type.price.toStringAsFixed(2)}",
-                  style: TextStyle(
+                  style: GoogleFonts.spaceGrotesk(
                     color: kSecondaryColor,
                     fontWeight: FontWeight.w500,
                   ),
@@ -1586,7 +1645,7 @@ class _CarRentalDetailsScreenState extends State<BoatDetailsScreen> {
           SizedBox(
             width: 8,
           ),
-          Text(text),
+          Text(text,style: GoogleFonts.spaceGrotesk(color: Colors.black38),),
         ],
       ),
     );
@@ -1594,69 +1653,183 @@ class _CarRentalDetailsScreenState extends State<BoatDetailsScreen> {
 
   Widget _buildFAQItem(String question, String answer) {
     return ExpansionTile(
-      title: Text(question),
+      title: Text(question,style: GoogleFonts.spaceGrotesk(),),
       children: [
         Padding(
           padding: EdgeInsets.all(16.0),
-          child: Text(answer),
+          child: Text(answer,style: GoogleFonts.spaceGrotesk(color: Colors.black38),),
         ),
       ],
     );
   }
 
   Widget _buildRatingSection(BoatDetailModel boatDetail) {
-    log("${boatDetail.data.reviewScore!.scoreTotal} scorechecing");
-    return Container(
-      width: double.infinity,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
+    const Color textColor = Colors.white;
+
+    return Column(
         children: [
           Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Text(
-                '${boatDetail.data.reviewScore!.scoreTotal}/5',
-                style: TextStyle(fontSize: 48, fontWeight: FontWeight.bold),
-                textAlign: TextAlign.center,
+              // Guest Review Text above the container (centered)
+              Padding(
+                padding: const EdgeInsets.only(right: 210),
+                child: Text(
+                  'Guest Review'.tr,
+                  style: GoogleFonts.spaceGrotesk(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 18,
+                    color: Color(0xff1D2025),
+                  ),
+                ),
               ),
-              SizedBox(height: 8),
-              Text(
-                // ignore: unnecessary_string_interpolations
-                '${boatDetail.data.reviewScore!.scoreText ?? 'Very Good'}',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
-              ),
-              Text(
-                'Based on ${boatDetail.data.reviewScore!.totalReview ?? 0} reviews'
-                    .tr,
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 14, color: Colors.grey),
+              const SizedBox(height: 8),
+              Center(
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF05A8C7),
+                    borderRadius: BorderRadius.circular(10.0), // Rounded corners
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 100.0,vertical: 6),
+
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Column(
+                        children: [
+                          Text(
+                            '${boatDetail.data?.reviewScore?.scoreTotal ?? '0'}/5',
+                            style: GoogleFonts.spaceGrotesk(
+                              fontWeight: FontWeight.w700, // Bold
+                              fontSize: 36,
+                              height: 40 / 36, // line-height
+                              letterSpacing: 0,
+                              color: textColor,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+
+                          const SizedBox(height: 4),
+                          Text(
+                            (boatDetail.data?.reviewScore?.scoreText ?? 'Very Good').tr,
+                            textAlign: TextAlign.center,
+                            style: GoogleFonts.spaceGrotesk(
+                              fontWeight: FontWeight.w400, // Regular
+                              fontSize: 14,
+                              height: 20 / 14,
+                              letterSpacing: 0,
+                              color: textColor,
+                            ),
+                          ),
+                          Text(
+                            'Based on ${boatDetail.data?.reviewScore?.totalReview ?? 0} reviews'
+                                .tr,
+                            textAlign: TextAlign.center,
+                            style: GoogleFonts.spaceGrotesk( fontWeight: FontWeight.w400, // Regular
+                              fontSize: 14,
+                              height: 20 / 14,
+                              letterSpacing: 0,
+                              color: textColor,),
+                          ),
+
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ],
+          )]);
+  }
+
+  // Widget _buildRatingSection(BoatDetailModel boatDetail) {
+  //   log("${boatDetail.data.reviewScore!.scoreTotal} scorechecing");
+  //   return Container(
+  //     width: double.infinity,
+  //     child: Column(
+  //       crossAxisAlignment: CrossAxisAlignment.center,
+  //       children: [
+  //         Column(
+  //           crossAxisAlignment: CrossAxisAlignment.center,
+  //           children: [
+  //             Text(
+  //               '${boatDetail.data.reviewScore!.scoreTotal}/5',
+  //               style: TextStyle(fontSize: 48, fontWeight: FontWeight.bold),
+  //               textAlign: TextAlign.center,
+  //             ),
+  //             SizedBox(height: 8),
+  //             Text(
+  //               // ignore: unnecessary_string_interpolations
+  //               '${boatDetail.data.reviewScore!.scoreText ?? 'Very Good'}',
+  //               textAlign: TextAlign.center,
+  //               style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
+  //             ),
+  //             Text(
+  //               'Based on ${boatDetail.data.reviewScore!.totalReview ?? 0} reviews'
+  //                   .tr,
+  //               textAlign: TextAlign.center,
+  //               style: TextStyle(fontSize: 14, color: Colors.grey),
+  //             ),
+  //           ],
+  //         ),
+  //         SizedBox(height: 16),
+  //         // Add rating bars here
+  //       ],
+  //     ),
+  //   );
+  // }
+
+  Widget _buildRatingBars(BoatDetailModel boatDetail) {
+    final rateScores = boatDetail.data?.reviewScore?.rateScore ?? [];
+
+    return Container(
+      // 1. Card Styling - matches your room detail screen
+      margin: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 8.0),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12.0),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.15),
+            spreadRadius: 1,
+            blurRadius: 5,
+            offset: const Offset(0, 2),
           ),
-          SizedBox(height: 16),
-          // Add rating bars here
         ],
+      ),
+      // 2. Inner Padding and Content
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
+        child: Column(
+          children: [
+            for (var score in rateScores)
+              _buildRatingBar(
+                score.title ?? '',
+                (score.percent ?? 0).toDouble() / 100,
+                score.total ?? 0,
+              ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildRatingBars(BoatDetailModel boatDetail) {
-    final rateScores = boatDetail.data.reviewScore!.rateScore ?? [];
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 15),
-      child: Column(
-        children: [
-          for (var score in rateScores)
-            _buildRatingBar(
-              "${score.title}",
-              (score.percent)!.toDouble() / 100,
-              score.total ?? 0,
-            ),
-        ],
-      ),
-    );
-  }
+  // Widget _buildRatingBars(BoatDetailModel boatDetail) {
+  //   final rateScores = boatDetail.data.reviewScore!.rateScore ?? [];
+  //   return Padding(
+  //     padding: const EdgeInsets.symmetric(horizontal: 15),
+  //     child: Column(
+  //       children: [
+  //         for (var score in rateScores)
+  //           _buildRatingBar(
+  //             "${score.title}",
+  //             (score.percent)!.toDouble() / 100,
+  //             score.total ?? 0,
+  //           ),
+  //       ],
+  //     ),
+  //   );
+  // }
 
   Widget _buildRatingBar(String title, double ratio, int totalScore) {
     return Padding(
@@ -1668,7 +1841,7 @@ class _CarRentalDetailsScreenState extends State<BoatDetailsScreen> {
           Expanded(
             flex: 2,
             child: Text(title,
-                style: TextStyle(fontFamily: 'Inter'.tr, fontSize: 14)),
+                style: GoogleFonts.spaceGrotesk( fontSize: 14,color: Color(0xff65758B))),
           ),
           Expanded(
             flex: 5,
@@ -1696,72 +1869,226 @@ class _CarRentalDetailsScreenState extends State<BoatDetailsScreen> {
           ),
           SizedBox(width: 8),
           Text('$totalScore',
-              style: TextStyle(fontFamily: 'Inter'.tr, fontSize: 14)),
+              style: GoogleFonts.spaceGrotesk( fontSize: 14,  color: Color(0xff65758B),)),
         ],
       ),
     );
   }
 
+  // Widget _buildRatingBar(String title, double ratio, int totalScore) {
+  //   return Padding(
+  //     padding: EdgeInsets.symmetric(vertical: 4),
+  //     child: Row(
+  //       children: [
+  //         // SvgPicture.asset("assets/icons/staricon.svg"),
+  //         // SizedBox(width: 4),
+  //         Expanded(
+  //           flex: 2,
+  //           child: Text(title,
+  //               style: TextStyle(fontFamily: 'Inter'.tr, fontSize: 14)),
+  //         ),
+  //         Expanded(
+  //           flex: 5,
+  //           child: Stack(
+  //             children: [
+  //               Container(
+  //                 height: 4,
+  //                 decoration: BoxDecoration(
+  //                   color: Colors.grey[300],
+  //                   borderRadius: BorderRadius.circular(4),
+  //                 ),
+  //               ),
+  //               FractionallySizedBox(
+  //                 widthFactor: ratio,
+  //                 child: Container(
+  //                   height: 4,
+  //                   decoration: BoxDecoration(
+  //                     color: kSecondaryColor,
+  //                     borderRadius: BorderRadius.circular(4),
+  //                   ),
+  //                 ),
+  //               ),
+  //             ],
+  //           ),
+  //         ),
+  //         SizedBox(width: 8),
+  //         Text('$totalScore',
+  //             style: TextStyle(fontFamily: 'Inter'.tr, fontSize: 14)),
+  //       ],
+  //     ),
+  //   );
+  // }
+
   Widget _buildReviewItem(Review review) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 15),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              CircleAvatar(
-                backgroundImage: NetworkImage(review.author.avatarUrl),
-                radius: 20,
-              ),
-              SizedBox(width: 12),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(review.author.name ?? "",
-                      style: TextStyle(
-                          fontFamily: 'Inter'.tr,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold)),
-                  // Text(review.author?.lastName ?? '',
-                  //     style: TextStyle(
-                  //         fontFamily: 'Inter'.tr, color: Colors.grey)),
-                ],
-              ),
-            ],
-          ),
-          SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.start,
-            children: [
-              Row(
-                children: List.generate(
-                  5,
-                  (index) => Icon(
-                    Icons.star,
-                    color: index < (review.rateNumber)
-                        ? kPrimaryColor
-                        : Colors.grey,
-                    size: 18,
-                  ),
-                ),
-              ),
-              SizedBox(width: 8),
-              Text(
-                  DateFormat('dd MMM yyyy')
-                      .format(DateTime.parse(review.createdAt)),
-                  style: TextStyle(fontFamily: 'Inter'.tr, color: Colors.grey)),
-            ],
-          ),
-          SizedBox(height: 8),
-          Text(
-            review.content,
-            style: TextStyle(fontFamily: 'Inter'.tr, color: Colors.grey[600]),
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
+      decoration: BoxDecoration(
+        color: Color(0xffFFFFFF),
+        borderRadius: BorderRadius.circular(12.0),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.15),
+            blurRadius: 5,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                CircleAvatar(
+                  backgroundImage: NetworkImage(review.author?.avatarUrl ?? ''),
+                  radius: 20,
+                ),
+                const SizedBox(width: 12),
+
+                // ★ FIX: Give bounded width to this Column
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+
+                      /// NAME + DATE ROW FIXED
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Flexible(
+                            child: Text(
+                              review.author?.name ?? '',
+                              style:  GoogleFonts.spaceGrotesk(
+
+                                  fontWeight: FontWeight.w500, // "Medium" in Figma = w500
+                                  fontSize: 14,
+                                  height: 20 / 14, // line-height = 20px
+                                  letterSpacing: 0,
+                                  color: Color(0xff1D2025)
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          Text(
+                            DateFormat('dd MMM yyyy').format(
+                              DateTime.parse(
+                                review.createdAt ?? DateTime.now().toString(),
+                              ),
+                            ),
+                            style:  GoogleFonts.spaceGrotesk(
+
+                              fontWeight: FontWeight.w400, // Regular
+                              fontSize: 12,
+                              height: 16 / 12, // exact line-height from Figma
+                              letterSpacing: 0,
+                              color: Color(0xff65758B),
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 4),
+
+                      Row(
+                        children: List.generate(
+                          5,
+                              (index) => Icon(
+                            Icons.star,
+                            color: index < (review.rateNumber ?? 0)
+                                ? Colors.yellow // Changed from kPrimaryColor to yellow for stars
+                                : Colors.grey,
+                            size: 18,
+                          ),
+                        ),
+                      )
+                    ],
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 8),
+
+            Text(
+              review.content ?? '',
+              style: GoogleFonts.spaceGrotesk(
+
+                fontWeight: FontWeight.w400, // Regular
+                fontSize: 14,
+                height: 21 / 14, // Figma line-height (21px)
+                letterSpacing: 0,
+                color: Color(0xff65758B),
+              ),
+            )
+
+          ],
+        ),
+      ),
     );
   }
+
+  // Widget _buildReviewItem(Review review) {
+  //   return Padding(
+  //     padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 15),
+  //     child: Column(
+  //       crossAxisAlignment: CrossAxisAlignment.start,
+  //       children: [
+  //         Row(
+  //           children: [
+  //             CircleAvatar(
+  //               backgroundImage: NetworkImage(review.author.avatarUrl),
+  //               radius: 20,
+  //             ),
+  //             SizedBox(width: 12),
+  //             Column(
+  //               crossAxisAlignment: CrossAxisAlignment.start,
+  //               children: [
+  //                 Text(review.author.name ?? "",
+  //                     style: TextStyle(
+  //                         fontFamily: 'Inter'.tr,
+  //                         fontSize: 16,
+  //                         fontWeight: FontWeight.bold)),
+  //                 // Text(review.author?.lastName ?? '',
+  //                 //     style: TextStyle(
+  //                 //         fontFamily: 'Inter'.tr, color: Colors.grey)),
+  //               ],
+  //             ),
+  //           ],
+  //         ),
+  //         SizedBox(height: 8),
+  //         Row(
+  //           mainAxisAlignment: MainAxisAlignment.start,
+  //           children: [
+  //             Row(
+  //               children: List.generate(
+  //                 5,
+  //                 (index) => Icon(
+  //                   Icons.star,
+  //                   color: index < (review.rateNumber)
+  //                       ? kPrimaryColor
+  //                       : Colors.grey,
+  //                   size: 18,
+  //                 ),
+  //               ),
+  //             ),
+  //             SizedBox(width: 8),
+  //             Text(
+  //                 DateFormat('dd MMM yyyy')
+  //                     .format(DateTime.parse(review.createdAt)),
+  //                 style: TextStyle(fontFamily: 'Inter'.tr, color: Colors.grey)),
+  //           ],
+  //         ),
+  //         SizedBox(height: 8),
+  //         Text(
+  //           review.content,
+  //           style: TextStyle(fontFamily: 'Inter'.tr, color: Colors.grey[600]),
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
 
   Widget _buildReviewWidget(BoatDetailModel boatDetail) {
     final formKey = GlobalKey<FormState>();
@@ -1788,9 +2115,11 @@ class _CarRentalDetailsScreenState extends State<BoatDetailsScreen> {
                 decoration: InputDecoration(
                   labelText: 'Title'.tr,
                   border: OutlineInputBorder(
-                    borderSide: BorderSide(color: kColor1),
+                    borderSide: BorderSide.none,
                   ),
-                  labelStyle: TextStyle(color: grey),
+                  filled: true, // Add this
+                  fillColor: Color(0xFFF5F5F5),
+                  labelStyle: GoogleFonts.spaceGrotesk(color: grey),
                 ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
@@ -1805,9 +2134,11 @@ class _CarRentalDetailsScreenState extends State<BoatDetailsScreen> {
                 decoration: InputDecoration(
                   labelText: 'Review Content'.tr,
                   border: OutlineInputBorder(
-                    borderSide: BorderSide(color: kColor1),
+                    borderSide: BorderSide.none,
                   ),
-                  labelStyle: TextStyle(color: grey),
+                  filled: true, // Add this
+                  fillColor: Color(0xFFF5F5F5),
+                  labelStyle: GoogleFonts.spaceGrotesk(color: grey),
                 ),
                 maxLines: 3,
                 validator: (value) {
@@ -1836,7 +2167,7 @@ class _CarRentalDetailsScreenState extends State<BoatDetailsScreen> {
                               children: [
                                 SizedBox(height: 5),
                                 Text(entry.key,
-                                    style: TextStyle(
+                                    style: GoogleFonts.spaceGrotesk(
                                         fontWeight: FontWeight.w400,
                                         color: grey,
                                         fontSize: 14)),

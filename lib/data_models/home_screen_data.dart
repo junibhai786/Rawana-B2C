@@ -20,6 +20,12 @@ class CategoryData {
 
 List<CategoryData> categoryDatas = [
 
+  CategoryData(
+    kIcon: 'assets/icons/home.svg',
+    category: "Home".tr,
+    id: 0,
+  ),
+
   if (enableHotel)
   CategoryData(
     kIcon: 'assets/icons/hotel.svg',
@@ -32,11 +38,7 @@ List<CategoryData> categoryDatas = [
       category: "Flight".tr,
       id: 6,
     ),
-  CategoryData(
-    kIcon: 'assets/icons/home.svg',
-    category: "Home".tr,
-    id: 0,
-  ),
+
   if (enableEvent)
     CategoryData(
       kIcon: 'assets/icons/event.svg',

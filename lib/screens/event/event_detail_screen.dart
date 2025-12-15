@@ -134,17 +134,17 @@ class _CarRentalDetailsScreenState extends State<EventsDetailsScreen> {
               height: 32,
               width: 32,
               decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(50),
+                color: Color(0xffF1F5F9),
+                shape: BoxShape.circle,
+                // Makes it perfectly circular
               ),
               child: Icon(
-                Icons.arrow_back,
+                Icons.arrow_back_ios_new_outlined,
                 color: Colors.black,
-
               ),
             ),
           ),
-        ),
+        )
       ),
       body: loading
           ? Center(child: CircularProgressIndicator(color: kSecondaryColor))
@@ -406,9 +406,6 @@ class _CarRentalDetailsScreenState extends State<EventsDetailsScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
 
-
-
-                          SizedBox(height: 9),
                           // Row(
                           //   children: [
                           //     Container(
@@ -464,15 +461,10 @@ class _CarRentalDetailsScreenState extends State<EventsDetailsScreen> {
                           //     ),
                           //   ],
                           // ),
-                          SizedBox(
-                            height: 15,
-                          ),
-                          Divider(
-                            thickness: 1,
-                          ),
+
                           Padding(
                             padding: EdgeInsets.symmetric(
-                                horizontal: 8.0, vertical: 8.0),
+                                horizontal: 4.0, vertical: 4.0),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
@@ -814,8 +806,8 @@ class _CarRentalDetailsScreenState extends State<EventsDetailsScreen> {
                                         alignment: Alignment.center,
                                         child: Text(
                                           'Book'.tr,
-                                          style: TextStyle(
-                                            fontFamily: 'Inter'.tr,
+                                          style: GoogleFonts.spaceGrotesk(
+
                                             color: isBookTab
                                                 ? kSecondaryColor
                                                 : grey,
@@ -1545,7 +1537,7 @@ class _CarRentalDetailsScreenState extends State<EventsDetailsScreen> {
       ],
     );
   }
-  Widget buildRatingSection(EventDetailModal boatDetail) {
+  Widget buildRatingSection(EventDetailModal eventDetails) {
     const Color textColor = Colors.white;
 
     return Column(
@@ -1580,7 +1572,7 @@ class _CarRentalDetailsScreenState extends State<EventsDetailsScreen> {
                       Column(
                         children: [
                           Text(
-                            '${boatDetail.data?.reviewScore?.scoreTotal ?? '0'}/5',
+                            '${eventDetails.data?.reviewScore?.scoreTotal ?? '0'}/5',
                             style: GoogleFonts.spaceGrotesk(
                               fontWeight: FontWeight.w700, // Bold
                               fontSize: 36,
@@ -1593,7 +1585,7 @@ class _CarRentalDetailsScreenState extends State<EventsDetailsScreen> {
 
                           const SizedBox(height: 4),
                           Text(
-                            (boatDetail.data?.reviewScore?.scoreText ?? 'Very Good').tr,
+                            (eventDetails.data?.reviewScore?.scoreText ?? 'Very Good').tr,
                             textAlign: TextAlign.center,
                             style: GoogleFonts.spaceGrotesk(
                               fontWeight: FontWeight.w400, // Regular
@@ -1604,7 +1596,7 @@ class _CarRentalDetailsScreenState extends State<EventsDetailsScreen> {
                             ),
                           ),
                           Text(
-                            'Based on ${boatDetail.data?.reviewScore?.totalReview ?? 0} reviews'
+                            'Based on ${eventDetails.data?.reviewScore?.totalReview ?? 0} reviews'
                                 .tr,
                             textAlign: TextAlign.center,
                             style: GoogleFonts.spaceGrotesk( fontWeight: FontWeight.w400, // Regular
@@ -2080,83 +2072,83 @@ class _CarRentalDetailsScreenState extends State<EventsDetailsScreen> {
     );
   }
 }
-const int _kMaxChars = 300;
-
-class ExpandableHtmlContent extends StatefulWidget {
-  final String content;
-  final String readMoreText;
-  final TextStyle textStyle;
-  final TextStyle readMoreStyle;
-  final Color primaryColor; // Assuming kPrimaryColor is passed in
-
-  const ExpandableHtmlContent({
-    required this.content,
-    required this.primaryColor,
-    this.readMoreText = 'Read more',
-    this.textStyle = const TextStyle(color: Colors.black54),
-    this.readMoreStyle = const TextStyle(color: Color(0xff05A8C7), fontWeight: FontWeight.w500),
-    Key? key,
-  }) : super(key: key);
-
-  @override
-  _ExpandableHtmlContentState createState() => _ExpandableHtmlContentState();
-}
-
-class _ExpandableHtmlContentState extends State<ExpandableHtmlContent> {
-  late bool _isExpanded;
-
-  @override
-  void initState() {
-    super.initState();
-    // Default to collapsed if content exceeds the limit
-    _isExpanded = widget.content.length <= _kMaxChars;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    // Determine if we need to truncate
-    final bool isTruncated = widget.content.length > _kMaxChars;
-
-    // Get the content to display: full text if expanded, or truncated text otherwise
-    final String displayedContent =
-    _isExpanded || !isTruncated
-        ? widget.content
-        : widget.content.substring(0, _kMaxChars) + '...';
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // 1. HTML Content
-        Padding(
-          padding: const EdgeInsets.only(left: 15),
-          child: HtmlWidget(
-            displayedContent,
-            textStyle: widget.textStyle,
-          ),
-        ),
-
-        // 2. Read More Button (only shown if truncation occurred and it's not yet expanded)
-        if (isTruncated)
-          Padding(
-            padding: const EdgeInsets.only(left: 15, top: 8),
-            child: InkWell(
-              onTap: () {
-                setState(() {
-                  _isExpanded = !_isExpanded;
-                });
-              },
-              child: Text(
-                _isExpanded ? 'Show less' : widget.readMoreText,
-                style: widget.readMoreStyle.copyWith(
-                  color: widget.primaryColor, // Use kPrimaryColor for the link
-                ),
-              ),
-            ),
-          ),
-      ],
-    );
-  }
-}
+// const int _kMaxChars = 300;
+//
+// class ExpandableHtmlContent extends StatefulWidget {
+//   final String content;
+//   final String readMoreText;
+//   final TextStyle textStyle;
+//   final TextStyle readMoreStyle;
+//   final Color primaryColor; // Assuming kPrimaryColor is passed in
+//
+//   const ExpandableHtmlContent({
+//     required this.content,
+//     required this.primaryColor,
+//     this.readMoreText = 'Read more',
+//     this.textStyle = const TextStyle(color: Colors.black54),
+//     this.readMoreStyle = const TextStyle(color: Color(0xff05A8C7), fontWeight: FontWeight.w500),
+//     Key? key,
+//   }) : super(key: key);
+//
+//   @override
+//   _ExpandableHtmlContentState createState() => _ExpandableHtmlContentState();
+// }
+//
+// class _ExpandableHtmlContentState extends State<ExpandableHtmlContent> {
+//   late bool _isExpanded;
+//
+//   @override
+//   void initState() {
+//     super.initState();
+//     // Default to collapsed if content exceeds the limit
+//     _isExpanded = widget.content.length <= _kMaxChars;
+//   }
+//
+//   @override
+//   Widget build(BuildContext context) {
+//     // Determine if we need to truncate
+//     final bool isTruncated = widget.content.length > _kMaxChars;
+//
+//     // Get the content to display: full text if expanded, or truncated text otherwise
+//     final String displayedContent =
+//     _isExpanded || !isTruncated
+//         ? widget.content
+//         : widget.content.substring(0, _kMaxChars) + '...';
+//
+//     return Column(
+//       crossAxisAlignment: CrossAxisAlignment.start,
+//       children: [
+//         // 1. HTML Content
+//         Padding(
+//           padding: const EdgeInsets.only(left: 15),
+//           child: HtmlWidget(
+//             displayedContent,
+//             textStyle: widget.textStyle,
+//           ),
+//         ),
+//
+//         // 2. Read More Button (only shown if truncation occurred and it's not yet expanded)
+//         if (isTruncated)
+//           Padding(
+//             padding: const EdgeInsets.only(left: 15, top: 8),
+//             child: InkWell(
+//               onTap: () {
+//                 setState(() {
+//                   _isExpanded = !_isExpanded;
+//                 });
+//               },
+//               child: Text(
+//                 _isExpanded ? 'Show less' : widget.readMoreText,
+//                 style: widget.readMoreStyle.copyWith(
+//                   color: widget.primaryColor, // Use kPrimaryColor for the link
+//                 ),
+//               ),
+//             ),
+//           ),
+//       ],
+//     );
+//   }
+// }
 class PersonTypeForEvent {
   final String name;
   final String desc;

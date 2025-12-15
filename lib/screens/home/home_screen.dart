@@ -2046,35 +2046,35 @@ class _HomeScreenState extends State<HomeScreen>
       case 1: // Hotels
         final data = homeProvider.hotelListPerCategory[index]?.data;
         if (data != null && data.isNotEmpty) {
-          return  'paris';
+          return  '--';
         }
         return 'Paris';
 
       case 2: // Tours
         final data = tourProvider.tourListPerCategory[index]?.data;
         if (data != null && data.isNotEmpty) {
-          return  'england';
+          return  '--';
         }
         return 'England';
 
       case 3: // Spaces
         final data = spaceProvider.spaceListPerCategory[index]?.data;
         if (data != null && data.isNotEmpty) {
-          return  'paris';
+          return  '--';
         }
         return 'England';
 
       case 4: // Cars
         final data = homeProvider.carListPerCategory[index]?.data;
         if (data != null && data.isNotEmpty) {
-          return  'dubai';
+          return  '--';
         }
         return 'London';
 
       case 5: // Events
         final data = eventProvider.eventListPerCategory[index]?.data;
         if (data != null && data.isNotEmpty) {
-          return  'london';
+          return  '--';
         }
         return 'Paris';
 
@@ -2084,7 +2084,7 @@ class _HomeScreenState extends State<HomeScreen>
       case 7: // Boats
         final data = boatProvider.boatListPerCategory[index]?.data;
         if (data != null && data.isNotEmpty) {
-          return  'austril;la';
+          return  '--';
         }
         return 'Marina';
 
