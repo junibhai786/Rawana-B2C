@@ -1,5 +1,6 @@
 // ignore_for_file: prefer_const_constructors
 
+import 'package:google_fonts/google_fonts.dart';
 import 'package:moonbnd/screens/auth/signin_screen.dart';
 import 'package:moonbnd/screens/boat/boat_detail_screen.dart';
 import 'package:moonbnd/screens/car/car_details_screen.dart';
@@ -102,11 +103,11 @@ class _WishlistScreenState extends State<WishlistScreen> {
                         children: [
                           Text(
                             "Wishlists".tr,
-                            style: TextStyle(
-                              fontFamily: 'Inter'.tr,
-                              fontSize: 28,
+                            style: GoogleFonts.spaceGrotesk(
                               fontWeight: FontWeight.w600,
-                            ),
+                              color: Colors.black,
+                              fontSize: 18
+                            )
                           ),
                           if (!isGuest) // Show Edit button only if logged in
                             GestureDetector(
@@ -117,13 +118,12 @@ class _WishlistScreenState extends State<WishlistScreen> {
                               },
                               child: Text(
                                 isEditMode ? 'Done'.tr : 'Edit'.tr,
-                                style: TextStyle(
+                                style: GoogleFonts.spaceGrotesk(
                                   fontSize: 18,
-                                  fontFamily: 'Inter'.tr,
-                                  fontWeight: FontWeight.w400,
-                                  color: kPrimaryColor,
                                   decoration: TextDecoration.underline,
-                                ),
+                                  fontWeight: FontWeight.w400,
+
+                                )
                               ),
                             )
                         ],
@@ -139,10 +139,9 @@ class _WishlistScreenState extends State<WishlistScreen> {
                           children: [
                             Text(
                               "Log in to view your wishlist.".tr,
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontFamily: 'Inter'.tr,
+                              style: GoogleFonts.spaceGrotesk(
                                 fontWeight: FontWeight.w400,
+                                fontSize: 18,
                                 color: Colors.grey,
                               ),
                               textAlign: TextAlign.center,

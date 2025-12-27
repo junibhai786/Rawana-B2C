@@ -2,6 +2,7 @@
 
 import 'dart:developer';
 
+import 'package:google_fonts/google_fonts.dart';
 import 'package:moonbnd/Provider/flight_provider.dart';
 import 'package:moonbnd/Provider/home_provider.dart';
 import 'package:moonbnd/constants.dart';
@@ -232,7 +233,7 @@ class _BookingScreenState extends State<FlightBookingScreen> {
     }
     return Scaffold(
       appBar: AppBar(
-        title: Text('Your Booking'.tr),
+        title: Text('Your Booking'.tr,style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w700,color: Colors.black),),
         leading: BackButton(),
       ),
       body: loading
@@ -248,29 +249,19 @@ class _BookingScreenState extends State<FlightBookingScreen> {
                             .bookingResponse?.data?.booking?.service?.title ??
                         ""
                             ' | ${flightbookingitem.flightDetail?.data?.code}',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w600,
-                      color: kPrimaryColor,
-                      fontFamily: 'Inter'.tr,
-                    ),
+                    style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w500,color: Colors.black,fontSize: 16),
                   ),
                   SizedBox(height: 2),
                   Row(
                     children: [
                       Text(
                         flightbookingitem.bookingResponse?.data?.booking
-                                ?.service?.airportFrom?.name ??
-                            "",
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w400,
-                          color: grey,
-                          fontFamily: 'Inter'.tr,
-                        ),
+                                ?.service?.airportFrom?.name?.tr ??
+                            "".tr,
+                        style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w400,color:grey,fontSize: 14),
                       ),
                       Text(
-                        " to ",
+                        " to ".tr,
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w400,
@@ -293,13 +284,8 @@ class _BookingScreenState extends State<FlightBookingScreen> {
                   ),
                   SizedBox(height: 5),
                   Text(
-                    "${flightbookingitem.bookingResponse?.data?.booking?.service?.duration ?? ""} hrs",
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: kPrimaryColor,
-                      fontFamily: 'Inter'.tr,
-                    ),
+                    "${flightbookingitem.bookingResponse?.data?.booking?.service?.duration?.tr ?? ""} hrs".tr,
+                    style: GoogleFonts.spaceGrotesk(fontSize: 14,fontWeight: FontWeight.bold)
                   ),
                   SizedBox(height: 10),
                   Row(
@@ -376,11 +362,10 @@ class _BookingScreenState extends State<FlightBookingScreen> {
                     children: [
                       Text(
                         'Start Date'.tr,
-                        style: TextStyle(
-                            fontFamily: 'Inter'.tr,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w500,
-                            color: kPrimaryColor),
+                        style: GoogleFonts.spaceGrotesk(
+                          fontWeight: FontWeight.w500,
+                          fontSize: 16,
+                        )
                       ),
                       Text(
                           DateFormat("dd/MM/yyyy").format(DateTime.parse(
@@ -388,11 +373,12 @@ class _BookingScreenState extends State<FlightBookingScreen> {
                                           ?.service?.departureTime ??
                                       '2000-01-01')
                                   .toString())), // Using a valid default date instead of empty string
-                          style: TextStyle(
-                              fontSize: 16,
-                              fontFamily: 'Inter'.tr,
-                              fontWeight: FontWeight.w400,
-                              color: grey)),
+                          style: GoogleFonts.spaceGrotesk(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w400,
+                            color: Colors.black54,
+                          )
+                      ),
                     ],
                   ),
                   SizedBox(height: 20),
@@ -425,18 +411,17 @@ class _BookingScreenState extends State<FlightBookingScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text('Duration'.tr,
-                          style: TextStyle(
-                              fontFamily: 'Inter'.tr,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w500,
-                              color: kPrimaryColor)),
+                          style: GoogleFonts.spaceGrotesk(
+                            fontWeight: FontWeight.w500,
+                            fontSize: 16,
+                          )),
                       Text(
                           "${flightbookingitem.bookingResponse?.data?.booking?.service?.duration ?? 0} hrs",
-                          style: TextStyle(
-                              fontSize: 16,
-                              fontFamily: 'Inter'.tr,
-                              fontWeight: FontWeight.w400,
-                              color: grey)),
+                          style: GoogleFonts.spaceGrotesk(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w400,
+                            color: Colors.black54,
+                          )),
                     ],
                   ),
                   SizedBox(height: 16),
@@ -452,19 +437,18 @@ class _BookingScreenState extends State<FlightBookingScreen> {
                                   Text(
                                       '${seat.seatType?.code?.capitalizeFirst ?? ""}'
                                           .tr,
-                                      style: TextStyle(
-                                          fontFamily: 'Inter'.tr,
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w500,
-                                          color: kPrimaryColor)),
+                                      style: GoogleFonts.spaceGrotesk(
+                                        fontWeight: FontWeight.w500,
+                                        fontSize: 16,
+                                      )),
                                   SizedBox(width: 16),
                                   SizedBox(height: 30),
                                   Text("${seat.number ?? 0} ",
-                                      style: TextStyle(
-                                          fontSize: 16,
-                                          fontFamily: 'Inter'.tr,
-                                          fontWeight: FontWeight.w400,
-                                          color: grey)),
+                                      style: GoogleFonts.spaceGrotesk(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w400,
+                                        color: Colors.black54,
+                                      )),
                                 ],
                               )),
                     ],
@@ -486,20 +470,19 @@ class _BookingScreenState extends State<FlightBookingScreen> {
                                   Text(
                                       '${seat.seatType?.code?.capitalizeFirst ?? ""}: ${seat.number ?? 0} * \$${seat.price ?? 0}'
                                           .tr,
-                                      style: TextStyle(
-                                          fontFamily: 'Inter'.tr,
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w500,
-                                          color: kPrimaryColor)),
+                                      style: GoogleFonts.spaceGrotesk(
+                                        fontWeight: FontWeight.w500,
+                                        fontSize: 16,
+                                      )),
                                   SizedBox(width: 16),
                                   SizedBox(height: 30),
                                   Text(
                                       "\$${(int.parse(seat.number?.toString() ?? "0") * double.parse(seat.price?.toString() ?? "0")).toStringAsFixed(2)} ",
-                                      style: TextStyle(
-                                          fontSize: 16,
-                                          fontFamily: 'Inter'.tr,
-                                          fontWeight: FontWeight.w400,
-                                          color: grey)),
+                                      style: GoogleFonts.spaceGrotesk(
+                                        fontWeight: FontWeight.w400,
+                                        color: Colors.black54,
+                                        fontSize: 16,
+                                      )),
                                 ],
                               )),
                     ],
@@ -563,6 +546,10 @@ class _BookingScreenState extends State<FlightBookingScreen> {
                         borderSide: BorderSide(width: 1),
                       ),
                       hintText: 'Coupon Code'.tr,
+                      hintStyle: GoogleFonts.spaceGrotesk(
+                        fontWeight: FontWeight.w400,
+                        fontSize: 16,
+                      ),
                       contentPadding:
                           EdgeInsets.symmetric(vertical: 25, horizontal: 15),
                       suffixIcon: Padding(
@@ -621,18 +608,19 @@ class _BookingScreenState extends State<FlightBookingScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text('Total'.tr,
-                          style: TextStyle(
-                              fontWeight: FontWeight.w600,
-                              fontSize: 18,
-                              fontFamily: 'Inter'.tr,
-                              color: kPrimaryColor)),
+                          style: GoogleFonts.spaceGrotesk(
+                            fontWeight: FontWeight.w500,
+                            fontSize: 16,
+                          )),
                       Text(
                           '\$${(flightbookingitem.bookingResponse?.data?.booking?.total ?? 0)}',
-                          style: TextStyle(
-                              fontWeight: FontWeight.w600,
-                              fontSize: 18,
-                              fontFamily: 'Inter'.tr,
-                              color: kPrimaryColor)),
+                          style: GoogleFonts.spaceGrotesk(
+                            fontWeight: FontWeight.w400,
+                            color: Colors.black54,
+                            fontSize: 18,
+                          )
+
+                      ),
                       // Text(
                       //     '\$${(flightbookingitem.bookingResponse?.data?.booking?.commission ?? 0).toInt() + int.parse("${widget.totalPrice}")}',
                       //     style: TextStyle(
@@ -643,11 +631,11 @@ class _BookingScreenState extends State<FlightBookingScreen> {
                     ],
                   ),
                   Text('Credit want to pay?'.tr,
-                      style: TextStyle(
-                          fontFamily: 'Inter'.tr,
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                          color: kPrimaryColor)),
+                      style: GoogleFonts.spaceGrotesk(
+                        fontWeight: FontWeight.w500,
+                        fontSize: 18,
+                      )
+                  ),
                   SizedBox(height: 16),
 
                   Container(
@@ -665,11 +653,11 @@ class _BookingScreenState extends State<FlightBookingScreen> {
                           child: Text(
                             'Credit ${homeProvider.creditbalance?.data?.creditBalance ?? '0'}'
                                 .tr,
-                            style: TextStyle(
+                            style: GoogleFonts.spaceGrotesk(
                               color: Colors.black,
+                              fontWeight: FontWeight.w500,
                               fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
+                            )
                           ),
                         ),
 
@@ -720,18 +708,19 @@ class _BookingScreenState extends State<FlightBookingScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text('Pay now :'.tr,
-                          style: TextStyle(
-                              fontWeight: FontWeight.w600,
-                              fontSize: 18,
-                              fontFamily: 'Inter'.tr,
-                              color: kPrimaryColor)),
+                          style: GoogleFonts.spaceGrotesk(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 18,
+                          )
+                      ),
                       Text(
                           '\$${flightbookingitem.bookingResponse?.data?.booking?.total ?? 0} ',
-                          style: TextStyle(
-                              fontWeight: FontWeight.w600,
-                              fontSize: 18,
-                              fontFamily: 'Inter'.tr,
-                              color: kPrimaryColor)),
+                          style: GoogleFonts.spaceGrotesk(
+                            fontWeight: FontWeight.w400,
+                            fontSize: 16,
+                            color: Colors.black54,
+                          )
+                      ),
                     ],
                   ),
 
@@ -747,43 +736,25 @@ class _BookingScreenState extends State<FlightBookingScreen> {
                       children: [
                         Text(
                           'Booking Submission'.tr,
-                          style: TextStyle(
-                            fontSize: 24,
+                          style: GoogleFonts.spaceGrotesk(
                             fontWeight: FontWeight.w600,
-                            color: kPrimaryColor,
-                            fontFamily: 'Inter'.tr,
-                          ),
+                            fontSize: 18,
+                            color: Colors.black,
+                          )
                         ),
                         SizedBox(height: 16),
 
                         // First Name
                         Text('First Name*'.tr,
-                            style: TextStyle(
+                            style: GoogleFonts.spaceGrotesk(
+                              fontWeight: FontWeight.w400,
                               fontSize: 16,
-                              fontFamily: 'Inter'.tr,
-                            )),
+                            )
+                        ),
                         SizedBox(height: 8),
                         TextFormField(
                           controller: _firstNameController, // Added controller
-                          decoration: InputDecoration(
-                            hintText: 'Enter your first name'.tr,
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(
-                                  8.0), // Set border radius
-                              borderSide: BorderSide(
-                                  color: Colors.grey), // Default border color
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8.0),
-                              borderSide: BorderSide(
-                                  color: Colors.blue), // Focused border color
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8.0),
-                              borderSide: BorderSide(
-                                  color: Colors.grey), // Enabled border color
-                            ),
-                          ),
+                          decoration: kTextFieldDecoration('Enter your first name'.tr),
                           keyboardType: TextInputType.name,
                           inputFormatters: [
                             FilteringTextInputFormatter.allow(
@@ -805,32 +776,14 @@ class _BookingScreenState extends State<FlightBookingScreen> {
 
                         // Last Name
                         Text('Last Name*'.tr,
-                            style: TextStyle(
+                            style: GoogleFonts.spaceGrotesk(
+                              fontWeight: FontWeight.w400,
                               fontSize: 16,
-                              fontFamily: 'Inter'.tr,
                             )),
                         SizedBox(height: 8),
                         TextFormField(
                           controller: _lastNameController, // Added controller
-                          decoration: InputDecoration(
-                            hintText: 'Enter your last name'.tr,
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(
-                                  8.0), // Set border radius
-                              borderSide: BorderSide(
-                                  color: Colors.grey), // Default border color
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8.0),
-                              borderSide: BorderSide(
-                                  color: Colors.blue), // Focused border color
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8.0),
-                              borderSide: BorderSide(
-                                  color: Colors.grey), // Enabled border color
-                            ),
-                          ),
+                          decoration: kTextFieldDecoration('Enter your last name'.tr),
                           keyboardType: TextInputType.name,
                           inputFormatters: [
                             FilteringTextInputFormatter.allow(
@@ -851,28 +804,14 @@ class _BookingScreenState extends State<FlightBookingScreen> {
 
                         // Email
                         Text('Email*'.tr,
-                            style: TextStyle(
+                            style:GoogleFonts.spaceGrotesk(
+                              fontWeight: FontWeight.w400,
                               fontSize: 16,
-                              fontFamily: 'Inter'.tr,
                             )),
                         SizedBox(height: 8),
                         TextFormField(
                           controller: _emailController, // Added controller
-                          decoration: InputDecoration(
-                            hintText: 'Enter your email'.tr,
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8.0),
-                              borderSide: BorderSide(color: Colors.grey),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8.0),
-                              borderSide: BorderSide(color: Colors.blue),
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8.0),
-                              borderSide: BorderSide(color: Colors.grey),
-                            ),
-                          ),
+                          decoration: kTextFieldDecoration('Enter your email'.tr),
                           keyboardType: TextInputType.emailAddress,
 
                           validator: (value) {
@@ -891,31 +830,14 @@ class _BookingScreenState extends State<FlightBookingScreen> {
 
                         // Phone
                         Text('Phone*'.tr,
-                            style: TextStyle(
+                            style: GoogleFonts.spaceGrotesk(
+                              fontWeight: FontWeight.w400,
                               fontSize: 16,
-                              fontFamily: 'Inter'.tr,
                             )),
                         SizedBox(height: 8),
                         TextFormField(
                           controller: _phoneController, // Added controller
-                          decoration: InputDecoration(
-                            hintText: 'Enter your phone number'.tr,
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8.0),
-                              borderSide: BorderSide(
-                                  color: Colors.grey), // Default border color
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8.0),
-                              borderSide: BorderSide(
-                                  color: Colors.blue), // Focused border color
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8.0),
-                              borderSide: BorderSide(
-                                  color: Colors.grey), // Enabled border color
-                            ),
-                          ),
+                          decoration: kTextFieldDecoration('Enter your phone number'.tr),
                           keyboardType: TextInputType.phone,
                           inputFormatters: [
                             FilteringTextInputFormatter.allow(
@@ -938,31 +860,15 @@ class _BookingScreenState extends State<FlightBookingScreen> {
 
                         // Address Line 1
                         Text('Address Line 1'.tr,
-                            style: TextStyle(
-                                fontFamily: 'Inter'.tr, fontSize: 16)),
+                            style: GoogleFonts.spaceGrotesk(
+                              fontWeight: FontWeight.w400,
+                              fontSize: 16,
+                            )),
                         SizedBox(height: 8),
                         TextFormField(
                           controller:
                               _addressLine1Controller, // Added controller
-                          decoration: InputDecoration(
-                            hintText: 'Enter your address'.tr,
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(
-                                  8.0), // Set border radius
-                              borderSide: BorderSide(
-                                  color: Colors.grey), // Default border color
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8.0),
-                              borderSide: BorderSide(
-                                  color: Colors.blue), // Focused border color
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8.0),
-                              borderSide: BorderSide(
-                                  color: Colors.grey), // Enabled border color
-                            ),
-                          ),
+                          decoration: kTextFieldDecoration('Enter your address'.tr),
                           validator: (value) {
                             if (value == null || value.isEmpty) {
                               return 'Please enter your address'.tr;
@@ -974,31 +880,15 @@ class _BookingScreenState extends State<FlightBookingScreen> {
 
                         // Address Line 2
                         Text('Address Line 2'.tr,
-                            style: TextStyle(
-                                fontFamily: 'Inter'.tr, fontSize: 16)),
+                            style: GoogleFonts.spaceGrotesk(
+                              fontWeight: FontWeight.w400,
+                              fontSize: 16,
+                            )),
                         SizedBox(height: 8),
                         TextFormField(
                           controller:
                               _addressLine2Controller, // Added controller
-                          decoration: InputDecoration(
-                            hintText: 'Enter your address (optional)'.tr,
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(
-                                  8.0), // Set border radius
-                              borderSide: BorderSide(
-                                  color: Colors.grey), // Default border color
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8.0),
-                              borderSide: BorderSide(
-                                  color: Colors.blue), // Focused border color
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8.0),
-                              borderSide: BorderSide(
-                                  color: Colors.grey), // Enabled border color
-                            ),
-                          ),
+                          decoration:kTextFieldDecoration('Enter your address (optional)'.tr) ,
                           // validator: (value) {
                           //   if (value == null || value.isEmpty) {
                           //     return 'Please enter your address'.tr;
@@ -1009,30 +899,25 @@ class _BookingScreenState extends State<FlightBookingScreen> {
                         SizedBox(height: 12),
 
                         Text('Country*'.tr,
-                            style: TextStyle(
-                                fontFamily: 'Inter'.tr, fontSize: 16)),
+                            style: GoogleFonts.spaceGrotesk(
+                              fontWeight: FontWeight.w400,
+                              fontSize: 16,
+                            )),
                         SizedBox(height: 8),
                         DropdownButtonFormField<String>(
-                          decoration: InputDecoration(
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8.0),
-                              borderSide: BorderSide(color: Colors.grey),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8.0),
-                              borderSide: BorderSide(color: Colors.blue),
-                            ),
-                          ),
+                          decoration: kTextFieldDecoration('Enter your address'.tr),
                           hint: Text('Select your country'),
-                          items: homeProvider.countryResponse!.data.isNotEmpty
-                              ? homeProvider.countryResponse!.data
-                                  .map((country) {
-                                  return DropdownMenuItem<String>(
-                                    value: country.code,
-                                    child: Text(country.name),
-                                  );
-                                }).toList()
-                              : [
+                            items: (homeProvider.countryResponse?.data ?? []).isNotEmpty
+                                ? (homeProvider.countryResponse?.data ?? [])
+                                .map((country) {
+                              return DropdownMenuItem<String>(
+                                value: country.code,
+                                child: Text(country.name),
+                              );
+                            }).toList()
+
+
+                            : [
                                   // Ensure there's a fallback if the list is empty
                                   DropdownMenuItem<String>(
                                     value: null,
@@ -1058,30 +943,14 @@ class _BookingScreenState extends State<FlightBookingScreen> {
 
                         // State/Province/Region
                         Text('State/Province/Region'.tr,
-                            style: TextStyle(
-                                fontFamily: 'Inter'.tr, fontSize: 16)),
+                            style: GoogleFonts.spaceGrotesk(
+                              fontWeight: FontWeight.w400,
+                              fontSize: 16,
+                            )),
                         SizedBox(height: 8),
                         TextFormField(
                           controller: _stateController, // Added controller
-                          decoration: InputDecoration(
-                            hintText: 'Enter your state or region'.tr,
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(
-                                  8.0), // Set border radius
-                              borderSide: BorderSide(
-                                  color: Colors.grey), // Default border color
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8.0),
-                              borderSide: BorderSide(
-                                  color: Colors.blue), // Focused border color
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8.0),
-                              borderSide: BorderSide(
-                                  color: Colors.grey), // Enabled border color
-                            ),
-                          ),
+                          decoration: kTextFieldDecoration('Enter your  state or region'.tr),
                           validator: (value) {
                             if (value == null || value.isEmpty) {
                               return 'Please enter your state or region'.tr;
@@ -1093,30 +962,14 @@ class _BookingScreenState extends State<FlightBookingScreen> {
 
                         // City
                         Text('City'.tr,
-                            style: TextStyle(
-                                fontFamily: 'Inter'.tr, fontSize: 16)),
+                            style: GoogleFonts.spaceGrotesk(
+                              fontWeight: FontWeight.w400,
+                              fontSize: 16,
+                            )),
                         SizedBox(height: 8),
                         TextFormField(
                           controller: _cityController, // Added controller
-                          decoration: InputDecoration(
-                            hintText: 'Enter your city'.tr,
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(
-                                  8.0), // Set border radius
-                              borderSide: BorderSide(
-                                  color: Colors.grey), // Default border color
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8.0),
-                              borderSide: BorderSide(
-                                  color: Colors.blue), // Focused border color
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8.0),
-                              borderSide: BorderSide(
-                                  color: Colors.grey), // Enabled border color
-                            ),
-                          ),
+                          decoration:kTextFieldDecoration('Enter your city'.tr),
                           validator: (value) {
                             if (value == null || value.isEmpty) {
                               return 'Please enter your city'.tr;
@@ -1128,30 +981,14 @@ class _BookingScreenState extends State<FlightBookingScreen> {
                         SizedBox(height: 12),
                         // ZIP code/Postal code
                         Text('ZIP Code/Postal Code'.tr,
-                            style: TextStyle(
-                                fontFamily: 'Inter'.tr, fontSize: 16)),
+                            style: GoogleFonts.spaceGrotesk(
+                              fontWeight: FontWeight.w400,
+                              fontSize: 16,
+                            )),
                         SizedBox(height: 8),
                         TextFormField(
                           controller: _zipCodeController, // Added controller
-                          decoration: InputDecoration(
-                            hintText: 'Enter your postal code'.tr,
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(
-                                  8.0), // Set border radius
-                              borderSide: BorderSide(
-                                  color: Colors.grey), // Default border color
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8.0),
-                              borderSide: BorderSide(
-                                  color: Colors.blue), // Focused border color
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8.0),
-                              borderSide: BorderSide(
-                                  color: Colors.grey), // Enabled border color
-                            ),
-                          ),
+                          decoration: kTextFieldDecoration('Enter your Postal Code'.tr),
                           keyboardType: TextInputType.text,
                           inputFormatters: [
                             // Allow alphanumeric characters only
@@ -1180,16 +1017,15 @@ class _BookingScreenState extends State<FlightBookingScreen> {
 
                         // Special Requirements
                         Text('Special Requirements'.tr,
-                            style: TextStyle(
-                                fontFamily: 'Inter'.tr, fontSize: 16)),
+                            style:GoogleFonts.spaceGrotesk(
+                              fontWeight: FontWeight.w400,
+                              fontSize: 16,
+                            )),
                         SizedBox(height: 8),
                         TextFormField(
                           controller:
                               _specialRequirementsController, // Added controller
-                          decoration: InputDecoration(
-                            hintText: 'Enter any special requests'.tr,
-                            border: OutlineInputBorder(),
-                          ),
+                          decoration: kTextFieldDecoration('Enter any special requests'.tr),
 
                           maxLines: 3,
                           keyboardType: TextInputType.text,
@@ -1217,11 +1053,10 @@ class _BookingScreenState extends State<FlightBookingScreen> {
                         // Payment Method
                         Text(
                           'Payment Method'.tr,
-                          style: TextStyle(
-                              fontFamily: 'Inter'.tr,
-                              fontSize: 24,
-                              fontWeight: FontWeight.w600,
-                              color: kPrimaryColor),
+                          style: GoogleFonts.spaceGrotesk(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 24,
+                          ),
                         ),
                         SizedBox(height: 16),
 
@@ -1237,7 +1072,10 @@ class _BookingScreenState extends State<FlightBookingScreen> {
                             ),
                           ),
                           child: RadioListTile(
-                            title: Text('Offline Payment'.tr),
+                            title: Text('Offline Payment'.tr,style: GoogleFonts.spaceGrotesk(
+                              fontWeight: FontWeight.w400,
+                              fontSize: 16,
+                            ),),
                             value: "offline",
                             groupValue: homeProvider.paymentMethod,
                             onChanged: (value) {
@@ -1259,7 +1097,10 @@ class _BookingScreenState extends State<FlightBookingScreen> {
                             ),
                           ),
                           child: RadioListTile(
-                            title: Text('Online Payment'.tr),
+                            title: Text('Online Payment'.tr,style: GoogleFonts.spaceGrotesk(
+                              fontWeight: FontWeight.w400,
+                              fontSize: 16,
+                            ),),
                             value: "online",
                             groupValue: homeProvider.paymentMethod,
                             onChanged: (value) {
@@ -1284,10 +1125,10 @@ class _BookingScreenState extends State<FlightBookingScreen> {
                                 child: Text(
                               'I have read and accept the Terms & Conditions'
                                   .tr,
-                              style: TextStyle(
-                                fontFamily: 'Inter'.tr,
+                              style: GoogleFonts.spaceGrotesk(
+                                fontWeight: FontWeight.w400,
                                 fontSize: 12,
-                              ),
+                              )
                             )),
                           ],
                         ),
@@ -1333,32 +1174,60 @@ class _BookingScreenState extends State<FlightBookingScreen> {
     );
   }
 }
+InputDecoration kTextFieldDecoration(String hint) {
+  return InputDecoration(
+    hintText: hint,
+    hintStyle: GoogleFonts.spaceGrotesk(
+      fontSize: 14,
+      color: Colors.grey[600],
+    ),
+
+    filled: true,
+    fillColor: const Color(0xFFF1F5F9), // light grey background
+
+    border: InputBorder.none,
+    enabledBorder: InputBorder.none,
+    focusedBorder: InputBorder.none,
+    errorBorder: InputBorder.none,
+    focusedErrorBorder: InputBorder.none,
+
+    contentPadding: const EdgeInsets.symmetric(
+      horizontal: 16,
+      vertical: 14,
+    ),
+  );
+}
 
 Widget _buildFlightInfo(
     String title, String time, String date, String location) {
   return Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      Text(title,
-          style: TextStyle(
-              fontWeight: FontWeight.w600,
-              fontSize: 12,
-              fontFamily: 'Inter',
-              color: kSecondaryColor)),
+      Text(title.tr,
+          style: GoogleFonts.spaceGrotesk(
+            fontWeight: FontWeight.w600,
+            fontSize: 12,
+
+          )
+      ),
       SizedBox(height: 5),
-      Text(time,
-          style: TextStyle(
-              color: kPrimaryColor,
-              fontWeight: FontWeight.w600,
-              fontSize: 18,
-              fontFamily: 'Inter')),
+      Text(time.tr,
+          style: GoogleFonts.spaceGrotesk(
+            fontSize:18,
+            fontWeight: FontWeight.w600
+          )
+      ),
       SizedBox(height: 5),
-      Text(date,
-          style:
-              TextStyle(color: Colors.grey, fontSize: 12, fontFamily: 'Inter')),
+      Text(date.tr,
+          style:GoogleFonts.spaceGrotesk(
+            fontWeight: FontWeight.w400,
+            fontSize: 12,
+            color: Colors.black54,
+          )),
       Text(location,
-          style:
-              TextStyle(color: Colors.grey, fontSize: 12, fontFamily: 'Inter')),
+          style:GoogleFonts.spaceGrotesk(fontSize: 12,fontWeight: FontWeight.w400,color: Colors.black54,)
+
+      ),
     ],
   );
 }

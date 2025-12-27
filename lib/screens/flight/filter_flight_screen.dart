@@ -1,5 +1,6 @@
 // ignore_for_file: prefer_const_constructors
 
+import 'package:google_fonts/google_fonts.dart';
 import 'package:moonbnd/Provider/flight_provider.dart';
 import 'package:moonbnd/constants.dart';
 
@@ -76,11 +77,11 @@ class _FilterFlightScreenState extends State<FilterFlightScreen> {
       appBar: AppBar(
         title: Text(
           'Filters'.tr,
-          style: TextStyle(
-              color: kPrimaryColor,
-              fontFamily: 'Inter'.tr,
-              fontWeight: FontWeight.w600,
-              fontSize: 16),
+          style: GoogleFonts.spaceGrotesk(
+            fontSize: 18,
+            color: Colors.black,
+            fontWeight: FontWeight.w700,
+          ),
         ),
         centerTitle: true,
         leading: IconButton(
@@ -94,11 +95,13 @@ class _FilterFlightScreenState extends State<FilterFlightScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text('Filter Price'.tr,
-                style: TextStyle(
-                    fontSize: 16,
-                    fontFamily: 'Inter'.tr,
-                    fontWeight: FontWeight.w600,
-                    color: kPrimaryColor)),
+                style: GoogleFonts.spaceGrotesk(
+                  color: Colors.black,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 18,
+                )
+
+            ),
             const SizedBox(height: 10),
             // ignore: sized_box_for_whitespace
             Container(
@@ -203,12 +206,11 @@ class _FilterFlightScreenState extends State<FilterFlightScreen> {
               },
               child: Text(
                 "Clear all".tr,
-                style: TextStyle(
-                  fontFamily: 'Inter'.tr,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 14,
+                style: GoogleFonts.spaceGrotesk(
                   decoration: TextDecoration.underline,
-                ),
+                  fontWeight: FontWeight.w500,
+                  fontSize: 16,
+                ) // Adjust fo
               ),
             ),
             SizedBox(
@@ -236,11 +238,11 @@ class _FilterFlightScreenState extends State<FilterFlightScreen> {
                       // ),
                       Text(
                         "Next".tr,
-                        style: TextStyle(
-                          fontFamily: 'Inter'.tr,
+                        style: GoogleFonts.spaceGrotesk(
                           color: Colors.white,
+                          fontWeight: FontWeight.w500,
                           fontSize: 16,
-                        ),
+                        ) // Adjust fo
                       ),
                     ],
                   ),
@@ -276,12 +278,18 @@ class _FilterFlightScreenState extends State<FilterFlightScreen> {
               ),
               Text(
                 label,
-                style: TextStyle(
-                    fontFamily: 'Inter'.tr,
-                    fontSize: 12), // Adjust font size if needed
+                style: GoogleFonts.spaceGrotesk(
+                  color: Colors.black,
+                  fontWeight: FontWeight.w500,
+                  fontSize: 12,
+                ) // Adjust fofont size if needed
               ),
               // const SizedBox(height: 4), // Space between label and price
-              Text('\$${value.round()}'.tr),
+              Text('\$${value.round()}'.tr,style: GoogleFonts.spaceGrotesk(
+                color: Colors.black,
+                fontWeight: FontWeight.w400,
+                fontSize: 12,
+              ) )// Adjust fo,),
             ],
           ),
         ),
@@ -292,11 +300,14 @@ class _FilterFlightScreenState extends State<FilterFlightScreen> {
   // Build section titles
   Widget _buildSectionTitle(String title) {
     return Text(title,
-        style: TextStyle(
-            fontFamily: 'Inter'.tr,
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: kPrimaryColor));
+        style:GoogleFonts.spaceGrotesk(
+          color: Colors.black,
+          fontWeight: FontWeight.w500,
+          fontSize: 18,
+        ) // Adjust fo
+
+
+    );
   }
 
   // Build star selection row
@@ -326,11 +337,11 @@ class FilterChipWidget extends StatelessWidget {
         return FilterChip(
           label: Text(
             item,
-            style: TextStyle(
-                color: kPrimaryColor,
-                fontSize: 14,
-                fontFamily: 'Inter'.tr,
-                fontWeight: FontWeight.w400),
+            style:GoogleFonts.spaceGrotesk(
+              color: Colors.black54,
+              fontWeight: FontWeight.w500,
+              fontSize: 12,
+            ) // Adjust fo
           ),
           selected: isSelected,
           side: BorderSide(

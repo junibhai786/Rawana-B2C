@@ -1,6 +1,7 @@
 // ignore_for_file: prefer_const_constructors
 
 import 'package:custom_date_range_picker/custom_date_range_picker.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:moonbnd/Provider/home_provider.dart';
 import 'package:moonbnd/Provider/space_provider.dart';
 import 'package:moonbnd/constants.dart';
@@ -114,11 +115,11 @@ class _FilterSpaceScreenState extends State<FilterSpaceScreen> {
       appBar: AppBar(
         title: Text(
           'Filters'.tr,
-          style: TextStyle(
-              color: kPrimaryColor,
-              fontFamily: 'Inter'.tr,
-              fontWeight: FontWeight.w600,
-              fontSize: 16),
+          style:GoogleFonts.spaceGrotesk(
+            fontSize: 18,
+            color: Colors.black,
+            fontWeight: FontWeight.w700,
+          ),
         ),
         centerTitle: true,
         leading: IconButton(
@@ -186,11 +187,11 @@ class _FilterSpaceScreenState extends State<FilterSpaceScreen> {
                     SizedBox(width: 12),
                     Text(
                       "${startDate != null ? DateFormat("MMM dd").format(startDate!) : ''} - ${endDate != null ? DateFormat("MMM dd").format(endDate!) : 'Choose Date'.tr}",
-                      style: TextStyle(
-                        fontFamily: 'Inter'.tr,
-                        color: kPrimaryColor,
-                        fontSize: 14,
-                      ),
+                      style: GoogleFonts.spaceGrotesk(
+                        color: Colors.black54,
+                        fontWeight: FontWeight.w400,
+                        fontSize: 15,
+                      )
                     ),
                   ],
                 ),
@@ -201,11 +202,11 @@ class _FilterSpaceScreenState extends State<FilterSpaceScreen> {
             const SizedBox(height: 10),
 
             Text('Filter Price'.tr,
-                style: TextStyle(
-                    fontSize: 16,
-                    fontFamily: 'Inter'.tr,
-                    fontWeight: FontWeight.w600,
-                    color: kPrimaryColor)),
+                style: GoogleFonts.spaceGrotesk(
+                  color: Colors.black,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 18,
+                )),
             const SizedBox(height: 10),
             // ignore: sized_box_for_whitespace
             Container(
@@ -324,12 +325,11 @@ class _FilterSpaceScreenState extends State<FilterSpaceScreen> {
               },
               child: Text(
                 "Clear all".tr,
-                style: TextStyle(
-                  fontFamily: 'Inter'.tr,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 14,
+                style: GoogleFonts.spaceGrotesk(
                   decoration: TextDecoration.underline,
-                ),
+                  fontWeight: FontWeight.w500,
+                  fontSize: 16,
+                )
               ),
             ),
             SizedBox(
@@ -357,11 +357,11 @@ class _FilterSpaceScreenState extends State<FilterSpaceScreen> {
                       // ),
                       Text(
                         "Apply".tr,
-                        style: TextStyle(
-                          fontFamily: 'Inter'.tr,
+                        style: GoogleFonts.spaceGrotesk(
                           color: Colors.white,
+                          fontWeight: FontWeight.w500,
                           fontSize: 16,
-                        ),
+                        )
                       ),
                     ],
                   ),
@@ -397,12 +397,18 @@ class _FilterSpaceScreenState extends State<FilterSpaceScreen> {
               ),
               Text(
                 label,
-                style: TextStyle(
-                    fontFamily: 'Inter'.tr,
-                    fontSize: 12), // Adjust font size if needed
+                style: GoogleFonts.spaceGrotesk(
+                  color: Colors.black,
+                  fontWeight: FontWeight.w500,
+                  fontSize: 12,
+                ) // Adjust  // Adjust font size if needed
               ),
               // const SizedBox(height: 4), // Space between label and price
-              Text('\$${value.round()}'.tr),
+              Text('\$${value.round()}'.tr,style: GoogleFonts.spaceGrotesk(
+                color: Colors.black,
+                fontWeight: FontWeight.w400,
+                fontSize: 12,
+              )),
             ],
           ),
         ),
@@ -413,21 +419,24 @@ class _FilterSpaceScreenState extends State<FilterSpaceScreen> {
   // Build section titles
   Widget _buildSectionTitle(String title) {
     return Text(title,
-        style: TextStyle(
-            fontFamily: 'Inter'.tr,
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: kPrimaryColor));
+        style: GoogleFonts.spaceGrotesk(
+          color: Colors.black,
+          fontWeight: FontWeight.w700,
+          fontSize: 18,
+        ));
   }
 
   // Build star selection row
 
   // Build review score selection row
   Widget _buildReviewScoreSelection() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
       children: List.generate(5, (index) {
-        int starValue = 5 - index;
+        final starValue = 5 - index;
+        final isSelected = selectedReviewScore == index + 1;
+
         return GestureDetector(
           onTap: () {
             setState(() {
@@ -435,30 +444,30 @@ class _FilterSpaceScreenState extends State<FilterSpaceScreen> {
             });
           },
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
             decoration: BoxDecoration(
               border: Border.all(
-                  color:
-                      selectedReviewScore == index + 1 ? kSecondaryColor : grey,
-                  width: 1.5),
+                color: isSelected ? kSecondaryColor : grey,
+                width: 1.5,
+              ),
               borderRadius: BorderRadius.circular(6),
             ),
             child: Row(
+              mainAxisSize: MainAxisSize.min, // ⭐ IMPORTANT
               children: [
                 Text(
                   '$starValue',
-                  style: TextStyle(
-                      fontSize: 12,
-                      color: kPrimaryColor,
-                      fontFamily: 'Inter'.tr,
-                      fontWeight: FontWeight.w600),
+                  style: GoogleFonts.spaceGrotesk(
+
+                    fontWeight: FontWeight.w500,
+                    fontSize: 16,
+                  )
                 ),
                 const SizedBox(width: 4),
                 SvgPicture.asset(
                   'assets/icons/star.svg',
-                  color: selectedReviewScore == index + 1
-                      ? kSecondaryColor
-                      : Colors.black,
+                  width: 14,
+                  color: isSelected ? kSecondaryColor : Colors.black,
                 ),
               ],
             ),
@@ -467,6 +476,7 @@ class _FilterSpaceScreenState extends State<FilterSpaceScreen> {
       }),
     );
   }
+
 }
 
 class FilterChipWidget extends StatelessWidget {
@@ -491,11 +501,11 @@ class FilterChipWidget extends StatelessWidget {
         return FilterChip(
           label: Text(
             item,
-            style: TextStyle(
-                color: kPrimaryColor,
-                fontSize: 14,
-                fontFamily: 'Inter'.tr,
-                fontWeight: FontWeight.w400),
+            style: GoogleFonts.spaceGrotesk(
+              color: Colors.black54,
+              fontWeight: FontWeight.w400,
+              fontSize: 14,
+            )
           ),
           selected: isSelected,
           side: BorderSide(

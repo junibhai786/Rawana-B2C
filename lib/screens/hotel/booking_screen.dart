@@ -2,6 +2,7 @@
 
 import 'dart:developer';
 
+import 'package:google_fonts/google_fonts.dart';
 import 'package:moonbnd/Provider/home_provider.dart';
 import 'package:moonbnd/constants.dart';
 import 'package:moonbnd/modals/country_modal.dart';
@@ -240,7 +241,12 @@ class _BookingScreenState extends State<BookingScreenForHotel> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Your Booking'.tr),
+        title: Text('Your Booking'.tr,style:GoogleFonts.spaceGrotesk(
+          fontWeight: FontWeight.w700,
+          fontSize: 18,
+          color: Colors.black,
+
+        )),
         leading: BackButton(),
       ),
       body: _isLoading
@@ -255,94 +261,44 @@ class _BookingScreenState extends State<BookingScreenForHotel> {
                       hotelbookingitem
                               .bookingResponse?.data?.booking?.service?.title ??
                           '',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w600,
-                        color: kPrimaryColor,
-                        fontFamily: 'Inter'.tr,
-                      ),
+                        style:GoogleFonts.spaceGrotesk(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 20,
+                          color: Colors.black,
+
+                        )
                     ),
                     SizedBox(height: 5),
                     Text(
                       hotelbookingitem.bookingResponse?.data?.booking?.service
                               ?.address ??
                           '',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w400,
-                        color: grey,
-                        fontFamily: 'Inter'.tr,
-                      ),
+                        style:GoogleFonts.spaceGrotesk(
+                            fontWeight: FontWeight.w400,
+                            fontSize: 14,
+                            color: Colors.black54
+
+                        )
                     ),
                     SizedBox(height: 15),
                     Row(
                       children: [
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(8.0),
-                          child: Image.network(
-                            hotelbookingitem.bookingResponse?.data?.booking
-                                    ?.service!.gallery?[0] ??
-                                'assets/haven/house.png',
-                            height: 80,
-                            width: 120,
-                            fit: BoxFit.cover,
+                        SizedBox(
+                          width: 120,
+                          height: 80,
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(8.0),
+                            child: Image.network(
+                              hotelbookingitem.bookingResponse?.data?.booking
+                                  ?.service?.gallery?.isNotEmpty == true
+                                  ? hotelbookingitem.bookingResponse!.data!.booking!
+                                  .service!.gallery!.first
+                                  : 'https://via.placeholder.com/120x80',
+                              fit: BoxFit.cover,
+                            ),
                           ),
                         ),
-                        SizedBox(width: 16),
-                        // Expanded(
-                        //   child: Column(
-                        //     crossAxisAlignment: CrossAxisAlignment.start,
-                        //     children: [
-                        //       Text(
-                        //         'Dylan Villa'.tr,
-                        //         style: TextStyle(
-                        //           fontSize: 20,
-                        //           fontWeight: FontWeight.w600,
-                        //           color: kPrimaryColor,
-                        //           fontFamily: 'Inter'.tr,
-                        //         ),
-                        //       ),
-                        //       Column(
-                        //         crossAxisAlignment: CrossAxisAlignment.start,
-                        //         children: [
-                        //           Text(
-                        //             'Vasiliki, Greece'.tr,
-                        //             style: TextStyle(
-                        //               fontSize: 14,
-                        //               fontWeight: FontWeight.w400,
-                        //               color: grey,
-                        //               fontFamily: 'Inter'.tr,
-                        //             ),
-                        //           ),
-                        //           SizedBox(height: 25),
-                        //           Row(
-                        //             children: [
-                        //               // Star Icons.
-                        //               SvgPicture.asset('assets/icons/star.svg'),
-                        //               // ...List.generate(
-                        //               //   5,
-                        //               //   (index) =>  Icon(Icons.star,
-                        //               //       color: Colors.yellow),
-                        //               // ),
-                        //               SizedBox(width: 8),
-
-                        //               // Review Text
-                        //               Text(
-                        //                 '4.82 (20 Reviews)'.tr,
-                        //                 style: TextStyle(
-                        //                   fontSize: 14,
-                        //                   fontFamily: 'Inter'.tr,
-                        //                   fontWeight: FontWeight.w400,
-                        //                   color: grey,
-                        //                 ),
-                        //               ),
-                        //             ],
-                        //           ),
-                        //         ],
-                        //       ),
-                        //     ],
-                        //   ),
-                        // ),
+                        const SizedBox(width: 16),
                       ],
                     ),
                     SizedBox(height: 16),
@@ -353,11 +309,11 @@ class _BookingScreenState extends State<BookingScreenForHotel> {
 
                     Text(
                       'Your Trip'.tr,
-                      style: TextStyle(
-                          fontFamily: 'Inter'.tr,
-                          fontSize: 16,
+                        style:GoogleFonts.spaceGrotesk(
                           fontWeight: FontWeight.w600,
-                          color: kPrimaryColor),
+                          fontSize: 16,
+
+                        )
                     ),
                     SizedBox(height: 20),
 
@@ -366,11 +322,11 @@ class _BookingScreenState extends State<BookingScreenForHotel> {
                       children: [
                         Text(
                           'Start Date'.tr,
-                          style: TextStyle(
-                              fontFamily: 'Inter'.tr,
+                            style:GoogleFonts.spaceGrotesk(
+                              fontWeight: FontWeight.w600,
                               fontSize: 16,
-                              fontWeight: FontWeight.w500,
-                              color: kPrimaryColor),
+
+                            )
                         ),
                         Text(
                             hotelbookingitem.bookingResponse?.data?.booking
@@ -385,11 +341,12 @@ class _BookingScreenState extends State<BookingScreenForHotel> {
                                         .booking!
                                         .startDate!))
                                 : '',
-                            style: TextStyle(
-                                fontSize: 16,
-                                fontFamily: 'Inter'.tr,
+                            style:GoogleFonts.spaceGrotesk(
                                 fontWeight: FontWeight.w400,
-                                color: grey)),
+                                fontSize: 16,
+                                color: Colors.black54
+
+                            )),
                       ],
                     ),
                     SizedBox(height: 20),
@@ -399,11 +356,11 @@ class _BookingScreenState extends State<BookingScreenForHotel> {
                       children: [
                         Text(
                           'End Date'.tr,
-                          style: TextStyle(
-                              fontFamily: 'Inter'.tr,
+                            style:GoogleFonts.spaceGrotesk(
+                              fontWeight: FontWeight.w600,
                               fontSize: 16,
-                              fontWeight: FontWeight.w500,
-                              color: kPrimaryColor),
+
+                            )
                         ),
                         Text(
                             hotelbookingitem.bookingResponse?.data?.booking
@@ -418,11 +375,12 @@ class _BookingScreenState extends State<BookingScreenForHotel> {
                                         .booking!
                                         .endDate!))
                                 : '',
-                            style: TextStyle(
-                                fontSize: 16,
-                                fontFamily: 'Inter'.tr,
+                            style:GoogleFonts.spaceGrotesk(
                                 fontWeight: FontWeight.w400,
-                                color: grey)),
+                                fontSize: 16,
+                                color: Colors.black54
+
+                            )),
                       ],
                     ),
                     SizedBox(height: 20),
@@ -430,18 +388,19 @@ class _BookingScreenState extends State<BookingScreenForHotel> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text('Days'.tr,
-                            style: TextStyle(
-                                fontFamily: 'Inter'.tr,
-                                fontSize: 16,
-                                fontWeight: FontWeight.w500,
-                                color: kPrimaryColor)),
+                            style:GoogleFonts.spaceGrotesk(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 16,
+
+                            )),
                         Text(
                             '${calculateNights(hotelbookingitem.bookingResponse?.data?.booking?.startDate, hotelbookingitem.bookingResponse?.data?.booking?.endDate)}',
-                            style: TextStyle(
-                                fontSize: 16,
-                                fontFamily: 'Inter'.tr,
+                            style:GoogleFonts.spaceGrotesk(
                                 fontWeight: FontWeight.w400,
-                                color: grey)),
+                                fontSize: 16,
+                                color: Colors.black54
+
+                            )),
                       ],
                     ),
                     SizedBox(height: 20),
@@ -449,11 +408,11 @@ class _BookingScreenState extends State<BookingScreenForHotel> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text('No. of Guests'.tr,
-                            style: TextStyle(
-                                fontSize: 16,
-                                fontFamily: 'Inter'.tr,
-                                fontWeight: FontWeight.w500,
-                                color: kPrimaryColor)),
+                            style:GoogleFonts.spaceGrotesk(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 16,
+
+                            )),
                         Row(
                           children: [
                             Text(
@@ -461,11 +420,12 @@ class _BookingScreenState extends State<BookingScreenForHotel> {
                                         ?.totalGuests
                                         .toString() ??
                                     '',
-                                style: TextStyle(
-                                    fontSize: 16,
-                                    fontFamily: 'Inter'.tr,
+                                style:GoogleFonts.spaceGrotesk(
                                     fontWeight: FontWeight.w400,
-                                    color: grey)),
+                                    fontSize: 16,
+                                    color: Colors.black54
+
+                                )),
                             // const SizedBox(width: 8),
                             // GestureDetector(
                             //   onTap: () {
@@ -499,13 +459,13 @@ class _BookingScreenState extends State<BookingScreenForHotel> {
                     Center(
                       child: Text(
                         'Detail'.tr,
-                        style: TextStyle(
-                          fontFamily: 'Inter'.tr,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.black,
-                          decoration: TextDecoration.underline,
-                        ),
+                          style:GoogleFonts.spaceGrotesk(
+                            decoration: TextDecoration.underline,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 16,
+                              color: Colors.black
+
+                          )
                       ),
                     ),
                     SizedBox(height: 16),
@@ -525,18 +485,19 @@ class _BookingScreenState extends State<BookingScreenForHotel> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text('Rental Price'.tr,
-                            style: TextStyle(
-                                fontFamily: 'Inter'.tr,
-                                fontSize: 16,
-                                fontWeight: FontWeight.w500,
-                                color: kPrimaryColor)),
+                            style:GoogleFonts.spaceGrotesk(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 16,
+
+                            )),
                         Text(
                             '\$${hotelbookingitem.bookingResponse?.data?.booking?.service?.roomDetails?.map((room) => '${room.price} * ${room.number}').join(', ') ?? ''}',
-                            style: TextStyle(
-                                fontFamily: 'Inter'.tr,
-                                fontSize: 16,
+                            style:GoogleFonts.spaceGrotesk(
                                 fontWeight: FontWeight.w400,
-                                color: grey)),
+                                fontSize: 16,
+                                color: Colors.black54
+
+                            )),
                       ],
                     ),
                     SizedBox(height: 10),
@@ -544,11 +505,11 @@ class _BookingScreenState extends State<BookingScreenForHotel> {
                     Container(
                       alignment: Alignment.centerLeft,
                       child: Text("Extra Prices:".tr,
-                          style: TextStyle(
-                              fontFamily: 'Inter'.tr,
-                              color: kPrimaryColor,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700)),
+                          style:GoogleFonts.spaceGrotesk(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 16,
+
+                          )),
                     ),
 
                     SizedBox(height: 10),
@@ -560,21 +521,21 @@ class _BookingScreenState extends State<BookingScreenForHotel> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(element.name ?? "",
-                              style: TextStyle(
-                                fontFamily: 'Inter'.tr,
+                              style:GoogleFonts.spaceGrotesk(
+                                fontWeight: FontWeight.w600,
                                 fontSize: 16,
-                                fontWeight: FontWeight.w500,
-                                color: kPrimaryColor,
+
                               )),
                           SizedBox(
                             height: 30,
                           ),
                           Text("\$${element.price}",
-                              style: TextStyle(
-                                  fontFamily: 'Inter'.tr,
-                                  fontSize: 16,
+                              style:GoogleFonts.spaceGrotesk(
                                   fontWeight: FontWeight.w400,
-                                  color: grey)),
+                                  fontSize: 16,
+                                  color: Colors.black54
+
+                              )),
                         ],
                       );
                     }),
@@ -582,11 +543,11 @@ class _BookingScreenState extends State<BookingScreenForHotel> {
                     Container(
                       alignment: Alignment.centerLeft,
                       child: Text("Buyer Fees:".tr,
-                          style: TextStyle(
-                              fontFamily: 'Inter'.tr,
-                              color: kPrimaryColor,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700)),
+                          style:GoogleFonts.spaceGrotesk(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 16,
+
+                          )),
                     ),
 
                     SizedBox(height: 5),
@@ -598,11 +559,10 @@ class _BookingScreenState extends State<BookingScreenForHotel> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(element.name ?? "",
-                              style: TextStyle(
-                                fontFamily: 'Inter'.tr,
+                              style:GoogleFonts.spaceGrotesk(
+                                fontWeight: FontWeight.w600,
                                 fontSize: 16,
-                                fontWeight: FontWeight.w500,
-                                color: kPrimaryColor,
+
                               )),
                           SizedBox(
                             height: 30,
@@ -686,28 +646,31 @@ class _BookingScreenState extends State<BookingScreenForHotel> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text('Total'.tr,
-                            style: TextStyle(
+                            style:GoogleFonts.spaceGrotesk(
                                 fontWeight: FontWeight.w600,
                                 fontSize: 18,
-                                fontFamily: 'Inter'.tr,
-                                color: kPrimaryColor)),
+
+                            )),
                         Text(
                             '\$${hotelbookingitem.bookingResponse?.data?.booking?.total ?? 0} ',
-                            style: TextStyle(
+                            style:GoogleFonts.spaceGrotesk(
                                 fontWeight: FontWeight.w600,
-                                fontSize: 18,
-                                fontFamily: 'Inter'.tr,
-                                color: kPrimaryColor)),
+                                fontSize: 16,
+                                color: Colors.black
+
+                            )
+                        ),
                       ],
                     ),
                     SizedBox(height: 16),
                     Divider(),
                     Text('Credit want to pay?'.tr,
-                        style: TextStyle(
-                            fontFamily: 'Inter'.tr,
-                            fontSize: 18,
-                            fontWeight: FontWeight.w600,
-                            color: kPrimaryColor)),
+                        style:GoogleFonts.spaceGrotesk(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 18,
+
+
+                        )),
                     SizedBox(height: 16),
 
                     Container(
@@ -725,11 +688,12 @@ class _BookingScreenState extends State<BookingScreenForHotel> {
                             child: Text(
                               'Credit ${hotelbookingitem.creditbalance?.data?.creditBalance ?? '0'}'
                                   .tr,
-                              style: TextStyle(
-                                color: Colors.black,
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                              ),
+                                style:GoogleFonts.spaceGrotesk(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 16,
+                                    color: Colors.black
+
+                                )
                             ),
                           ),
 
@@ -780,18 +744,17 @@ class _BookingScreenState extends State<BookingScreenForHotel> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text('Pay now :'.tr,
-                            style: TextStyle(
-                                fontWeight: FontWeight.w600,
-                                fontSize: 18,
-                                fontFamily: 'Inter'.tr,
-                                color: kPrimaryColor)),
+                            style:GoogleFonts.spaceGrotesk(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 18,
+                            )),
                         Text(
                             '\$${hotelbookingitem.bookingResponse?.data?.booking?.total ?? 0} ',
-                            style: TextStyle(
-                                fontWeight: FontWeight.w600,
-                                fontSize: 18,
-                                fontFamily: 'Inter'.tr,
-                                color: kPrimaryColor)),
+                            style:GoogleFonts.spaceGrotesk(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 18,
+                              color: Colors.black,
+                            )),
                       ],
                     ),
                     SizedBox(height: 16),
@@ -806,43 +769,27 @@ class _BookingScreenState extends State<BookingScreenForHotel> {
                         children: [
                           Text(
                             'Booking Submission'.tr,
-                            style: TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.w600,
-                              color: kPrimaryColor,
-                              fontFamily: 'Inter'.tr,
-                            ),
+                              style:GoogleFonts.spaceGrotesk(
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 18,
+                                  color: Colors.black
+
+                              )
                           ),
                           SizedBox(height: 16),
 
                           // First Name
                           Text('First Name*'.tr,
-                              style: TextStyle(
+                              style: GoogleFonts.spaceGrotesk(
+                                fontWeight: FontWeight.w400,
                                 fontSize: 16,
-                                fontFamily: 'Inter'.tr,
                               )),
                           SizedBox(height: 8),
                           TextFormField(
                             controller:
                                 _firstNameController, // Added controller
-                            decoration: InputDecoration(
-                              hintText: 'Enter your first name'.tr,
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(
-                                    8.0), // Set border radius
-                                borderSide: BorderSide(
-                                    color: Colors.grey), // Default border color
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8.0),
-                                borderSide: BorderSide(
-                                    color: Colors.blue), // Focused border color
-                              ),
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8.0),
-                                borderSide: BorderSide(
-                                    color: Colors.grey), // Enabled border color
-                              ),
+                            decoration: _greyFilledDecoration(
+                              'Enter your first name'.tr,
                             ),
                             keyboardType: TextInputType.name,
                             inputFormatters: [
@@ -865,31 +812,15 @@ class _BookingScreenState extends State<BookingScreenForHotel> {
 
                           // Last Name
                           Text('Last Name*'.tr.tr,
-                              style: TextStyle(
+                              style: GoogleFonts.spaceGrotesk(
+                                fontWeight: FontWeight.w400,
                                 fontSize: 16,
-                                fontFamily: 'Inter'.tr,
                               )),
                           SizedBox(height: 8),
                           TextFormField(
                             controller: _lastNameController, // Added controller
-                            decoration: InputDecoration(
-                              hintText: 'Enter your last name'.tr,
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(
-                                    8.0), // Set border radius
-                                borderSide: BorderSide(
-                                    color: Colors.grey), // Default border color
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8.0),
-                                borderSide: BorderSide(
-                                    color: Colors.blue), // Focused border color
-                              ),
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8.0),
-                                borderSide: BorderSide(
-                                    color: Colors.grey), // Enabled border color
-                              ),
+                            decoration: _greyFilledDecoration(
+                              'Enter your last name'.tr,
                             ),
                             keyboardType: TextInputType.name,
                             inputFormatters: [
@@ -911,27 +842,15 @@ class _BookingScreenState extends State<BookingScreenForHotel> {
 
                           // Email
                           Text('Email*'.tr,
-                              style: TextStyle(
+                              style: GoogleFonts.spaceGrotesk(
+                                fontWeight: FontWeight.w400,
                                 fontSize: 16,
-                                fontFamily: 'Inter'.tr,
                               )),
                           SizedBox(height: 8),
                           TextFormField(
                             controller: _emailController, // Added controller
-                            decoration: InputDecoration(
-                              hintText: 'Enter your email'.tr,
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8.0),
-                                borderSide: BorderSide(color: Colors.grey),
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8.0),
-                                borderSide: BorderSide(color: Colors.blue),
-                              ),
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8.0),
-                                borderSide: BorderSide(color: Colors.grey),
-                              ),
+                            decoration:_greyFilledDecoration(
+                              'Enter your email'.tr,
                             ),
                             keyboardType: TextInputType.emailAddress,
 
@@ -951,30 +870,15 @@ class _BookingScreenState extends State<BookingScreenForHotel> {
 
                           // Phone
                           Text('Phone*'.tr,
-                              style: TextStyle(
+                              style: GoogleFonts.spaceGrotesk(
+                                fontWeight: FontWeight.w400,
                                 fontSize: 16,
-                                fontFamily: 'Inter'.tr,
                               )),
                           SizedBox(height: 8),
                           TextFormField(
                             controller: _phoneController, // Added controller
-                            decoration: InputDecoration(
-                              hintText: 'Enter your phone number'.tr,
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8.0),
-                                borderSide: BorderSide(
-                                    color: Colors.grey), // Default border color
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8.0),
-                                borderSide: BorderSide(
-                                    color: Colors.blue), // Focused border color
-                              ),
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8.0),
-                                borderSide: BorderSide(
-                                    color: Colors.grey), // Enabled border color
-                              ),
+                            decoration: _greyFilledDecoration(
+                              'Enter your phone number'.tr,
                             ),
                             keyboardType: TextInputType.phone,
                             inputFormatters: [
@@ -998,30 +902,16 @@ class _BookingScreenState extends State<BookingScreenForHotel> {
 
                           // Address Line 1
                           Text('Address Line 1'.tr,
-                              style: TextStyle(
-                                  fontFamily: 'Inter'.tr, fontSize: 16)),
+                              style: GoogleFonts.spaceGrotesk(
+                                fontWeight: FontWeight.w400,
+                                fontSize: 16,
+                              )),
                           SizedBox(height: 8),
                           TextFormField(
                             controller:
                                 _addressLine1Controller, // Added controller
-                            decoration: InputDecoration(
-                              hintText: 'Enter your address'.tr,
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(
-                                    8.0), // Set border radius
-                                borderSide: BorderSide(
-                                    color: Colors.grey), // Default border color
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8.0),
-                                borderSide: BorderSide(
-                                    color: Colors.blue), // Focused border color
-                              ),
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8.0),
-                                borderSide: BorderSide(
-                                    color: Colors.grey), // Enabled border color
-                              ),
+                            decoration: _greyFilledDecoration(
+                              'Enter your address'.tr,
                             ),
                             validator: (value) {
                               if (value == null || value.isEmpty) {
@@ -1034,30 +924,16 @@ class _BookingScreenState extends State<BookingScreenForHotel> {
 
                           // Address Line 2
                           Text('Address Line 2'.tr,
-                              style: TextStyle(
-                                  fontFamily: 'Inter'.tr, fontSize: 16)),
+                              style: GoogleFonts.spaceGrotesk(
+                                fontWeight: FontWeight.w400,
+                                fontSize: 16,
+                              )),
                           SizedBox(height: 8),
                           TextFormField(
                             controller:
                                 _addressLine2Controller, // Added controller
-                            decoration: InputDecoration(
-                              hintText: 'Enter your address (optional)'.tr,
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(
-                                    8.0), // Set border radius
-                                borderSide: BorderSide(
-                                    color: Colors.grey), // Default border color
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8.0),
-                                borderSide: BorderSide(
-                                    color: Colors.blue), // Focused border color
-                              ),
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8.0),
-                                borderSide: BorderSide(
-                                    color: Colors.grey), // Enabled border color
-                              ),
+                            decoration: _greyFilledDecoration(
+                              'Enter your address (optional)'.tr,
                             ),
                             // validator: (value) {
                             //   if (value == null || value.isEmpty) {
@@ -1070,29 +946,19 @@ class _BookingScreenState extends State<BookingScreenForHotel> {
 
                           // Country Dropdown
                           Text('Country*'.tr,
-                              style: TextStyle(
-                                  fontFamily: 'Inter'.tr, fontSize: 16)),
+                              style: GoogleFonts.spaceGrotesk(
+                                fontWeight: FontWeight.w400,
+                                fontSize: 16,
+                              )),
                           SizedBox(height: 8),
                           DropdownButtonFormField<String>(
-                            decoration: InputDecoration(
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(
-                                    8.0), // Set border radius
-                                borderSide: BorderSide(
-                                    color: Colors.grey), // Default border color
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8.0),
-                                borderSide: BorderSide(
-                                    color: Colors.blue), // Focused border color
-                              ),
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8.0),
-                                borderSide: BorderSide(
-                                    color: Colors.grey), // Enabled border color
-                              ),
+                            decoration: _greyFilledDecoration(
+                              'Enter your country'.tr,
                             ),
-                            hint: Text('Select your country'.tr),
+                            hint: Text('Select your country'.tr, style: GoogleFonts.spaceGrotesk(
+                              fontWeight: FontWeight.w400,
+                              fontSize: 16,
+                            )),
                             items: hotelbookingitem.countryResponse?.data
                                 .map<DropdownMenuItem<String>>((Country value) {
                               return DropdownMenuItem<String>(
@@ -1116,29 +982,15 @@ class _BookingScreenState extends State<BookingScreenForHotel> {
 
                           // State/Province/Region
                           Text('State/Province/Region'.tr,
-                              style: TextStyle(
-                                  fontFamily: 'Inter'.tr, fontSize: 16)),
+                              style: GoogleFonts.spaceGrotesk(
+                                fontWeight: FontWeight.w400,
+                                fontSize: 16,
+                              )),
                           SizedBox(height: 8),
                           TextFormField(
                             controller: _stateController, // Added controller
-                            decoration: InputDecoration(
-                              hintText: 'Enter your state or region'.tr,
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(
-                                    8.0), // Set border radius
-                                borderSide: BorderSide(
-                                    color: Colors.grey), // Default border color
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8.0),
-                                borderSide: BorderSide(
-                                    color: Colors.blue), // Focused border color
-                              ),
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8.0),
-                                borderSide: BorderSide(
-                                    color: Colors.grey), // Enabled border color
-                              ),
+                            decoration: _greyFilledDecoration(
+                              'Enter your state or region'.tr,
                             ),
                             validator: (value) {
                               if (value == null || value.isEmpty) {
@@ -1150,29 +1002,15 @@ class _BookingScreenState extends State<BookingScreenForHotel> {
                           // City
                           SizedBox(height: 12.0),
                           Text('City'.tr,
-                              style: TextStyle(
-                                  fontFamily: 'Inter'.tr, fontSize: 16)),
+                              style: GoogleFonts.spaceGrotesk(
+                                fontWeight: FontWeight.w400,
+                                fontSize: 16,
+                              )),
                           SizedBox(height: 8),
                           TextFormField(
                             controller: _cityController, // Added controller
-                            decoration: InputDecoration(
-                              hintText: 'Enter your city'.tr,
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(
-                                    8.0), // Set border radius
-                                borderSide: BorderSide(
-                                    color: Colors.grey), // Default border color
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8.0),
-                                borderSide: BorderSide(
-                                    color: Colors.blue), // Focused border color
-                              ),
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8.0),
-                                borderSide: BorderSide(
-                                    color: Colors.grey), // Enabled border color
-                              ),
+                            decoration: _greyFilledDecoration(
+                              'Enter your city'.tr,
                             ),
                             validator: (value) {
                               if (value == null || value.isEmpty) {
@@ -1186,29 +1024,15 @@ class _BookingScreenState extends State<BookingScreenForHotel> {
 
                           // ZIP code/Postal code
                           Text('ZIP Code/Postal Code'.tr,
-                              style: TextStyle(
-                                  fontFamily: 'Inter'.tr, fontSize: 16)),
+                              style: GoogleFonts.spaceGrotesk(
+                                fontWeight: FontWeight.w400,
+                                fontSize: 16,
+                              )),
                           SizedBox(height: 8),
                           TextFormField(
                             controller: _zipCodeController, // Added controller
-                            decoration: InputDecoration(
-                              hintText: 'Enter your postal code'.tr,
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(
-                                    8.0), // Set border radius
-                                borderSide: BorderSide(
-                                    color: Colors.grey), // Default border color
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8.0),
-                                borderSide: BorderSide(
-                                    color: Colors.blue), // Focused border color
-                              ),
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8.0),
-                                borderSide: BorderSide(
-                                    color: Colors.grey), // Enabled border color
-                              ),
+                            decoration: _greyFilledDecoration(
+                              'Enter your postal code'.tr,
                             ),
                             keyboardType: TextInputType.text,
                             inputFormatters: [
@@ -1234,15 +1058,16 @@ class _BookingScreenState extends State<BookingScreenForHotel> {
 
                           // Special Requirements
                           Text('Special Requirements'.tr,
-                              style: TextStyle(
-                                  fontFamily: 'Inter'.tr, fontSize: 16)),
+                              style: GoogleFonts.spaceGrotesk(
+                                fontWeight: FontWeight.w400,
+                                fontSize: 16,
+                              )),
                           SizedBox(height: 8),
                           TextFormField(
                             controller:
                                 _specialRequirementsController, // Added controller
-                            decoration: InputDecoration(
-                              hintText: 'Enter any special requests'.tr,
-                              border: OutlineInputBorder(),
+                            decoration:_greyFilledDecoration(
+                              'Enter any special requests'.tr,
                             ),
                             maxLines: 3,
                             keyboardType: TextInputType.text,
@@ -1270,11 +1095,10 @@ class _BookingScreenState extends State<BookingScreenForHotel> {
                           // Payment Method
                           Text(
                             'Payment Method'.tr,
-                            style: TextStyle(
-                                fontFamily: 'Inter'.tr,
-                                fontSize: 24,
+                              style: GoogleFonts.spaceGrotesk(
                                 fontWeight: FontWeight.w600,
-                                color: kPrimaryColor),
+                                fontSize: 24,
+                              )
                           ),
                           SizedBox(height: 16),
                           Container(
@@ -1292,7 +1116,11 @@ class _BookingScreenState extends State<BookingScreenForHotel> {
                               ),
                             ),
                             child: RadioListTile(
-                              title: Text('Offline Payment'.tr),
+                              title: Text('Offline Payment'.tr,style: GoogleFonts.spaceGrotesk(
+                                fontWeight: FontWeight.w400,
+                                fontSize: 16,
+                                color: Colors.black,
+                              )),
                               value: "offline",
                               groupValue: hotelbookingitem.paymentMethod,
                               onChanged: (value) {
@@ -1318,7 +1146,11 @@ class _BookingScreenState extends State<BookingScreenForHotel> {
                               ),
                             ),
                             child: RadioListTile(
-                              title: Text('Online Payment'.tr),
+                              title: Text('Online Payment'.tr,style: GoogleFonts.spaceGrotesk(
+                                fontWeight: FontWeight.w400,
+                                fontSize: 16,
+                                color: Colors.black,
+                              )),
                               value: "online",
                               groupValue: hotelbookingitem.paymentMethod,
                               onChanged: (value) {
@@ -1341,10 +1173,12 @@ class _BookingScreenState extends State<BookingScreenForHotel> {
                               Text(
                                 'I have read and accept the Terms & Conditions'
                                     .tr,
-                                style: TextStyle(
-                                  fontFamily: 'Inter'.tr,
-                                  fontSize: 12,
-                                ),
+                                  style: GoogleFonts.spaceGrotesk(
+                                    fontWeight: FontWeight.w400,
+                                    fontSize: 12,
+
+
+                                  )
                               )
                             ],
                           ),
@@ -1820,4 +1654,23 @@ class _BookingScreenState extends State<BookingScreenForHotel> {
 //     );
 //   }
 // }
+}
+InputDecoration _greyFilledDecoration(String hint) {
+  return InputDecoration(
+    hintText: hint,
+    filled: true,
+    hintStyle: GoogleFonts.spaceGrotesk(
+      fontSize: 16,
+      fontWeight: FontWeight.w400,
+      color: Colors.black54,
+    ),
+    fillColor: Colors.grey.shade200,
+    border: InputBorder.none,
+    enabledBorder: InputBorder.none,
+    focusedBorder: InputBorder.none,
+    errorBorder: InputBorder.none,
+    focusedErrorBorder: InputBorder.none,
+    contentPadding:
+    const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+  );
 }

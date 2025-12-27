@@ -46,32 +46,51 @@ class FlightProvider with ChangeNotifier {
   }) async {
     log("Flight List API Call for category index $index ===>");
     await loadToken();
+    final Map<String, String> queryParams = {
+      if (searchParams?['from_where'] != null)
+        'from_where': searchParams!['from_where'].toString(),
+
+      if (searchParams?['to_where'] != null)
+        'to_where': searchParams!['to_where'].toString(),
+
+      if (searchParams?['start'] != null)
+        'start': DateFormat('yyyy-MM-dd')
+            .format(searchParams!['start'] as DateTime),
+
+      if (searchParams?['children'] != null)
+        'children': searchParams!['children'].toString(),
+      if (searchParams?['travelers'] != null)
+        'travelers': searchParams!['travelers'].toString(),
+
+      if (sortBy != null)
+        'orderby': sortBy!,
+    };
 
     // Convert searchParams to query parameters
-    final queryParams = {
-      if (searchParams?['from_where'] != null)
-        'from_where': searchParams!['from_where'],
-      if (searchParams?['to_where'] != null)
-        'to_where': searchParams!['to_where'],
-      if (searchParams?['start'] != null)
-        'start':
-            DateFormat('MM/dd/yyyy').format(searchParams!['start'] as DateTime),
-      if (searchParams?['travelers'] != null)
-        'travelers': json.encode(searchParams!['travelers']),
-      if (sortBy != null) 'orderby': sortBy,
-      if (searchParams?['price_range'] != null)
-        'price_range': searchParams?['price_range'],
-      if (searchParams?['flight_types'] != null &&
-          searchParams?['flight_types'] != '')
-        'attrs[12]': searchParams?['flight_types'],
-      if (searchParams?['facilities'] != null &&
-          searchParams?['facilities'] != '')
-        'attrs[13]': searchParams?['facilities'],
-    };
+    // final queryParams = {
+    //   if (searchParams?['from_where'] != null)
+    //     'from_where': searchParams!['from_where'],
+    //   if (searchParams?['to_where'] != null)
+    //     'to_where': searchParams!['to_where'],
+    //   if (searchParams?['start'] != null)
+    //     'start':
+    //         DateFormat('MM/dd/yyyy').format(searchParams!['start'] as DateTime),
+    //   if (searchParams?['travelers'] != null)
+    //     'travelers': json.encode(searchParams!['travelers']),
+    //   if (sortBy != null) 'orderby': sortBy,
+    //   if (searchParams?['price_range'] != null)
+    //     'price_range': searchParams?['price_range'],
+    //   if (searchParams?['flight_types'] != null &&
+    //       searchParams?['flight_types'] != '')
+    //     'attrs[12]': searchParams?['flight_types'],
+    //   if (searchParams?['facilities'] != null &&
+    //       searchParams?['facilities'] != '')
+    //     'attrs[13]': searchParams?['facilities'],
+    // };
 
     final queryString = Uri(queryParameters: queryParams).query;
     String url = '${ApiUrls.baseUrl}${ApiUrls.flightSearch}?$queryString';
-    log('$url checkurl');
+    log('################################### Hotels     $url checkurl');
 
     final result = await makeRequest(
       url,

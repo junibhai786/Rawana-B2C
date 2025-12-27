@@ -1,6 +1,6 @@
 class ApiUrls {
   //// production
-  static const baseUrl = "https://travolyo.com/api/";
+  static const baseUrl = "https://dentirostral-pseudoindependently-michell.ngrok-free.dev/api/";              //"https://travolyo.com/api/";
   static const webUrl = "https://travolyo.com/admin/";
 
   static const login = "auth/login";
@@ -33,7 +33,7 @@ class ApiUrls {
   static const deleteAccount = "delete-my-account";
   static const updateProfilePicture = "upload-profile-img";
   static const resendOtp = "auth/resend_otp";
-  static const homeListEnd = "home";
+  static const homeListEnd = "home-page";
   static const hotelListEnd = "home/hotel";
   static const carListEndPoint = "home/car";
   static const eventListEndPoint = "home/event";
@@ -45,7 +45,7 @@ class ApiUrls {
   static const vendorpublishcar = "vendor/car/publish";
 
   /// details
-  static const hotelDetailsEndPoint = "hotel/details";
+  static const hotelDetailsEndPoint = "hotel/detail";
   static const carDetailsEndPoint = "car/details";
   static const vendorcarDetailsEndPoint = "vendor/car/details";
 
@@ -74,6 +74,7 @@ class ApiUrls {
   static const hotelcheckout = 'checkout/me';
   static const bookinghistoryendpoint = 'me/booking-history';
   static const hotelSearch = 'hotel/search';
+  static const hotellocations='locations';
   static const carSearch = 'car/search';
   static const boatSearch = 'boat/search';
   static const tourSearch = 'tour/search';

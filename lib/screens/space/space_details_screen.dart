@@ -373,23 +373,45 @@ class _SpacePageState extends State<SpacePage> {
                                 children: [
                                   Row(
                                     children: [
-                                      buildIconText('assets/haven/bed.png', "No. of Bed".tr,
-                                          item.spaceDetail?.data?.bed?.toString() ?? ""),
-                                      SizedBox(width: 50,),
-                                      buildIconText('assets/haven/bathroom.png', "No. of Bathroom".tr,
-                                          item.spaceDetail?.data?.bathroom?.toString() ?? ""),
+                                      Expanded(
+                                        child: buildIconText(
+                                          'assets/haven/bed.png',
+                                          "No. of Bed".tr,
+                                          item.spaceDetail?.data?.bed?.toString() ?? "",
+                                        ),
+                                      ),
+                                      SizedBox(width: 12),
+                                      Expanded(
+                                        child: buildIconText(
+                                          'assets/haven/bathroom.png',
+                                          "No. of Bathroom".tr,
+                                          item.spaceDetail?.data?.bathroom?.toString() ?? "",
+                                        ),
+                                      ),
                                     ],
                                   ),
+
                                   SizedBox(width: 60,),
                                   Row(
                                     children: [
-                                      buildIconText('assets/haven/square.png', "Square".tr,
-                                          item.spaceDetail?.data?.square?.toString() ?? ""),
-                                      SizedBox(width: 80,),
-                                      buildIconText('assets/haven/location.png', "Location".tr,
-                                          item.spaceDetail?.data?.location?.name ?? ""),
+                                      Expanded(
+                                        child: buildIconText(
+                                          'assets/haven/square.png',
+                                          "Square".tr,
+                                          item.spaceDetail?.data?.square?.toString() ?? "",
+                                        ),
+                                      ),
+                                      SizedBox(width: 12),
+                                      Expanded(
+                                        child: buildIconText(
+                                          'assets/haven/location.png',
+                                          "Location".tr,
+                                          item.spaceDetail?.data?.location?.name ?? "",
+                                        ),
+                                      ),
                                     ],
-                                  )
+                                  ),
+
 
 
                                 ],
@@ -688,7 +710,7 @@ class _SpacePageState extends State<SpacePage> {
                     color: const Color(0xFF05A8C7),
                     borderRadius: BorderRadius.circular(10.0), // Rounded corners
                   ),
-                  padding: const EdgeInsets.symmetric(horizontal: 100.0,vertical: 6),
+                  padding: const EdgeInsets.symmetric(horizontal: 115.0,vertical: 6),
 
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -720,16 +742,16 @@ class _SpacePageState extends State<SpacePage> {
                               color: textColor,
                             ),
                           ),
-                          Text(
-                            'Based on ${spaceDetail.data?.reviewScore?.totalReview ?? 0} reviews'
-                                .tr,
-                            textAlign: TextAlign.center,
-                            style: GoogleFonts.spaceGrotesk( fontWeight: FontWeight.w400, // Regular
-                              fontSize: 14,
-                              height: 20 / 14,
-                              letterSpacing: 0,
-                              color: textColor,),
-                          ),
+                          // Text(
+                          //   'Based on ${spaceDetail.data?.reviewScore?.totalReview ?? 0} reviews'
+                          //       .tr,
+                          //   textAlign: TextAlign.center,
+                          //   style: GoogleFonts.spaceGrotesk( fontWeight: FontWeight.w400, // Regular
+                          //     fontSize: 14,
+                          //     height: 20 / 14,
+                          //     letterSpacing: 0,
+                          //     color: textColor,),
+                          // ),
 
                         ],
                       ),
@@ -1441,19 +1463,35 @@ class _SpacePageState extends State<SpacePage> {
 
   Widget buildIconText(String imagePath, String text, String subtext) {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Image.asset(
           imagePath,
+          width: 20,
+          height: 20,
         ),
-        SizedBox(width: 16),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(text),
-            SizedBox(height: 8),
-            Text(subtext, style: TextStyle(color: Colors.grey, fontSize: 12)),
-          ],
+        SizedBox(width: 12),
+        Flexible( // ✅ NOT Expanded
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                text,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              SizedBox(height: 4),
+              Text(
+                subtext,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: Colors.grey,
+                  fontSize: 12,
+                ),
+              ),
+            ],
+          ),
         ),
       ],
     );
@@ -1552,17 +1590,14 @@ class _SpacePageState extends State<SpacePage> {
                                         alignment: Alignment.center,
                                         child: Text(
                                           'Book'.tr,
-                                          style: TextStyle(
-                                            fontFamily: 'Inter'.tr,
-                                            color: isBookTab
-                                                ? kSecondaryColor
-                                                : grey,
-                                            fontSize: 14,
-                                            fontWeight: isBookTab
-                                                ? FontWeight.bold
-                                                : FontWeight.normal,
-                                          ),
+                                          style:  GoogleFonts.spaceGrotesk(
+                                        color: isBookTab ? kSecondaryColor : grey,
+                                          fontSize: 14,
+                                          fontWeight:
+                                          isBookTab ? FontWeight.bold : FontWeight.normal,
                                         ),
+
+                                      ),
                                       ),
                                     ),
                                   ),
@@ -1593,15 +1628,11 @@ class _SpacePageState extends State<SpacePage> {
                                         alignment: Alignment.center,
                                         child: Text(
                                           'Enquiry'.tr,
-                                          style: TextStyle(
-                                            fontFamily: 'Inter'.tr,
-                                            color: !isBookTab
-                                                ? kSecondaryColor
-                                                : grey,
+                                          style: GoogleFonts.spaceGrotesk(
+                                            color: isBookTab ? kSecondaryColor : grey,
                                             fontSize: 14,
-                                            fontWeight: !isBookTab
-                                                ? FontWeight.bold
-                                                : FontWeight.normal,
+                                            fontWeight:
+                                            isBookTab ? FontWeight.bold : FontWeight.normal,
                                           ),
                                         ),
                                       ),
@@ -1638,12 +1669,11 @@ class _SpacePageState extends State<SpacePage> {
                                       child: Text(
                                         'From \$${txSpaceDetail?.data?.discountPercent == null ? txSpaceDetail?.data?.price : (txSpaceDetail?.data?.salePrice == 0 ? txSpaceDetail?.data?.price : txSpaceDetail?.data?.salePrice)}'
                                             .tr,
-                                        style: TextStyle(
-                                          fontSize: 20,
-                                          fontFamily: 'Inter'.tr,
-                                          fontWeight: FontWeight.w600,
-                                          color: kPrimaryColor,
-                                        ),
+                                          style: GoogleFonts.spaceGrotesk(
+                                            fontWeight: FontWeight.w400,
+                                            fontSize: 24,
+                                            color: Colors.black,
+                                          )
                                       )),
                                 ),
 
@@ -1704,11 +1734,11 @@ class _SpacePageState extends State<SpacePage> {
                                                   children: [
                                                     Text(
                                                       "From".tr,
-                                                      style: TextStyle(
-                                                        fontFamily: 'Inter'.tr,
-                                                        color: kPrimaryColor,
-                                                        fontSize: 12,
-                                                      ),
+                                                        style: GoogleFonts.spaceGrotesk(
+                                                          fontWeight: FontWeight.w600,
+                                                          fontSize: 12,
+
+                                                        )
                                                     ),
                                                     SizedBox(height: 5),
                                                     Container(
@@ -1808,10 +1838,8 @@ class _SpacePageState extends State<SpacePage> {
                                                       CrossAxisAlignment.center,
                                                   children: [
                                                     Text("To".tr,
-                                                        style: TextStyle(
-                                                          fontFamily:
-                                                              'Inter'.tr,
-                                                          color: kPrimaryColor,
+                                                        style: GoogleFonts.spaceGrotesk(
+                                                          fontWeight: FontWeight.w600,
                                                           fontSize: 12,
                                                         )),
                                                     SizedBox(height: 5),
@@ -1871,12 +1899,11 @@ class _SpacePageState extends State<SpacePage> {
                                             children: [
                                               Text(
                                                 "Guests".tr,
-                                                style: TextStyle(
-                                                  fontSize: 12,
-                                                  fontFamily: 'Inter'.tr,
-                                                  fontWeight: FontWeight.w600,
-                                                  color: kPrimaryColor,
-                                                ),
+                                                  style: GoogleFonts.spaceGrotesk(
+                                                    fontWeight: FontWeight.w600,
+                                                    fontSize: 12,
+
+                                                  )
                                               ),
                                               SizedBox(height: 10),
                                               Container(
@@ -1898,11 +1925,12 @@ class _SpacePageState extends State<SpacePage> {
                                                       children: [
                                                         Text(
                                                           "Adults".tr,
-                                                          style: TextStyle(
-                                                            fontFamily:
-                                                                'Inter'.tr,
-                                                            fontSize: 14,
-                                                          ),
+                                                            style: GoogleFonts.spaceGrotesk(
+                                                              fontWeight: FontWeight.w600,
+                                                              fontSize: 12,
+                                                              color: Colors.black,
+
+                                                            )
                                                         ),
                                                         Row(
                                                           children: [
@@ -1946,16 +1974,11 @@ class _SpacePageState extends State<SpacePage> {
                                                               child: Center(
                                                                 child: Text(
                                                                   "$adults",
-                                                                  style:
-                                                                      TextStyle(
-                                                                    fontFamily:
-                                                                        'Inter',
-                                                                    fontSize:
-                                                                        16,
-                                                                    fontWeight:
-                                                                        FontWeight
-                                                                            .w500,
-                                                                  ),
+                                                                    style: GoogleFonts.spaceGrotesk(
+                                                                      fontWeight: FontWeight.w700,
+                                                                      fontSize: 16,
+
+                                                                    )
                                                                 ),
                                                               ),
                                                             ),
@@ -2015,11 +2038,12 @@ class _SpacePageState extends State<SpacePage> {
                                                       children: [
                                                         Text(
                                                           "Children".tr,
-                                                          style: TextStyle(
-                                                            fontFamily:
-                                                                'Inter'.tr,
-                                                            fontSize: 14,
-                                                          ),
+                                                            style: GoogleFonts.spaceGrotesk(
+                                                              fontWeight: FontWeight.w600,
+                                                              fontSize: 12,
+                                                              color: Colors.black,
+
+                                                            )
                                                         ),
                                                         Row(
                                                           children: [
@@ -2063,16 +2087,11 @@ class _SpacePageState extends State<SpacePage> {
                                                               child: Center(
                                                                 child: Text(
                                                                   "$children",
-                                                                  style:
-                                                                      TextStyle(
-                                                                    fontFamily:
-                                                                        'Inter',
-                                                                    fontSize:
-                                                                        16,
-                                                                    fontWeight:
-                                                                        FontWeight
-                                                                            .w500,
-                                                                  ),
+                                                                    style: GoogleFonts.spaceGrotesk(
+                                                                      fontWeight: FontWeight.w700,
+                                                                      fontSize: 16,
+
+                                                                    )
                                                                 ),
                                                               ),
                                                             ),
@@ -2184,11 +2203,12 @@ class _SpacePageState extends State<SpacePage> {
                                   padding: EdgeInsets.symmetric(horizontal: 15),
                                   alignment: Alignment.centerLeft,
                                   child: Text("Extra Prices:".tr,
-                                      style: TextStyle(
-                                          fontFamily: 'Inter'.tr,
-                                          color: kPrimaryColor,
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w700)),
+                                      style: GoogleFonts.spaceGrotesk(
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: 16,
+
+                                      )
+                                  ),
                                 ),
                                 if (txSpaceDetail?.data?.extraPrice != null)
                                   ...(txSpaceDetail?.data?.extraPrice)!
@@ -2221,9 +2241,17 @@ class _SpacePageState extends State<SpacePage> {
 
                                                 setState1(() {});
                                               }),
-                                          Text(element.name ?? ""),
+                                          Text(element.name ?? "",style: GoogleFonts.spaceGrotesk(
+                                            fontWeight: FontWeight.w400,
+                                            fontSize: 16,
+                                            color: Colors.black54,
+                                          )),
                                           Spacer(),
-                                          Text("\$${element.price}"),
+                                          Text("\$${element.price}", style:GoogleFonts.spaceGrotesk(
+                                            fontWeight: FontWeight.w400,
+                                            fontSize: 16,
+
+                                          )),
                                         ],
                                       ),
                                     );
@@ -2240,9 +2268,17 @@ class _SpacePageState extends State<SpacePage> {
                                         bottom: 10, left: 15, right: 15),
                                     child: Row(
                                       children: [
-                                        Text(element.name ?? ""),
+                                        Text(element.name ?? "",style: GoogleFonts.spaceGrotesk(
+                                          fontWeight: FontWeight.w400,
+                                          fontSize: 16,
+                                          color: Colors.black54,
+                                        )),
                                         Spacer(),
-                                        Text("\$${element.price}"),
+                                        Text("\$${element.price}",style:GoogleFonts.spaceGrotesk(
+                                          fontWeight: FontWeight.w400,
+                                          fontSize: 16,
+
+                                        )),
                                       ],
                                     ),
                                   );
@@ -2259,15 +2295,19 @@ class _SpacePageState extends State<SpacePage> {
                                   child: Row(
                                     children: [
                                       Text("Total".tr,
-                                          style: TextStyle(
-                                              fontSize: 20,
-                                              fontWeight: FontWeight.bold)),
+                                          style:GoogleFonts.spaceGrotesk(
+                                            fontWeight: FontWeight.w700,
+                                            fontSize: 18,
+
+                                          )),
                                       Spacer(),
                                       Text(
                                           "\$${_calculateTotalPrice(txSpaceDetail, days, total, extraPriceValue)}",
-                                          style: TextStyle(
-                                              fontSize: 20,
-                                              fontWeight: FontWeight.bold)),
+                                          style:GoogleFonts.spaceGrotesk(
+                                            fontWeight: FontWeight.w700,
+                                            fontSize: 18,
+
+                                          )),
                                     ],
                                   ),
                                 ),
@@ -2365,191 +2405,224 @@ class _SpacePageState extends State<SpacePage> {
                               if (isBookTab == false) ...[
                                 Container(
                                   padding: EdgeInsets.only(
-                                    bottom: MediaQuery.of(context)
-                                        .viewInsets
-                                        .bottom,
+                                    bottom: MediaQuery.of(context).viewInsets.bottom,
                                     left: 16,
                                     right: 16,
                                     top: 16,
                                   ),
-                                  child: Form(
-                                    key: formKey,
-                                    child: Column(
-                                      mainAxisSize: MainAxisSize.min,
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.stretch,
-                                      children: [
-                                        Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            Text(
-                                              'Enquiry'.tr,
-                                              style: TextStyle(
-                                                fontSize: 20,
-                                                fontWeight: FontWeight.bold,
+                                  child: DefaultTextStyle(
+                                    style: GoogleFonts.spaceGrotesk(),
+                                    child: Form(
+                                      key: formKey,
+                                      child: Column(
+                                        mainAxisSize: MainAxisSize.min,
+                                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                                        children: [
+                                          Row(
+                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              Text(
+                                                'Enquiry'.tr,
+                                                style: GoogleFonts.spaceGrotesk(
+                                                  fontSize: 20,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: Colors.black,
+                                                ),
                                               ),
-                                            ),
-                                            IconButton(
-                                              onPressed: () =>
-                                                  Navigator.pop(context),
-                                              icon: const Icon(Icons.close),
-                                            ),
-                                          ],
-                                        ),
-                                        Divider(thickness: 1),
-                                        const SizedBox(height: 16),
-                                        TextFormField(
-                                          controller: nameController,
-                                          decoration: InputDecoration(
-                                            labelText: 'Name*'.tr,
-                                            border: OutlineInputBorder(),
+                                            ],
                                           ),
-                                          style: TextStyle(height: 1),
-                                          validator: (value) {
-                                            if (value == null ||
-                                                value.isEmpty) {
-                                              return 'Please enter your name'
-                                                  .tr;
-                                            }
-                                            return null;
-                                          },
-                                        ),
-                                        const SizedBox(height: 16),
-                                        TextFormField(
-                                          controller: emailController,
-                                          keyboardType:
-                                              TextInputType.emailAddress,
-                                          decoration: InputDecoration(
-                                            labelText: 'Email*'.tr,
-                                            border: OutlineInputBorder(),
-                                          ),
-                                          style: TextStyle(height: 1),
-                                          validator: (value) {
-                                            if (value == null ||
-                                                value.isEmpty) {
-                                              return 'Please enter your email'
-                                                  .tr;
-                                            }
-                                            if (!RegExp(
-                                                    r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
-                                                .hasMatch(value)) {
-                                              return 'Please enter a valid email address';
-                                            }
-                                            return null;
-                                          },
-                                        ),
-                                        const SizedBox(height: 16),
-                                        TextFormField(
-                                          controller: phoneController,
-                                          keyboardType: TextInputType.phone,
-                                          decoration: InputDecoration(
-                                            labelText: 'Phone*'.tr,
-                                            border: OutlineInputBorder(),
-                                          ),
-                                          style: TextStyle(height: 1),
-                                          validator: (value) {
-                                            if (value == null ||
-                                                value.isEmpty) {
-                                              return 'Please enter your phone number'
-                                                  .tr;
-                                            }
-                                            if (!RegExp(r'^\+?[\d\s-]{10,}$')
-                                                .hasMatch(value)) {
-                                              return 'Please enter a valid phone number'
-                                                  .tr;
-                                            }
-                                            return null;
-                                          },
-                                        ),
-                                        const SizedBox(height: 16),
-                                        TextFormField(
-                                          controller: noteController,
-                                          maxLines: 3,
-                                          decoration: InputDecoration(
-                                            labelText: 'Note*'.tr,
-                                            border: OutlineInputBorder(),
-                                          ),
-                                          style: TextStyle(height: 1),
-                                          validator: (value) {
-                                            if (value == null ||
-                                                value.isEmpty) {
-                                              return 'Please enter a note'.tr;
-                                            }
-                                            return null;
-                                          },
-                                        ),
-                                        const SizedBox(height: 24),
-                                        Divider(thickness: 1),
-                                        SizedBox(
-                                          width: 150,
-                                          child: ElevatedButton(
-                                            onPressed: () async {
-                                              if (formKey.currentState!
-                                                  .validate()) {
-                                                final homeProvider =
-                                                    Provider.of<HomeProvider>(
-                                                        context,
-                                                        listen: false);
-                                                final result =
-                                                    await homeProvider
-                                                        .sendEnquiry(
-                                                  serviceId:
-                                                      "${txSpaceDetail?.data?.id}",
-                                                  serviceType: "space",
-                                                  name: nameController.text,
-                                                  email: emailController.text,
-                                                  phone: phoneController.text,
-                                                  note: noteController.text,
-                                                );
 
-                                                if (result != null &&
-                                                    result['status'] == 1) {
-                                                  Navigator.pop(context);
-                                                  ScaffoldMessenger.of(context)
-                                                      .showSnackBar(
-                                                    SnackBar(
-                                                        content: Text(result[
-                                                                'message'] ??
-                                                            'Enquiry submitted successfully'
-                                                                .tr)),
-                                                  );
-                                                } else {
-                                                  ScaffoldMessenger.of(context)
-                                                      .showSnackBar(
-                                                    SnackBar(
-                                                        content: Text(
-                                                            'Error: ${result?['message'] ?? ''}')),
-                                                  );
-                                                }
-                                              }
-                                            },
-                                            style: ElevatedButton.styleFrom(
-                                              backgroundColor: kSecondaryColor,
-                                              foregroundColor: Colors.white,
-                                              minimumSize: const Size(0, 55),
-                                              shape: RoundedRectangleBorder(
-                                                borderRadius:
-                                                    BorderRadius.circular(5),
-                                              ),
+
+                                          const SizedBox(height: 16),
+
+                                          /// Name
+                                          TextFormField(
+                                            controller: nameController,
+                                            style: GoogleFonts.spaceGrotesk(fontSize: 14),
+                                            decoration: InputDecoration(
+                                              labelText: 'Name*'.tr,
+                                              labelStyle: GoogleFonts.spaceGrotesk(fontSize: 14),
+                                              filled: true,
+                                              fillColor: Colors.grey.shade200,
+                                              border: InputBorder.none,
+                                              enabledBorder: InputBorder.none,
+                                              focusedBorder: InputBorder.none,
+                                              errorBorder: InputBorder.none,
+                                              focusedErrorBorder: InputBorder.none,
+                                              contentPadding: const EdgeInsets.symmetric(
+                                                  horizontal: 14, vertical: 14),
                                             ),
-                                            child: Text(
-                                              'Send Now'.tr,
-                                              style: TextStyle(
-                                                color: kBackgroundColor,
-                                                fontSize: 16,
-                                                fontFamily: 'Inter',
-                                                fontWeight: FontWeight.w700,
+                                            validator: (value) {
+                                              if (value == null || value.isEmpty) {
+                                                return 'Please enter your name'.tr;
+                                              }
+                                              return null;
+                                            },
+                                          ),
+
+                                          const SizedBox(height: 16),
+
+                                          /// Email
+                                          TextFormField(
+                                            controller: emailController,
+                                            keyboardType: TextInputType.emailAddress,
+                                            style: GoogleFonts.spaceGrotesk(fontSize: 14),
+                                            decoration: InputDecoration(
+                                              labelText: 'Email*'.tr,
+                                              labelStyle: GoogleFonts.spaceGrotesk(fontSize: 14),
+                                              filled: true,
+                                              fillColor: Colors.grey.shade200,
+                                              border: InputBorder.none,
+                                              enabledBorder: InputBorder.none,
+                                              focusedBorder: InputBorder.none,
+                                              errorBorder: InputBorder.none,
+                                              focusedErrorBorder: InputBorder.none,
+                                              contentPadding: const EdgeInsets.symmetric(
+                                                  horizontal: 14, vertical: 14),
+                                            ),
+                                            validator: (value) {
+                                              if (value == null || value.isEmpty) {
+                                                return 'Please enter your email'.tr;
+                                              }
+                                              if (!RegExp(
+                                                  r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
+                                                  .hasMatch(value)) {
+                                                return 'Please enter a valid email address'.tr;
+                                              }
+                                              return null;
+                                            },
+                                          ),
+
+                                          const SizedBox(height: 16),
+
+                                          /// Phone
+                                          TextFormField(
+                                            controller: phoneController,
+                                            keyboardType: TextInputType.phone,
+                                            style: GoogleFonts.spaceGrotesk(fontSize: 14),
+                                            decoration: InputDecoration(
+                                              labelText: 'Phone*'.tr,
+                                              labelStyle: GoogleFonts.spaceGrotesk(fontSize: 14),
+                                              filled: true,
+                                              fillColor: Colors.grey.shade200,
+                                              border: InputBorder.none,
+                                              enabledBorder: InputBorder.none,
+                                              focusedBorder: InputBorder.none,
+                                              errorBorder: InputBorder.none,
+                                              focusedErrorBorder: InputBorder.none,
+                                              contentPadding: const EdgeInsets.symmetric(
+                                                  horizontal: 14, vertical: 14),
+                                            ),
+                                            validator: (value) {
+                                              if (value == null || value.isEmpty) {
+                                                return 'Please enter your phone number'.tr;
+                                              }
+                                              if (!RegExp(r'^\+?[\d\s-]{10,}$')
+                                                  .hasMatch(value)) {
+                                                return 'Please enter a valid phone number'.tr;
+                                              }
+                                              return null;
+                                            },
+                                          ),
+
+                                          const SizedBox(height: 16),
+
+                                          /// Note
+                                          TextFormField(
+                                            controller: noteController,
+                                            maxLines: 3,
+                                            style: GoogleFonts.spaceGrotesk(fontSize: 14),
+                                            decoration: InputDecoration(
+                                              labelText: 'Note*'.tr,
+                                              labelStyle: GoogleFonts.spaceGrotesk(fontSize: 14),
+                                              filled: true,
+                                              fillColor: Colors.grey.shade200,
+                                              border: InputBorder.none,
+                                              enabledBorder: InputBorder.none,
+                                              focusedBorder: InputBorder.none,
+                                              errorBorder: InputBorder.none,
+                                              focusedErrorBorder: InputBorder.none,
+                                              contentPadding: const EdgeInsets.symmetric(
+                                                  horizontal: 14, vertical: 14),
+                                            ),
+                                            validator: (value) {
+                                              if (value == null || value.isEmpty) {
+                                                return 'Please enter a note'.tr;
+                                              }
+                                              return null;
+                                            },
+                                          ),
+
+                                          const SizedBox(height: 24),
+
+                                          SizedBox(
+                                            width: 150,
+                                            child: ElevatedButton(
+                                              onPressed: () async {
+                                                if (formKey.currentState!.validate()) {
+                                                  final homeProvider =
+                                                  Provider.of<HomeProvider>(context, listen: false);
+
+                                                  final result =
+                                                  await homeProvider.sendEnquiry(
+                                                    serviceId:
+                                                    "${txSpaceDetail?.data?.id}",
+                                                    serviceType: "space",
+                                                    name: nameController.text,
+                                                    email: emailController.text,
+                                                    phone: phoneController.text,
+                                                    note: noteController.text,
+                                                  );
+
+                                                  if (result != null && result['status'] == 1) {
+                                                    Navigator.pop(context);
+                                                    ScaffoldMessenger.of(context).showSnackBar(
+                                                      SnackBar(
+                                                        content: Text(
+                                                          result['message'] ??
+                                                              'Enquiry submitted successfully'.tr,
+                                                          style: GoogleFonts.spaceGrotesk(),
+                                                        ),
+                                                      ),
+                                                    );
+                                                  } else {
+                                                    ScaffoldMessenger.of(context).showSnackBar(
+                                                      SnackBar(
+                                                        content: Text(
+                                                          'Error: ${result?['message'] ?? ''}',
+                                                          style: GoogleFonts.spaceGrotesk(),
+                                                        ),
+                                                      ),
+                                                    );
+                                                  }
+                                                }
+                                              },
+                                              style: ElevatedButton.styleFrom(
+                                                backgroundColor: kSecondaryColor,
+                                                foregroundColor: Colors.white,
+                                                minimumSize: const Size(0, 55),
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius: BorderRadius.circular(5),
+                                                ),
+                                              ),
+                                              child: Text(
+                                                'Send Now'.tr,
+                                                style: GoogleFonts.spaceGrotesk(
+                                                  fontSize: 16,
+                                                  fontWeight: FontWeight.w700,
+                                                  color: kBackgroundColor,
+                                                ),
                                               ),
                                             ),
                                           ),
-                                        ),
-                                        Divider(thickness: 1),
-                                      ],
+
+                                        ],
+                                      ),
                                     ),
                                   ),
                                 ),
                               ],
+
                             ],
                           ),
                         ),

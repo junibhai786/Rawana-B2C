@@ -33,6 +33,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:http/http.dart' as http;
 
 import '../modals/country_modal.dart';
+import '../modals/fetch_locations.dart';
 
 class HomeProvider with ChangeNotifier {
   String? _token;
@@ -70,6 +71,12 @@ class HomeProvider with ChangeNotifier {
   CouponResponse? couponResponseList;
   ManageService? manageServiceResponse;
 
+  //Fetch locations for hotel search filter.
+  bool isLocationLoading = false;
+
+  LocationResponse? locationResponse;
+  List<LocationItem> locations = [];
+  List<LocationItem> filteredLocations = [];
   ////end
   int _selectedHomeTab = 0;
   TabController? tabController;
@@ -87,6 +94,79 @@ class HomeProvider with ChangeNotifier {
     tabController?.animateTo(index);
     notifyListeners();
   }
+  String selectedCity = '';
+  String departureCity='';
+  String destinationCity='';
+
+  void selectCity(String city) {
+    selectedCity = city;
+    notifyListeners();
+  }
+
+
+  void selectDepartureCity(String city) {
+    departureCity = city;
+    notifyListeners();
+  }
+
+  void selectDestinationCity(String city) {
+    destinationCity = city;
+    notifyListeners();
+  }
+  //Fetch locations for hotel search Api
+  Future<void> fetchLocations() async {
+    log('******************************Check A *******************************************');
+
+  //  if (locations.isNotEmpty) return; // 🛑 cache
+
+    isLocationLoading = true;
+    notifyListeners();
+
+    try {
+      final url = Uri.parse(ApiUrls.baseUrl + ApiUrls.hotellocations);
+log('*************************************************************************${url.toString()}');
+      final response = await http.get(url);
+
+      if (response.statusCode == 200) {
+        log('*******************************   Response is 200  *************************');
+        final Map<String, dynamic> json = jsonDecode(response.body) as Map<String, dynamic>;
+        log(json.toString());
+        log('******************************Check B *******************************************');
+
+        final parsed = LocationResponse.fromJson(json);
+log('response is ${parsed.toString()}');
+        locationResponse = parsed;
+        locations = parsed.data ?? [];
+        filteredLocations = locations;
+      } else {
+        log('*******************************   Response Failed  *************************');
+
+        debugPrint('Failed to fetch locations: ${response.statusCode}');
+      }
+    } catch (e) {
+      log('*******************************   Response in catch *************************');
+
+      debugPrint('Fetch locations error: $e');
+    } finally {
+      isLocationLoading = false;
+      notifyListeners();
+    }
+  }
+
+
+  void filterLocations(String query) {
+    if (query.isEmpty) {
+      filteredLocations = locations;
+    } else {
+      filteredLocations = locations
+          .where((e) =>
+      e.title?.toLowerCase().contains(query.toLowerCase()) ?? false)
+          .toList();
+    }
+    notifyListeners();
+  }
+
+
 
   Future<bool> deletevendorcar({
     required String id,
@@ -441,9 +521,22 @@ class HomeProvider with ChangeNotifier {
       return null;
     }
   }
+  String formatDate(dynamic value) {
+    if (value == null) return '';
+    if (value is DateTime) {
+      return DateFormat('yyyy-MM-dd').format(value);
+    }
+    if (value is String) {
+      return DateFormat('yyyy-MM-dd')
+          .format(DateTime.parse(value));
+    }
+    throw Exception('Invalid date type');
+  }
+
 
   Future<bool> hotellistapi(int index,
-      {String? sortBy,
+      {
+        String? sortBy,
       String? searchQuery,
       required Map<String, Object?> searchParams}) async {
     log("check here");
@@ -452,45 +545,48 @@ class HomeProvider with ChangeNotifier {
       await loadToken();
 
       // Convert searchParams to query parameters
-      final queryParams = {
-        if (searchParams['location'] != null)
-          'location': searchParams['location'],
-        if (searchParams['startDate'] != null)
-          'start': DateFormat('MM/dd/yyyy')
-              .format(searchParams['startDate'] as DateTime),
-        if (searchParams['endDate'] != null)
-          'end': DateFormat('MM/dd/yyyy')
-              .format(searchParams['endDate'] as DateTime),
-        if (searchParams['rooms'] != null)
-          'room': searchParams['rooms'].toString(),
-        if (searchParams['adults'] != null)
-          'adults': searchParams['adults'].toString(),
+      final queryParams = <String, String>{
+        if (searchParams['city'] != null)
+          'location_id': searchParams['city'].toString(),
+
+        if (searchParams['check_in'] != null)
+          'start_date': formatDate(searchParams['check_in']),
+
+        if (searchParams['check_out'] != null)
+          'end_date': formatDate(searchParams['check_out']),
+
+        if (searchParams['guests'] != null)
+          'adults': searchParams['guests'].toString(),
+
         if (searchParams['children'] != null)
           'children': searchParams['children'].toString(),
-        if (searchParams['star_rate'] != null &&
-            searchParams['star_rate'] != '')
-          'star_rate': searchParams['star_rate'],
-        if (searchParams['review_score'] != null &&
-            searchParams['review_score'] != '')
-          'review_score': searchParams['review_score'],
-        if (searchParams['property_type'] != null &&
-            searchParams['property_type'] != '')
-          'attrs[5]': searchParams['property_type'],
-        if (searchParams['facilities'] != null &&
-            searchParams['facilities'] != '')
-          'attrs[6]': searchParams['facilities'],
-        if (searchParams['services'] != null && searchParams['services'] != '')
-          'attrs[7]': searchParams['services'],
-        if (searchParams['price_range'] != null)
-          'price_range': searchParams['price_range'],
-        if (sortBy != null) 'orderby': sortBy,
+
+        if (searchParams['rooms'] != null)
+          'rooms': searchParams['rooms'].toString(),
+
+        if (searchParams['page'] != null)
+          'page': searchParams['page'].toString(),
+
+        if (searchParams['per_page'] != null)
+          'per_page': searchParams['per_page'].toString(),
+
+        if (sortBy != null)
+          'orderby': sortBy,
       };
 
-      final queryString = Uri(queryParameters: queryParams).query;
-      final url = '${ApiUrls.baseUrl}${ApiUrls.hotelSearch}?$queryString';
-      log('$url checkurl');
 
-      log("API URL: $url");
+
+      final queryString = Uri(queryParameters: queryParams).query;
+      final uri = Uri.parse(
+        '${ApiUrls.baseUrl}${ApiUrls.hotelSearch}',
+      ).replace(queryParameters: queryParams);
+
+      final url = uri.toString();
+      log('API URL: $url');
+
+
+      log("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%API URL: $url");
+     // return true;
       final result =
           await makeRequest(url, 'GET', {}, _token ?? '', requiresAuth: true);
 

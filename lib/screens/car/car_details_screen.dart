@@ -868,21 +868,19 @@ class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
                                         children: [
                                           Text(
                                             'From '.tr,
-                                            style: TextStyle(
-                                              fontSize: 20,
-                                              fontFamily: 'Inter'.tr,
+                                            style: GoogleFonts.spaceGrotesk(
                                               fontWeight: FontWeight.w400,
-                                              color: kPrimaryColor,
-                                            ),
+                                              fontSize: 24,
+                                              color: Colors.black,
+                                            )
                                           ),
                                           Text(
                                             '\$${txCarDetail?.data?.salePrice == 0 ? txCarDetail?.data?.price : txCarDetail?.data?.salePrice}',
-                                            style: TextStyle(
-                                              fontSize: 20,
-                                              fontFamily: 'Inter'.tr,
-                                              fontWeight: FontWeight.w600,
-                                              color: kPrimaryColor,
-                                            ),
+                                            style: GoogleFonts.spaceGrotesk(
+                                              fontWeight: FontWeight.w400,
+                                              fontSize: 24,
+                                              color: Colors.black,
+                                            )
                                           ),
                                         ],
                                       )),
@@ -937,13 +935,11 @@ class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
                                                   children: [
                                                     Text(
                                                       "From".tr,
-                                                      style: TextStyle(
-                                                        fontFamily: 'Inter'.tr,
-                                                        color: kPrimaryColor,
-                                                        fontWeight:
-                                                            FontWeight.w600,
+                                                      style: GoogleFonts.spaceGrotesk(
+                                                        fontWeight: FontWeight.w600,
                                                         fontSize: 12,
-                                                      ),
+
+                                                      )
                                                     ),
                                                     SizedBox(height: 5),
                                                     Container(
@@ -1028,14 +1024,11 @@ class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
                                                       CrossAxisAlignment.center,
                                                   children: [
                                                     Text("To".tr,
-                                                        style: TextStyle(
-                                                          fontFamily:
-                                                              'Inter'.tr,
-                                                          fontWeight:
-                                                              FontWeight.w600,
-                                                          color: kPrimaryColor,
+                                                        style: GoogleFonts.spaceGrotesk(
+                                                          fontWeight: FontWeight.w600,
                                                           fontSize: 12,
-                                                        )),
+                                                        )
+                                                    ),
                                                     SizedBox(height: 5),
                                                     Container(
                                                       padding:
@@ -1089,11 +1082,11 @@ class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
                                             children: [
                                               Text(
                                                 "Passengers".tr,
-                                                style: TextStyle(
-                                                    fontSize: 12,
-                                                    fontFamily: 'Inter'.tr,
-                                                    fontWeight: FontWeight.w600,
-                                                    color: kPrimaryColor),
+                                                style: GoogleFonts.spaceGrotesk(
+                                                  fontWeight: FontWeight.w600,
+                                                  fontSize: 12,
+
+                                                )
                                               ),
                                               SizedBox(height: 10),
                                               Container(
@@ -1105,6 +1098,7 @@ class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
                                                   decoration: InputDecoration(
                                                       labelText:
                                                           "Select Passenger".tr,
+
                                                       border:
                                                           OutlineInputBorder(),
                                                       contentPadding:
@@ -1115,27 +1109,47 @@ class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
                                                     DropdownMenuItem<String>(
                                                       value: "1 Passenger",
                                                       child: Text(
-                                                          "1 Passenger".tr),
+                                                          "1 Passenger".tr,style: GoogleFonts.spaceGrotesk(
+                                                        fontWeight: FontWeight.w400,
+                                                        fontSize: 16,
+                                                        color: Colors.black54,
+                                                      ),),
                                                     ),
                                                     DropdownMenuItem<String>(
                                                       value: "2 Passenger",
                                                       child: Text(
-                                                          "2 Passenger".tr),
+                                                          "2 Passenger".tr,style: GoogleFonts.spaceGrotesk(
+                                                        fontWeight: FontWeight.w400,
+                                                        fontSize: 16,
+                                                        color: Colors.black54,
+                                                      )),
                                                     ),
                                                     DropdownMenuItem<String>(
                                                       value: "3 Passenger",
                                                       child: Text(
-                                                          "3 Passenger".tr),
+                                                          "3 Passenger".tr,style: GoogleFonts.spaceGrotesk(
+                                                        fontWeight: FontWeight.w400,
+                                                        fontSize: 16,
+                                                        color: Colors.black54,
+                                                      )),
                                                     ),
                                                     DropdownMenuItem<String>(
                                                       value: "4 Passenger",
                                                       child: Text(
-                                                          "4 Passenger".tr),
+                                                          "4 Passenger".tr,style: GoogleFonts.spaceGrotesk(
+                                                        fontWeight: FontWeight.w400,
+                                                        fontSize: 16,
+                                                        color: Colors.black54,
+                                                      )),
                                                     ),
                                                     DropdownMenuItem<String>(
                                                       value: "5 Passenger",
                                                       child: Text(
-                                                          "5 Passenger".tr),
+                                                          "5 Passenger".tr,style: GoogleFonts.spaceGrotesk(
+                                                        fontWeight: FontWeight.w400,
+                                                        fontSize: 16,
+                                                        color: Colors.black54,
+                                                      )),
                                                     ),
                                                   ],
                                                   onChanged: (value) {
@@ -1160,11 +1174,12 @@ class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
                                   padding: EdgeInsets.symmetric(horizontal: 15),
                                   alignment: Alignment.centerLeft,
                                   child: Text("Extra Prices:".tr,
-                                      style: TextStyle(
-                                          fontFamily: 'Inter'.tr,
-                                          color: kPrimaryColor,
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w700)),
+                                      style: GoogleFonts.spaceGrotesk(
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: 16,
+
+                                      )
+                                  ),
                                 ),
 
                                 ...((txCarDetail?.data?.extraPrice) ?? [])
@@ -1197,12 +1212,19 @@ class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
 
                                               setState1(() {});
                                             }),
-                                        Text(element.name ?? ""),
+                                        Text(element.name ?? "",style: GoogleFonts.spaceGrotesk(
+                                          fontWeight: FontWeight.w400,
+                                          fontSize: 16,
+                                          color: Colors.black54,
+                                        )),
                                         Spacer(),
                                         Text(
                                           "\$${element.price}",
-                                          style: TextStyle(
-                                              fontWeight: FontWeight.w600),
+                                          style:GoogleFonts.spaceGrotesk(
+                                          fontWeight: FontWeight.w400,
+                                          fontSize: 16,
+
+                                        )
                                         ),
                                       ],
                                     ),
@@ -1222,14 +1244,20 @@ class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
                                       children: [
                                         Text(
                                           element.name ?? "",
-                                          style: TextStyle(
-                                              fontWeight: FontWeight.w600),
+                                            style: GoogleFonts.spaceGrotesk(
+                                              fontWeight: FontWeight.w400,
+                                              fontSize: 16,
+                                              color: Colors.black54,
+                                            )
                                         ),
                                         Spacer(),
                                         Text(
                                           "\$${element.price}",
-                                          style: TextStyle(
-                                              fontWeight: FontWeight.w600),
+                                            style:GoogleFonts.spaceGrotesk(
+                                              fontWeight: FontWeight.w400,
+                                              fontSize: 16,
+
+                                            )
                                         ),
                                       ],
                                     ),
@@ -1247,16 +1275,23 @@ class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
                                   child: Row(
                                     children: [
                                       Text("Total".tr,
-                                          style: TextStyle(
-                                              fontSize: 20,
-                                              fontWeight: FontWeight.bold)),
+                                          style:GoogleFonts.spaceGrotesk(
+                                            fontWeight: FontWeight.w700,
+                                            fontSize: 18,
+
+                                          )
+                                      ),
                                       Spacer(),
 
                                       Text(
                                           "\$${(txCarDetail?.data?.salePrice == 0 ? txCarDetail?.data?.price ?? 0 : txCarDetail?.data?.salePrice ?? 0) * (days + 1) + total + extraPriceValue}",
-                                          style: TextStyle(
-                                              fontSize: 20,
-                                              fontWeight: FontWeight.bold)),
+                                          style:GoogleFonts.spaceGrotesk(
+                                            fontWeight: FontWeight.w700,
+                                            fontSize: 18,
+
+                                          )
+
+                                      ),
                                       // Text(
                                       //     "\$${(txCarDetail?.data?.salePrice ?? 0) + total + extraPriceValue}",
                                       //     style: TextStyle(
@@ -1356,190 +1391,174 @@ class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
                               if (isBookTab == false) ...[
                                 Container(
                                   padding: EdgeInsets.only(
-                                    bottom: MediaQuery.of(context)
-                                        .viewInsets
-                                        .bottom,
+                                    bottom: MediaQuery.of(context).viewInsets.bottom,
                                     left: 16,
                                     right: 16,
                                     top: 16,
                                   ),
-                                  child: Form(
-                                    key: formKey,
-                                    child: Column(
-                                      mainAxisSize: MainAxisSize.min,
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.stretch,
-                                      children: [
-                                        Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            Text(
-                                              'Enquiry'.tr,
-                                              style: TextStyle(
-                                                fontSize: 20,
-                                                fontWeight: FontWeight.bold,
+                                  child: DefaultTextStyle(
+                                    style: GoogleFonts.spaceGrotesk(),
+                                    child: Form(
+                                      key: formKey,
+                                      child: Column(
+                                        mainAxisSize: MainAxisSize.min,
+                                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                                        children: [
+                                          Row(
+                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              Text(
+                                                'Enquiry'.tr,
+                                                style: GoogleFonts.spaceGrotesk(
+                                                  fontSize: 20,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: Colors.black,
+                                                ),
                                               ),
-                                            ),
-                                            IconButton(
-                                              onPressed: () =>
-                                                  Navigator.pop(context),
-                                              icon: const Icon(Icons.close),
-                                            ),
-                                          ],
-                                        ),
-                                        Divider(thickness: 1),
-                                        const SizedBox(height: 16),
-                                        TextFormField(
-                                          controller: nameController,
-                                          decoration: InputDecoration(
-                                            labelText: 'Name*'.tr,
-                                            border: OutlineInputBorder(),
-                                          ),
-                                          style: TextStyle(height: 1),
-                                          validator: (value) {
-                                            if (value == null ||
-                                                value.isEmpty) {
-                                              return 'Please enter your name'
-                                                  .tr;
-                                            }
-                                            return null;
-                                          },
-                                        ),
-                                        const SizedBox(height: 16),
-                                        TextFormField(
-                                          controller: emailController,
-                                          keyboardType:
-                                              TextInputType.emailAddress,
-                                          decoration: InputDecoration(
-                                            labelText: 'Email*'.tr,
-                                            border: OutlineInputBorder(),
-                                          ),
-                                          style: TextStyle(height: 1),
-                                          validator: (value) {
-                                            if (value == null ||
-                                                value.isEmpty) {
-                                              return 'Please enter your email'
-                                                  .tr;
-                                            }
-                                            if (!RegExp(
-                                                    r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
-                                                .hasMatch(value)) {
-                                              return 'Please enter a valid email address';
-                                            }
-                                            return null;
-                                          },
-                                        ),
-                                        const SizedBox(height: 16),
-                                        TextFormField(
-                                          controller: phoneController,
-                                          keyboardType: TextInputType.phone,
-                                          decoration: InputDecoration(
-                                            labelText: 'Phone*'.tr,
-                                            border: OutlineInputBorder(),
-                                          ),
-                                          style: TextStyle(height: 1),
-                                          validator: (value) {
-                                            if (value == null ||
-                                                value.isEmpty) {
-                                              return 'Please enter your phone number'
-                                                  .tr;
-                                            }
-                                            if (!RegExp(r'^\+?[\d\s-]{10,}$')
-                                                .hasMatch(value)) {
-                                              return 'Please enter a valid phone number';
-                                            }
-                                            return null;
-                                          },
-                                        ),
-                                        const SizedBox(height: 16),
-                                        TextFormField(
-                                          controller: noteController,
-                                          maxLines: 3,
-                                          decoration: InputDecoration(
-                                            labelText: 'Note*'.tr,
-                                            border: OutlineInputBorder(),
-                                          ),
-                                          style: TextStyle(height: 1),
-                                          validator: (value) {
-                                            if (value == null ||
-                                                value.isEmpty) {
-                                              return 'Please enter a note'.tr;
-                                            }
-                                            return null;
-                                          },
-                                        ),
-                                        const SizedBox(height: 24),
-                                        Divider(thickness: 1),
-                                        SizedBox(
-                                          width: 150,
-                                          child: ElevatedButton(
-                                            onPressed: () async {
-                                              if (formKey.currentState!
-                                                  .validate()) {
-                                                final homeProvider =
-                                                    Provider.of<HomeProvider>(
-                                                        context,
-                                                        listen: false);
-                                                final result =
-                                                    await homeProvider
-                                                        .sendEnquiry(
-                                                  serviceId:
-                                                      "${txCarDetail?.data?.id}",
-                                                  serviceType: "car",
-                                                  name: nameController.text,
-                                                  email: emailController.text,
-                                                  phone: phoneController.text,
-                                                  note: noteController.text,
-                                                );
 
-                                                if (result != null &&
-                                                    result['status'] == 1) {
-                                                  Navigator.pop(context);
-                                                  ScaffoldMessenger.of(context)
-                                                      .showSnackBar(
-                                                    SnackBar(
-                                                        content: Text(result[
-                                                                'message'] ??
-                                                            'Enquiry submitted successfully'
-                                                                .tr)),
-                                                  );
-                                                } else {
-                                                  ScaffoldMessenger.of(context)
-                                                      .showSnackBar(
-                                                    SnackBar(
-                                                        content: Text(
-                                                            'Error: ${result?['message'] ?? ''}')),
-                                                  );
-                                                }
+                                            ],
+                                          ),
+
+                                          Divider(thickness: 1),
+                                          const SizedBox(height: 16),
+
+                                          /// Name
+                                          _enquiryField(
+                                            controller: nameController,
+                                            label: 'Name*'.tr,
+                                            validator: (value) {
+                                              if (value == null || value.isEmpty) {
+                                                return 'Please enter your name'.tr;
                                               }
+                                              return null;
                                             },
-                                            style: ElevatedButton.styleFrom(
-                                              backgroundColor: kSecondaryColor,
-                                              foregroundColor: Colors.white,
-                                              minimumSize: const Size(0, 55),
-                                              shape: RoundedRectangleBorder(
-                                                borderRadius:
-                                                    BorderRadius.circular(5),
+                                          ),
+
+                                          const SizedBox(height: 16),
+
+                                          /// Email
+                                          _enquiryField(
+                                            controller: emailController,
+                                            label: 'Email*'.tr,
+                                            keyboardType: TextInputType.emailAddress,
+                                            validator: (value) {
+                                              if (value == null || value.isEmpty) {
+                                                return 'Please enter your email'.tr;
+                                              }
+                                              if (!RegExp(
+                                                  r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
+                                                  .hasMatch(value)) {
+                                                return 'Please enter a valid email address';
+                                              }
+                                              return null;
+                                            },
+                                          ),
+
+                                          const SizedBox(height: 16),
+
+                                          /// Phone
+                                          _enquiryField(
+                                            controller: phoneController,
+                                            label: 'Phone*'.tr,
+                                            keyboardType: TextInputType.phone,
+                                            validator: (value) {
+                                              if (value == null || value.isEmpty) {
+                                                return 'Please enter your phone number'.tr;
+                                              }
+                                              if (!RegExp(r'^\+?[\d\s-]{10,}$')
+                                                  .hasMatch(value)) {
+                                                return 'Please enter a valid phone number';
+                                              }
+                                              return null;
+                                            },
+                                          ),
+
+                                          const SizedBox(height: 16),
+
+                                          /// Note
+                                          _enquiryField(
+                                            controller: noteController,
+                                            label: 'Note*'.tr,
+                                            maxLines: 3,
+                                            validator: (value) {
+                                              if (value == null || value.isEmpty) {
+                                                return 'Please enter a note'.tr;
+                                              }
+                                              return null;
+                                            },
+                                          ),
+
+                                          const SizedBox(height: 24),
+
+
+                                          SizedBox(
+                                            width: 150,
+                                            child: ElevatedButton(
+                                              onPressed: () async {
+                                                if (formKey.currentState!.validate()) {
+                                                  final homeProvider =
+                                                  Provider.of<HomeProvider>(context, listen: false);
+
+                                                  final result =
+                                                  await homeProvider.sendEnquiry(
+                                                    serviceId: "${txCarDetail?.data?.id}",
+                                                    serviceType: "car",
+                                                    name: nameController.text,
+                                                    email: emailController.text,
+                                                    phone: phoneController.text,
+                                                    note: noteController.text,
+                                                  );
+
+                                                  if (result != null && result['status'] == 1) {
+                                                    Navigator.pop(context);
+                                                    ScaffoldMessenger.of(context).showSnackBar(
+                                                      SnackBar(
+                                                        content: Text(
+                                                          result['message'] ??
+                                                              'Enquiry submitted successfully'.tr,
+                                                          style: GoogleFonts.spaceGrotesk(),
+                                                        ),
+                                                      ),
+                                                    );
+                                                  } else {
+                                                    ScaffoldMessenger.of(context).showSnackBar(
+                                                      SnackBar(
+                                                        content: Text(
+                                                          'Error: ${result?['message'] ?? ''}',
+                                                          style: GoogleFonts.spaceGrotesk(),
+                                                        ),
+                                                      ),
+                                                    );
+                                                  }
+                                                }
+                                              },
+                                              style: ElevatedButton.styleFrom(
+                                                backgroundColor: kSecondaryColor,
+                                                foregroundColor: Colors.white,
+                                                minimumSize: const Size(0, 55),
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius: BorderRadius.circular(5),
+                                                ),
                                               ),
-                                            ),
-                                            child: Text(
-                                              'Send Now'.tr,
-                                              style: TextStyle(
-                                                color: kBackgroundColor,
-                                                fontSize: 16,
-                                                fontFamily: 'Inter',
-                                                fontWeight: FontWeight.w700,
+                                              child: Text(
+                                                'Send Now'.tr,
+                                                style: GoogleFonts.spaceGrotesk(
+                                                  fontSize: 16,
+                                                  fontWeight: FontWeight.w700,
+                                                  color: kBackgroundColor,
+                                                ),
                                               ),
                                             ),
                                           ),
-                                        ),
-                                        Divider(thickness: 1),
-                                      ],
+
+
+                                        ],
+                                      ),
                                     ),
                                   ),
                                 ),
                               ],
+
                             ],
                           ),
                         ),
@@ -1572,6 +1591,34 @@ class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
             ],
           );
         });
+  }
+  Widget _enquiryField({
+    required TextEditingController controller,
+    required String label,
+    TextInputType? keyboardType,
+    int maxLines = 1,
+    String? Function(String?)? validator,
+  }) {
+    return TextFormField(
+      controller: controller,
+      keyboardType: keyboardType,
+      maxLines: maxLines,
+      validator: validator,
+      style: GoogleFonts.spaceGrotesk(fontSize: 14),
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: GoogleFonts.spaceGrotesk(fontSize: 14),
+        filled: true,
+        fillColor: Colors.grey.shade200,
+        border: InputBorder.none,
+        enabledBorder: InputBorder.none,
+        focusedBorder: InputBorder.none,
+        errorBorder: InputBorder.none,
+        focusedErrorBorder: InputBorder.none,
+        contentPadding:
+        const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+      ),
+    );
   }
 
   Widget _buildHighlightItem(String text) {

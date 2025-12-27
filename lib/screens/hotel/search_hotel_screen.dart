@@ -1,4 +1,5 @@
-// Create a new file: hotel_search_results_screen.dart
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -7,17 +8,11 @@ import 'package:moonbnd/modals/hotel_list_model.dart';
 import 'package:moonbnd/screens/hotel/room_detail_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:get/get.dart';
-
-import '../../constants.dart';
-import '../home/home_screen.dart';
 import '../wishlist/wishlist_screen.dart';
 import 'filter_screen.dart';
-import 'map_screen.dart';
-
-// Add this class at the end of your current file (after the last class)
 
 class HotelSearchResultsScreen extends StatefulWidget {
-  final String? city;
+  final int? city;
   final DateTime? checkInDate;
   final DateTime? checkOutDate;
   final int guests;
@@ -48,6 +43,11 @@ class _HotelSearchResultsScreenState extends State<HotelSearchResultsScreen> {
     setState(() {
       isLoading = true;
     });
+    log('City ${widget.city}');
+    log('CheckIn ${widget.checkInDate}');
+    log('Checkout ${widget.checkOutDate}');
+    log('Guests ${widget.guests}');
+
 
     await Provider.of<HomeProvider>(context, listen: false)
         .hotellistapi(1, searchParams: {
@@ -264,7 +264,7 @@ class _HotelSearchResultsScreenState extends State<HotelSearchResultsScreen> {
 
 class _HotelCardWidget extends StatefulWidget {
   final Hotel hotel;
-  final String? city;
+  final int? city;
 
   const _HotelCardWidget({required this.hotel, this.city});
 
@@ -518,7 +518,7 @@ class _HotelCardWidgetState extends State<_HotelCardWidget> {
                     SizedBox(width: 6),
                     Expanded(
                       child: Text(
-                        location,
+                        location.toString(),
                         style: GoogleFonts.spaceGrotesk(
                           fontSize: 14,
                           color: Colors.grey[700],

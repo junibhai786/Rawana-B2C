@@ -527,16 +527,14 @@ class _RoomDetailScreenState extends State<RoomDetailScreen>
                                         alignment: Alignment.center,
                                         child: Text(
                                           'Book'.tr,
-                                          style: TextStyle(
-                                            fontFamily: 'Inter'.tr,
-                                            color:
-                                                isBookTab ? kSecondaryColor : grey,
+                                          style: GoogleFonts.spaceGrotesk(
+                                            color: isBookTab ? kSecondaryColor : grey,
                                             fontSize: 14,
-                                            fontWeight: isBookTab
-                                                ? FontWeight.bold
-                                                : FontWeight.normal,
+                                            fontWeight:
+                                            isBookTab ? FontWeight.bold : FontWeight.normal,
                                           ),
                                         ),
+
                                       ),
                                     ),
                                   ),
@@ -567,18 +565,16 @@ class _RoomDetailScreenState extends State<RoomDetailScreen>
                                       child: Container(
                                         padding: EdgeInsets.all(15),
                                         alignment: Alignment.center,
-                                        child: Text(
+                                        child:Text(
                                           'Enquiry'.tr,
-                                          style: TextStyle(
-                                            fontFamily: 'Inter'.tr,
-                                            color:
-                                                !isBookTab ? kSecondaryColor : grey,
+                                          style: GoogleFonts.spaceGrotesk(
+                                            color: !isBookTab ? kSecondaryColor : grey,
                                             fontSize: 14,
-                                            fontWeight: !isBookTab
-                                                ? FontWeight.bold
-                                                : FontWeight.normal,
+                                            fontWeight:
+                                            !isBookTab ? FontWeight.bold : FontWeight.normal,
                                           ),
                                         ),
+
                                       ),
                                     ),
                                   ),
@@ -624,12 +620,11 @@ class _RoomDetailScreenState extends State<RoomDetailScreen>
                                           )
                                         : Text(
                                             'Check availability for pricing'.tr,
-                                            style: TextStyle(
+                                            style: GoogleFonts.spaceGrotesk(
                                               fontSize: 16,
-                                              fontFamily: 'Inter'.tr,
                                               fontWeight: FontWeight.w500,
-                                              color: Colors.grey,
-                                            ),
+                                              color: Colors.black,
+                                            )
                                           ),
                                   ),
                                 ),

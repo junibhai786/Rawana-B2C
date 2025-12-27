@@ -492,4 +492,6 @@ class Location {
     data['translation'] = translation;
     return data;
   }
+
+
 }

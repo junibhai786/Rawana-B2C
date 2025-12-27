@@ -1,7 +1,9 @@
+import 'dart:convert';
 import 'dart:developer';
 
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:http/http.dart' as http;
 import 'package:moonbnd/Provider/auth_provider.dart';
 import 'package:moonbnd/Provider/boat_provider.dart';
 import 'package:moonbnd/Provider/event_provider.dart';
@@ -78,7 +80,13 @@ class _HomeScreenState extends State<HomeScreen>
   DateTime? _checkInDate;
   DateTime? _checkOutDate;
   int _guestCount = 1;
-  String _selectedCity = '';
+  int?  _selectedCity = 0;
+  int ?fromWhereLocation=0;
+  int?toWhereLocation=0;
+  DateTime?fromDate;
+  DateTime?toDate;
+
+  String _selectedToCity='';
 
   // Flight search variables
   bool _isRoundTrip = true;
@@ -95,13 +103,21 @@ class _HomeScreenState extends State<HomeScreen>
     homeProvider.tabController?.dispose();
     super.dispose();
   }
+  final TextEditingController _cityController = TextEditingController();
+  final TextEditingController _fromCityController = TextEditingController();
+  final TextEditingController _toCityController = TextEditingController();
+  List<dynamic> _citySuggestions = [];
+  List<dynamic> _fromcitySuggestions = [];
+  List<dynamic> _tocitySuggestions = [];
+  bool _isSearchingCity = false;
 
   @override
   void initState() {
     super.initState();
     final homeProvider = Provider.of<HomeProvider>(context, listen: false);
-    homeProvider.tabController =
-        TabController(length: categoryDatas.length, vsync: this);
+
+    homeProvider.fetchLocations(); // ✅ preload cities
+    homeProvider.tabController = TabController(length: categoryDatas.length, vsync: this);
 
     // Add listener to handle both tap and swipe
     homeProvider.tabController?.addListener(() {
@@ -233,13 +249,14 @@ class _HomeScreenState extends State<HomeScreen>
                     children: [
                       Text(
                         'Passengers'.tr,
-                        style: TextStyle(
+                        style: GoogleFonts.spaceGrotesk(
+                          color: Colors.black,
+                          fontWeight: FontWeight.w700,
                           fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
+                        )
                       ),
                       IconButton(
-                        icon: Icon(Icons.close),
+                        icon: Icon(Icons.close,color: Colors.redAccent,),
                         onPressed: () => Navigator.pop(context),
                       ),
                     ],
@@ -250,7 +267,11 @@ class _HomeScreenState extends State<HomeScreen>
                     children: [
                       Text(
                         'Passengers'.tr,
-                        style: TextStyle(fontSize: 16),
+                        style: GoogleFonts.spaceGrotesk(
+                          color: Colors.black54,
+                          fontWeight: FontWeight.w500,
+                          fontSize: 15,
+                        ),
                       ),
                       Row(
                         children: [
@@ -266,10 +287,11 @@ class _HomeScreenState extends State<HomeScreen>
                           ),
                           Text(
                             '$_passengerCount',
-                            style: TextStyle(
+                            style: GoogleFonts.spaceGrotesk(
+                              color: Colors.black,
+                              fontWeight: FontWeight.w700,
                               fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
+                            )
                           ),
                           IconButton(
                             icon: Icon(Icons.add_circle_outline),
@@ -305,106 +327,166 @@ class _HomeScreenState extends State<HomeScreen>
       },
     );
   }
-  void _showDepartureCitySelection(BuildContext context) {
-    final List<String> cities = ['New York', 'London', 'Tokyo', 'Paris', 'Dubai'];
 
-    showDialog(
+
+
+  void _showGuestSelector() {
+    showModalBottomSheet(
       context: context,
       builder: (context) {
-        return AlertDialog(
-          title: Text('Select Departure City'),
-          content: Container(
-            width: double.maxFinite,
-            child: ListView.builder(
-              shrinkWrap: true,
-              itemCount: cities.length,
-              itemBuilder: (context, index) {
-                return ListTile(
-                  title: Text(cities[index]),
-                  onTap: () {
-                    setState(() {
-                      _departureCity = cities[index];
-                    });
-                    Navigator.pop(context);
-                  },
-                );
-              },
-            ),
-          ),
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return Container(
+              padding: EdgeInsets.all(20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                          'Guests'.tr,
+                          style: GoogleFonts.spaceGrotesk(
+                            color: Colors.black,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 18,
+                          )
+                      ),
+                      IconButton(
+                        icon: Icon(Icons.close,color: Colors.redAccent,),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Guests'.tr,
+                        style: GoogleFonts.spaceGrotesk(
+                          color: Colors.black54,
+                          fontWeight: FontWeight.w500,
+                          fontSize: 16,
+                        ),
+                      ),
+                      Row(
+                        children: [
+                          IconButton(
+                            icon: Icon(Icons.remove_circle_outline),
+                            onPressed: _guestCount > 1
+                                ? () {
+                              setState(() {
+                                _guestCount--;
+                              });
+                            }
+                                : null,
+                          ),
+                          Text(
+                              '$_guestCount',
+                              style: GoogleFonts.spaceGrotesk(
+                                color: Colors.black,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 18,
+                              )
+                          ),
+                          IconButton(
+                            icon: Icon(Icons.add_circle_outline),
+                            onPressed: () {
+                              setState(() {
+                                _guestCount++;
+                              });
+                            },
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 20),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        setState(() {});
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Color(0xFF05A8C7),
+                      ),
+                      child: Text('Apply'.tr),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
         );
       },
     );
   }
-  void _showCitySelection(BuildContext context) {
-    final List<String> cities = [
-      'New York', 'London', 'Tokyo', 'Paris', 'Dubai',
-      'Sydney', 'Singapore', 'Berlin', 'Barcelona', 'Rome',
-      'Amsterdam', 'Vienna', 'Prague', 'Istanbul', 'Bangkok'
-    ];
 
-    String tempSelected = _selectedCity; // local selection inside bottom sheet
+
+  //Show city selection for hotel....
+  void _showCitySelection(BuildContext context) async {
+    final homeProvider = context.read<HomeProvider>();
+
+    // ✅ fetch first
+    if (homeProvider.locations.isEmpty) {
+      await homeProvider.fetchLocations();
+    }
 
     showModalBottomSheet(
       context: context,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(16),
-          topRight: Radius.circular(16),
-        ),
-      ),
       isScrollControlled: true,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (BuildContext context, StateSetter modalSetState) {
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (_) {
+        return Consumer<HomeProvider>(
+          builder: (context, provider, _) {
             return Container(
-              padding: EdgeInsets.all(16),
+              padding: const EdgeInsets.all(16),
               height: MediaQuery.of(context).size.height * 0.7,
               child: Column(
                 children: [
-                  Text(
-                    'Select City or Destination'.tr,
+                  const Text(
+                    'Select City or Destination',
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
-                  SizedBox(height: 16),
+                  const SizedBox(height: 16),
 
-                  // Search field
+                  /// 🔍 Search
                   TextField(
+                    onChanged: provider.filterLocations,
                     decoration: InputDecoration(
-                      hintText: 'Search city...'.tr,
-                      prefixIcon: Icon(Icons.search),
+                      hintText: 'Search city...',
+                      prefixIcon: const Icon(Icons.search),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                     ),
                   ),
 
-                  SizedBox(height: 16),
+                  const SizedBox(height: 16),
 
-                  // City list
+                  /// 📍 City list
                   Expanded(
-                    child: ListView.builder(
-                      itemCount: cities.length,
+                    child: provider.isLocationLoading
+                        ? const Center(child: CircularProgressIndicator())
+                        : provider.filteredLocations.isEmpty
+                        ? const Center(child: Text('No locations found'))
+                        : ListView.builder(
+                      itemCount: provider.filteredLocations.length,
                       itemBuilder: (context, index) {
-                        final city = cities[index];
+                        final city = provider.filteredLocations[index];
 
                         return ListTile(
-                          leading: Icon(Icons.location_on, color: Colors.blue),
-                          title: Text(city),
-                          trailing: tempSelected == city
-                              ? Icon(Icons.check, color: Colors.green)
-                              : null,
+                          leading: const Icon(Icons.location_on),
+                          title: Text(city.title ?? ''),
                           onTap: () {
-                            // update inside modal
-                            modalSetState(() {
-                              tempSelected = city;
-                            });
-
-                            // update parent widget
-                            setState(() {
-                              _selectedCity = city;
-                            });
-
+                            provider.selectCity(city.title ?? '');
+                            _cityController.text = provider.selectedCity;
+                            _selectedCity=city.id;
                             Navigator.pop(context);
                           },
                         );
@@ -421,6 +503,157 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
 
+  void _showDepartureLocation(BuildContext context) async {
+    final homeProvider = context.read<HomeProvider>();
+
+    // ✅ fetch first
+    if (homeProvider.locations.isEmpty) {
+      await homeProvider.fetchLocations();
+    }
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (_) {
+        return Consumer<HomeProvider>(
+          builder: (context, provider, _) {
+            return Container(
+              padding: const EdgeInsets.all(16),
+              height: MediaQuery.of(context).size.height * 0.7,
+              child: Column(
+                children: [
+                  const Text(
+                    'Select City or Destination',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 16),
+
+                  /// 🔍 Search
+                  TextField(
+                    onChanged: provider.filterLocations,
+                    decoration: InputDecoration(
+                      hintText: 'Search city...',
+                      prefixIcon: const Icon(Icons.search),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  /// 📍 City list
+                  Expanded(
+                    child: provider.isLocationLoading
+                        ? const Center(child: CircularProgressIndicator())
+                        : provider.filteredLocations.isEmpty
+                        ? const Center(child: Text('No locations found'))
+                        : ListView.builder(
+                      itemCount: provider.filteredLocations.length,
+                      itemBuilder: (context, index) {
+                        final city = provider.filteredLocations[index];
+
+                        return ListTile(
+                          leading: const Icon(Icons.location_on),
+                          title: Text(city.title ?? ''),
+                          onTap: () {
+                            provider.selectDepartureCity(city.title ?? '');
+                            _fromCityController.text = provider.departureCity;
+                            fromWhereLocation=city.id;
+                            Navigator.pop(context);
+                          },
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+
+
+  void _showDestinationLocation(BuildContext context) async {
+    final homeProvider = context.read<HomeProvider>();
+
+    // ✅ fetch first
+    if (homeProvider.locations.isEmpty) {
+      await homeProvider.fetchLocations();
+    }
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (_) {
+        return Consumer<HomeProvider>(
+          builder: (context, provider, _) {
+            return Container(
+              padding: const EdgeInsets.all(16),
+              height: MediaQuery.of(context).size.height * 0.7,
+              child: Column(
+                children: [
+                  const Text(
+                    'Select City or Destination',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 16),
+
+                  /// 🔍 Search
+                  TextField(
+                    onChanged: provider.filterLocations,
+                    decoration: InputDecoration(
+                      hintText: 'Search city...',
+                      prefixIcon: const Icon(Icons.search),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  /// 📍 City list
+                  Expanded(
+                    child: provider.isLocationLoading
+                        ? const Center(child: CircularProgressIndicator())
+                        : provider.filteredLocations.isEmpty
+                        ? const Center(child: Text('No locations found'))
+                        : ListView.builder(
+                      itemCount: provider.filteredLocations.length,
+                      itemBuilder: (context, index) {
+                        final city = provider.filteredLocations[index];
+
+                        return ListTile(
+                          leading: const Icon(Icons.location_on),
+                          title: Text(city.title ?? ''),
+                          onTap: () {
+                            provider.selectDestinationCity(city.title ?? '');
+                            _toCityController.text = provider.destinationCity;
+                            toWhereLocation=city.id;
+                            Navigator.pop(context);
+                          },
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
 
   Widget _buildFlightSearchSection(BuildContext context) {
     String departureDateText = _flightDepartureDate != null
@@ -483,38 +716,53 @@ class _HomeScreenState extends State<HomeScreen>
               SizedBox(height: 4),
               GestureDetector(
                 onTap: () {
-                  _showDepartureCitySelection(context);
+                  _showDepartureLocation(context);
                 },
-                child: Container(
-                  height: 47,
-                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Color(0xffE5E7EB)),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Row(
-                    children: [
-                      SvgPicture.asset(
-                        'assets/icons/location.svg',
-                        width: 20,
-                        height: 20,
-                        color: Color(0xff6B7280),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    Container(
+                      height: 47,
+                      padding: EdgeInsets.symmetric(horizontal: 12,),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Color(0xffE5E7EB)),
+                        borderRadius: BorderRadius.circular(8),
                       ),
-                      SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          _departureCity.isEmpty ? 'Departure city'.tr : _departureCity,
-                          style: GoogleFonts.spaceGrotesk(
-                            fontSize: 14,
-                            color: _departureCity.isEmpty ? Color(0xff6B7280) : Color(0xff1D2025),
+                      child: Row(
+                        children: [
+                          SvgPicture.asset(
+                            'assets/icons/location.svg',
+                            width: 20,
+                            height: 20,
+                            color: Color(0xff6B7280),
                           ),
-                        ),
+                          SizedBox(width: 8),
+                          Expanded(
+                            child: AbsorbPointer(
+                              child: TextField(
+                                controller: _fromCityController,
+                                decoration: InputDecoration(
+                                  hintText: 'Departure City'.tr,
+                                  border: InputBorder.none,
+                                  hintStyle: GoogleFonts.spaceGrotesk(
+                                    fontSize: 14,
+                                    color: const Color(0xff6B7280),
+                                  ),
+                                ),
+                                style: GoogleFonts.spaceGrotesk(
+                                  fontSize: 14,
+                                  color: const Color(0xff1D2025),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                      Icon(Icons.arrow_drop_down, color: Color(0xff6B7280)),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
+
             ],
           ),
           SizedBox(height: 12),
@@ -534,36 +782,91 @@ class _HomeScreenState extends State<HomeScreen>
               SizedBox(height: 4),
               GestureDetector(
                 onTap: () {
-                  _showDepartureCitySelection(context);
+                  _showDestinationLocation(context);
                 },
-                child: Container(
-                  height: 47,
-                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Color(0xffE5E7EB)),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Row(
-                    children: [
-                      SvgPicture.asset(
-                        'assets/icons/location.svg',
-                        width: 20,
-                        height: 20,
-                        color: Color(0xff6B7280),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.start,
+
+                  children: [
+                    Container(
+                      height: 47,
+                      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Color(0xffE5E7EB)),
+                        borderRadius: BorderRadius.circular(8),
                       ),
-                      SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          _destinationCity.isEmpty ? 'Destination city'.tr : _destinationCity,
-                          style: GoogleFonts.spaceGrotesk(
-                            fontSize: 14,
-                            color: _destinationCity.isEmpty ? Color(0xff6B7280) : Color(0xff1D2025),
+                      child: Row(
+                        children: [
+                          SvgPicture.asset(
+                            'assets/icons/location.svg',
+                            width: 20,
+                            height: 20,
+                            color: Color(0xff6B7280),
                           ),
-                        ),
+                          SizedBox(width: 8),
+                          Expanded(
+                            child: AbsorbPointer(
+                              child: TextField(
+                                controller: _toCityController,
+                                decoration: InputDecoration(
+                                  hintText: 'Destination City'.tr,
+                                  border: InputBorder.none,
+                                  hintStyle: GoogleFonts.spaceGrotesk(
+                                    fontSize: 14,
+                                    color: const Color(0xff6B7280),
+                                  ),
+                                ),
+                                style: GoogleFonts.spaceGrotesk(
+                                  fontSize: 14,
+                                  color: const Color(0xff1D2025),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                      Icon(Icons.arrow_drop_down, color: Color(0xff6B7280)),
-                    ],
-                  ),
+                    ),
+
+
+
+                    // if (_tocitySuggestions.isNotEmpty)
+                    //   Container(
+                    //     margin: const EdgeInsets.only(top: 4),
+                    //     constraints: const BoxConstraints(maxHeight: 250),
+                    //     decoration: BoxDecoration(
+                    //       color: Colors.white,
+                    //       border: Border.all(color: const Color(0xffE5E7EB)),
+                    //       borderRadius: BorderRadius.circular(8),
+                    //     ),
+                    //     child: ListView.separated(
+                    //       shrinkWrap: true,
+                    //       itemCount: _tocitySuggestions.length,
+                    //       separatorBuilder: (_, __) => const Divider(height: 1),
+                    //       itemBuilder: (context, index) {
+                    //         final suggestion = _tocitySuggestions[index];
+                    //
+                    //         return ListTile(
+                    //           dense: true,
+                    //           leading: const Icon(Icons.location_on, size: 20),
+                    //           title: Text(
+                    //             suggestion['description'],
+                    //             style: GoogleFonts.spaceGrotesk(fontSize: 14),
+                    //           ),
+                    //           onTap: () {
+                    //             setState(() {
+                    //               _selectedToCity = suggestion['description'];
+                    //               _toCityController.text = _selectedToCity;
+                    //              _tocitySuggestions.clear();
+                    //             });
+                    //
+                    //             FocusScope.of(context).unfocus();
+                    //           },
+                    //         );
+                    //       },
+                    //     ),
+                    //   ),
+
+                  ],
                 ),
               ),
             ],
@@ -741,7 +1044,18 @@ class _HomeScreenState extends State<HomeScreen>
               onPressed: () {
                 // You need to get the flight data from somewhere
                 // For example, from a provider
+
                 final flightProvider = Provider.of<FlightProvider>(context, listen: false);
+                flightProvider.flightlistapi(2,searchParams: {
+                  'from_where': fromWhereLocation,
+                  'to_where': toWhereLocation,
+                  'start': _flightDepartureDate,
+                  'children': _passengerCount,
+                }).then((_) {
+                  setState(() {
+                    isLoading = false;
+                  });
+                });
                 final flightList = flightProvider.flightListPerCategory[6] ?? FlightList();
 
                 Navigator.push(
@@ -817,95 +1131,7 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
-  // ADD THIS METHOD
-  void _showGuestSelector() {
-    showModalBottomSheet(
-      context: context,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setState) {
-            return Container(
-              padding: EdgeInsets.all(20),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Guests'.tr,
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      IconButton(
-                        icon: Icon(Icons.close),
-                        onPressed: () => Navigator.pop(context),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 20),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Guests'.tr,
-                        style: TextStyle(fontSize: 16),
-                      ),
-                      Row(
-                        children: [
-                          IconButton(
-                            icon: Icon(Icons.remove_circle_outline),
-                            onPressed: _guestCount > 1
-                                ? () {
-                              setState(() {
-                                _guestCount--;
-                              });
-                            }
-                                : null,
-                          ),
-                          Text(
-                            '$_guestCount',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          IconButton(
-                            icon: Icon(Icons.add_circle_outline),
-                            onPressed: () {
-                              setState(() {
-                                _guestCount++;
-                              });
-                            },
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 20),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.pop(context);
-                        setState(() {});
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Color(0xFF05A8C7),
-                      ),
-                      child: Text('Apply'.tr),
-                    ),
-                  ),
-                ],
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
+
 //zeshan
   Widget _buildHotelSearchSection(BuildContext context) {
     // Calculate the text values directly
@@ -938,39 +1164,53 @@ class _HomeScreenState extends State<HomeScreen>
 
           // City/Destination Field
           GestureDetector(
-            onTap: () {
-              _showCitySelection(context);
-            },
-            child: Container(
-              height: 47,
-              padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                border: Border.all(color: Color(0xffE5E7EB)),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
-                children: [
-                  SvgPicture.asset(
-                    'assets/icons/location.svg',
-                    width: 20,
-                    height: 20,
-                    color: Color(0xff6B7280),
+            onTap: () => _showCitySelection(context),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  height: 47,
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: const Color(0xffE5E7EB)),
+                    borderRadius: BorderRadius.circular(8),
                   ),
-                  SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      _selectedCity.isEmpty ? 'City or destination'.tr : _selectedCity,
-                      style: GoogleFonts.spaceGrotesk(
-                        fontSize: 14,
-                        color: _selectedCity.isEmpty ? Color(0xff6B7280) : Color(0xff1D2025),
+                  child: Row(
+                    children: [
+                      SvgPicture.asset(
+                        'assets/icons/location.svg',
+                        width: 20,
+                        height: 20,
+                        color: const Color(0xff6B7280),
                       ),
-                    ),
-                  ),
+                      const SizedBox(width: 8),
 
-                ],
-              ),
+                      Expanded(
+                        child: AbsorbPointer(
+                          child: TextField(
+                            controller: _cityController,
+                            decoration: InputDecoration(
+                              hintText: 'City or destination'.tr,
+                              border: InputBorder.none,
+                              hintStyle: GoogleFonts.spaceGrotesk(
+                                fontSize: 14,
+                                color: const Color(0xff6B7280),
+                              ),
+                            ),
+                            style: GoogleFonts.spaceGrotesk(
+                              fontSize: 14,
+                              color: const Color(0xff1D2025),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
+
           SizedBox(height: 12),
           Padding(
             padding: const EdgeInsets.all(8.0),
@@ -1177,7 +1417,7 @@ class _HomeScreenState extends State<HomeScreen>
                   context,
                   MaterialPageRoute(
                     builder: (context) => HotelSearchResultsScreen(
-                      city: _selectedCity.isEmpty ? null : _selectedCity,
+                      city: _selectedCity==null ? 0 : _selectedCity,
                       checkInDate: _checkInDate,
                       checkOutDate: _checkOutDate,
                       guests: _guestCount,
@@ -1221,6 +1461,10 @@ class _HomeScreenState extends State<HomeScreen>
       ),
     );
   }
+
+
+
+
   //zeeshan
   Widget _buildFeaturedDestinations() {
     return Padding(
@@ -1699,255 +1943,6 @@ class _HomeScreenState extends State<HomeScreen>
       },
     );
   }
-// //old code
-//   Widget _buildResultsCount(
-//       int index,
-//       HomeProvider homeProvider,
-//       BoatProvider boatProvider,
-//       TourProvider tourProvider,
-//       SpaceProvider spaceProvider,
-//       EventProvider eventProvider,
-//       FlightProvider flightProvider) {
-//     return Padding(
-//       padding: const EdgeInsets.symmetric(horizontal: 10.0),
-//       child: Column(
-//         crossAxisAlignment: CrossAxisAlignment.start,
-//         children: [
-//           Padding(
-//             padding: const EdgeInsets.symmetric(horizontal: 15),
-//             child: Align(
-//               alignment: Alignment.centerLeft,
-//               child: Text(
-//                 '${_getItemCount(index, homeProvider, boatProvider, tourProvider, spaceProvider, eventProvider, flightProvider)} ${'items found'.tr}'
-//                     .tr,
-//                 style: GoogleFonts.spaceGrotesk(
-//                     fontSize: 14,
-//                     fontWeight: FontWeight.w600,
-//                     color: kPrimaryColor,
-//                   ),
-//               ),
-//             ),
-//           ),
-//           Padding(
-//             padding: const EdgeInsets.symmetric(horizontal: 15),
-//             child: Text(
-//               '${'Showing'.tr} ${_getStartId(index, homeProvider, boatProvider, tourProvider, spaceProvider, eventProvider, flightProvider)} - ${_getEndId(index, homeProvider, boatProvider, tourProvider, spaceProvider, eventProvider, flightProvider)} ${'of'.tr} ${_getItemCount(index, homeProvider, boatProvider, tourProvider, spaceProvider, eventProvider, flightProvider)} ${'items'.tr}',
-//               style: GoogleFonts.spaceGrotesk(
-//                   color: grey,
-//                   fontSize: 12,
-//                   fontWeight: FontWeight.w400,
-//
-//               )),
-//           ),
-//         ],
-//       ),
-//     );
-//   }
-
-  // Widget _buildFilterTabs(int index) {
-  //   return SingleChildScrollView(
-  //     scrollDirection: Axis.horizontal,
-  //     child: Padding(
-  //       padding: EdgeInsets.all(8),
-  //       child: Row(
-  //         mainAxisAlignment: index == 6
-  //             ? MainAxisAlignment.spaceBetween
-  //             : MainAxisAlignment.start,
-  //         children: [
-  //           InkWell(
-  //             onTap: () {
-  //               _showSortingOptions(index);
-  //             },
-  //             child: Container(
-  //               padding: EdgeInsets.symmetric(horizontal: 8, vertical: 9),
-  //               decoration: BoxDecoration(
-  //                 border: Border.all(color: grey),
-  //                 borderRadius: BorderRadius.circular(1),
-  //               ),
-  //               child: Row(
-  //                 children: [
-  //                   Text(selectedSort),
-  //                   SizedBox(width: 5),
-  //                   SvgPicture.asset('assets/icons/arrow_down.svg'),
-  //                 ],
-  //               ),
-  //             ),
-  //           ),
-  //           SizedBox(width: 6),
-  //           if (index != 6)
-  //             InkWell(
-  //               onTap: () {
-  //                 final homeProvider =
-  //                 Provider.of<HomeProvider>(context, listen: false);
-  //                 final tourProvider =
-  //                 Provider.of<TourProvider>(context, listen: false);
-  //                 final spaceProvider =
-  //                 Provider.of<SpaceProvider>(context, listen: false);
-  //
-  //                 final boatProvider =
-  //                 Provider.of<BoatProvider>(context, listen: false);
-  //                 final eventProvider =
-  //                 Provider.of<EventProvider>(context, listen: false);
-  //
-  //                 switch (index) {
-  //                   case 1: // Hotels
-  //                     final hotelList =
-  //                     homeProvider.hotelListPerCategory[index];
-  //                     if (hotelList != null && hotelList.data != null) {
-  //                       log("Number of hotels being sent to map: ${hotelList.data!.length}");
-  //                       Navigator.push(
-  //                         context,
-  //                         MaterialPageRoute(
-  //                           builder: (context) => MapScreen(),
-  //                         ),
-  //                       );
-  //                     }
-  //                     break;
-  //                   case 2: // Tours
-  //                     final tourList = tourProvider.tourListPerCategory[index];
-  //                     if (tourList != null && tourList.data != null) {
-  //                       log("Number of tours being sent to map: ${tourList.data!.length}");
-  //                       Navigator.push(
-  //                         context,
-  //                         MaterialPageRoute(
-  //                           builder: (context) => MapScreenTour(),
-  //                         ),
-  //                       );
-  //                     }
-  //                     break;
-  //                   case 3: // Spaces
-  //                     final spaceList =
-  //                     spaceProvider.spaceListPerCategory[index];
-  //                     if (spaceList != null && spaceList.data != null) {
-  //                       log("Number of spaces being sent to map: ${spaceList.data!.length}");
-  //                       Navigator.push(
-  //                         context,
-  //                         MaterialPageRoute(
-  //                           builder: (context) => MapScreenSpace(),
-  //                         ),
-  //                       );
-  //                     }
-  //                     break;
-  //                   case 4: // Cars
-  //                     final carList = homeProvider.carListPerCategory[index];
-  //                     if (carList != null && carList.data != null) {
-  //                       log("Number of cars being sent to map: ${carList.data!.length}");
-  //                       Navigator.push(
-  //                         context,
-  //                         MaterialPageRoute(
-  //                           builder: (context) => MapScreenCar(),
-  //                         ),
-  //                       );
-  //                     }
-  //                     break;
-  //                   case 5: // Events
-  //                     final eventList =
-  //                     eventProvider.eventListPerCategory[index];
-  //                     if (eventList != null && eventList.data != null) {
-  //                       log("Number of events being sent to map: ${eventList.data!.length}");
-  //                       Navigator.push(
-  //                         context,
-  //                         MaterialPageRoute(
-  //                           builder: (context) => MapScreenEvent(),
-  //                         ),
-  //                       );
-  //                     }
-  //                     break;
-  //                   case 7: // Boats
-  //                     final boatList = boatProvider.boatListPerCategory[index];
-  //                     if (boatList != null && boatList.data != null) {
-  //                       log("Number of boats being sent to map: ${boatList.data!.length}");
-  //                       Navigator.push(
-  //                         context,
-  //                         MaterialPageRoute(
-  //                           builder: (context) => MapScreenBoat(),
-  //                         ),
-  //                       );
-  //                     }
-  //                     break;
-  //                 }
-  //               },
-  //               child: Container(
-  //                 padding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-  //                 decoration: BoxDecoration(
-  //                   border: Border.all(color: grey),
-  //                   borderRadius: BorderRadius.circular(1),
-  //                 ),
-  //                 child: Row(
-  //                   children: [
-  //                     Text('Show on the map'.tr),
-  //                     SizedBox(width: 5),
-  //                     SvgPicture.asset('assets/icons/map_icon.svg'),
-  //                   ],
-  //                 ),
-  //               ),
-  //             ),
-  //           SizedBox(width: index == 6 ? 115 : 6),
-  //           InkWell(
-  //             onTap: () {
-  //               if (index == 1) {
-  //                 Navigator.of(context).push(MaterialPageRoute(
-  //                   builder: (context) {
-  //                     return FilterScreen();
-  //                   },
-  //                 ));
-  //               } else if (index == 2) {
-  //                 Navigator.of(context).push(MaterialPageRoute(
-  //                   builder: (context) {
-  //                     return FilterTourScreen();
-  //                   },
-  //                 ));
-  //               } else if (index == 3) {
-  //                 Navigator.of(context).push(MaterialPageRoute(
-  //                   builder: (context) {
-  //                     return FilterSpaceScreen();
-  //                   },
-  //                 ));
-  //               } else if (index == 4) {
-  //                 Navigator.of(context).push(MaterialPageRoute(
-  //                   builder: (context) {
-  //                     return FilterCarScreen();
-  //                   },
-  //                 ));
-  //               } else if (index == 5) {
-  //                 Navigator.of(context).push(MaterialPageRoute(
-  //                   builder: (context) {
-  //                     return FilterEventScreen();
-  //                   },
-  //                 ));
-  //               } else if (index == 6) {
-  //                 Navigator.of(context).push(MaterialPageRoute(
-  //                   builder: (context) {
-  //                     return FilterFlightScreen();
-  //                   },
-  //                 ));
-  //               } else if (index == 7) {
-  //                 Navigator.of(context).push(MaterialPageRoute(
-  //                   builder: (context) {
-  //                     return FilterBoatScreen();
-  //                   },
-  //                 ));
-  //               }
-  //             },
-  //             child: Container(
-  //               padding: EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-  //               decoration: BoxDecoration(
-  //                 border: Border.all(color: grey),
-  //                 borderRadius: BorderRadius.circular(1),
-  //               ),
-  //               child: Row(
-  //                 children: [
-  //                   Text('Filter'.tr),
-  //                   SvgPicture.asset('assets/icons/filter_icon.svg'),
-  //                 ],
-  //               ),
-  //             ),
-  //           ),
-  //         ],
-  //       ),
-  //     ),
-  //   );
-  // }
 
   Widget _buildResultsCount(
       int index,
@@ -2822,28 +2817,36 @@ class EventListItem extends StatelessWidget {
               right: 20,
               top: 20,
             ),
-            scrollDirection: Axis.vertical,
-            shrinkWrap: true,
-            itemCount: eventList.data?.length,
+            itemCount: eventList.data?.length ?? 0,
             itemBuilder: (context, index) {
-              var eventData = EvenData.fromEvent(eventList.data![index]);
+              final rawEvent = eventList.data?[index];
+
+              // ✅ Extra safety
+              if (rawEvent == null) {
+                return const SizedBox.shrink();
+              }
+
+              final eventData = EvenData.fromEvent(rawEvent);
+
               return Padding(
                 padding: const EdgeInsets.only(bottom: 32.0),
                 child: EventItem(
-                    dataSrc: eventData,
-                    press: () {
-                      log("go to event".tr);
-                      Navigator.of(context).push(MaterialPageRoute(
-                        builder: (context) {
-                          return EventsDetailsScreen(
-                              eventId: eventList.data?[index].id ?? 0);
-                        },
-                      ));
-                    }),
+                  dataSrc: eventData,
+                  press: () {
+                    log("go to event".tr);
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => EventsDetailsScreen(
+                          eventId: rawEvent.id ?? 0,
+                        ),
+                      ),
+                    );
+                  },
+                ),
               );
             },
           ),
-        ),
+        )
       ],
     );
   }
@@ -2933,251 +2936,6 @@ class _PropertyItemState extends State<PropertyItem> {
     );
   }
 }
-
-
-
-//Property item widget builder
-// *****************this is old code of property item*******************************
-
-// class PropertyItem extends StatefulWidget {
-//   const PropertyItem({
-//     super.key,
-//     required this.dataSrc,
-//     required this.press,
-//   });
-//
-//   final PropertyData dataSrc;
-//   final VoidCallback press;
-//
-//   @override
-//   State<PropertyItem> createState() => _PropertyItemState();
-// }
-
-// class _PropertyItemState extends State<PropertyItem> {
-//   @override
-//   Widget build(BuildContext context) {
-//     return GestureDetector(
-//       onTap: widget.press,
-//       child: Container(
-//         decoration: BoxDecoration(
-//           border: Border.all(
-//             color: kColor1,
-//             width: 1,
-//           ),
-//           borderRadius: BorderRadius.circular(5),
-//         ),
-//         child: Column(
-//           crossAxisAlignment: CrossAxisAlignment.start,
-//           children: [
-//             Stack(
-//               children: [
-//                 ImageCarouselWithDots(
-//                   images: widget.dataSrc.images,
-//                 ),
-//                 Positioned(
-//                     top: 12,
-//                     right: 12,
-//                     child: InkWell(
-//                       onTap: () async {
-//                         log("fav 1");
-//
-//                         // Retrieve the token from SharedPreferences
-//                         final prefs = await SharedPreferences.getInstance();
-//                         final token = prefs.getString('userToken');
-//
-//                         if (token == null) {
-//                           // Show the custom bottom sheet
-//                           showModalBottomSheet(
-//                             context: context,
-//                             shape: RoundedRectangleBorder(
-//                               borderRadius: BorderRadius.only(
-//                                 topLeft: Radius.circular(16),
-//                                 topRight: Radius.circular(16),
-//                               ),
-//                             ),
-//                             builder: (context) => CustomBottomSheet(
-//                               title: 'Log in to add to',
-//                               content: 'wishlists',
-//                               onCancel: () {
-//                                 Navigator.of(context)
-//                                     .pop(); // Close the bottom sheet
-//                               },
-//                               onLogin: () {
-//                                 // Close the bottom sheet
-//                                 Navigator.of(context).pushReplacement(
-//                                   MaterialPageRoute(
-//                                       builder: (context) => SignInScreen()),
-//                                 ); // Navigate to SignInScreen
-//                               },
-//                             ),
-//                           );
-//                           return; // Exit the function if token is null
-//                         }
-//
-//                         // Proceed with adding to wishlist if token is not null
-//                         final homeProvider =
-//                         Provider.of<HomeProvider>(context, listen: false);
-//                         final success = await homeProvider.addToWishlist(
-//                           widget.dataSrc.id.toString(),
-//                           'hotel',
-//                         );
-//                         homeProvider.homelistapi(0);
-//                         homeProvider.fetchHotelDetails(widget.dataSrc.id);
-//                         await homeProvider.hotellistapi(1, searchParams: {});
-//
-//                         if (success == "Added to wishlist") {
-//                           setState(() {
-//                             widget.dataSrc.isWishlist = true;
-//                           });
-//                         } else if (success == "Removed from wishlist") {
-//                           setState(() {
-//                             widget.dataSrc.isWishlist = false;
-//                           });
-//                         }
-//                         // ignore: use_build_context_synchronously
-//
-//                         ScaffoldMessenger.of(context).showSnackBar(
-//                           SnackBar(content: Text(success)),
-//                         );
-//                       },
-//                       child: SvgPicture.asset(
-//                         widget.dataSrc.isWishlist
-//                             ? 'assets/icons/like.svg'
-//                             : 'assets/icons/heart.svg',
-//                         width: 24,
-//                         height: 20,
-//                       ),
-//                     )),
-//                 Positioned(
-//                   bottom: 8,
-//                   left: 8,
-//                   child: Container(
-//                     padding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-//                     child: Row(
-//                       children: List.generate(
-//                         5,
-//                             (index) => Icon(
-//                           index <
-//                               double.parse(widget.dataSrc.reviewscore)
-//                                   .round()
-//                               ? Icons.star
-//                               : Icons.star_border,
-//                           color: flutterpads,
-//                           size: 20,
-//                         ),
-//                       ),
-//                     ),
-//                   ),
-//                 ),
-//               ],
-//             ),
-//             const SizedBox(height: 16),
-//             Padding(
-//               padding: const EdgeInsets.symmetric(horizontal: 8),
-//               child: Column(
-//                 crossAxisAlignment: CrossAxisAlignment.start,
-//                 children: [
-//                   SizedBox(
-//                     width: 250,
-//                     child: Text(
-//                       widget.dataSrc.propertyName,
-//                       style: TextStyle(
-//                         fontWeight: FontWeight.w600,
-//                         fontFamily: 'Inter'.tr,
-//                         fontSize: 14,
-//                       ),
-//                       maxLines: 3,
-//                     ),
-//                   ),
-//                   const SizedBox(height: 4),
-//                   Text(
-//                     widget.dataSrc.address,
-//                     style: TextStyle(fontFamily: 'Inter'.tr, color: darkgrey),
-//                   ),
-//                   const SizedBox(height: 4),
-//                   Row(
-//                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
-//                     children: [
-//                       Row(
-//                         children: [
-//                           Text(
-//                             '${widget.dataSrc.reviewscore}/5',
-//                             style: TextStyle(
-//                               fontFamily: 'Inter'.tr,
-//                               fontWeight: FontWeight.w400,
-//                               color: flutterpads,
-//                               fontSize: 14,
-//                             ),
-//                           ),
-//                           const SizedBox(width: 4),
-//                           Text(
-//                             widget.dataSrc.reviewtext,
-//                             style: TextStyle(
-//                               fontFamily: 'Inter'.tr,
-//                               color: flutterpads,
-//                               fontWeight: FontWeight.w400,
-//                               fontSize: 14,
-//                             ),
-//                           ),
-//                         ],
-//                       ),
-//                       const SizedBox(height: 4),
-//                       Text(
-//                         '${widget.dataSrc.reviewcount} reviews'.tr,
-//                         style: TextStyle(
-//                           fontSize: 10,
-//                           fontFamily: 'Inter'.tr,
-//                           color: darkgrey,
-//                         ),
-//                       ),
-//                     ],
-//                   ),
-//                   const SizedBox(height: 4),
-//                   Row(
-//                     children: [
-//                       Text(
-//                         "from ".tr,
-//                         style: TextStyle(
-//                           fontFamily: 'Inter'.tr,
-//                           fontWeight: FontWeight.w500,
-//                           decoration: TextDecoration.underline,
-//                           decorationThickness: 1.5,
-//                           decorationColor: Colors.black,
-//                         ),
-//                       ),
-//                       Text(
-//                         "\$${widget.dataSrc.price}",
-//                         style: TextStyle(
-//                           fontFamily: 'Inter'.tr,
-//                           fontWeight: FontWeight.w600,
-//                           decoration: TextDecoration.underline,
-//                           decorationThickness: 1.5,
-//                           decorationColor: Colors.black,
-//                         ),
-//                       ),
-//                       Text(
-//                         "/night".tr,
-//                         style: TextStyle(
-//                           color: darkgrey,
-//                           fontFamily: 'Inter'.tr,
-//                           decoration: TextDecoration.underline,
-//                           decorationThickness: 1.5,
-//                           decorationColor: Colors.black,
-//                         ),
-//                       ),
-//                     ],
-//                   ),
-//                 ],
-//               ),
-//             ),
-//             const SizedBox(height: 16),
-//           ],
-//         ),
-//       ),
-//     );
-//   }
-// }
-
 class TourListItem extends StatelessWidget {
   final TourList tourList;
 
@@ -3350,56 +3108,61 @@ class FlightListItem extends StatelessWidget {
           : Column(
         children: [
           // Header with search summary
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+        Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
             children: [
+              Padding(
+                padding: const EdgeInsets.only(left: 20),
+                child: Text(
+                  '${flights.length} flights available'.tr,
+                  style: GoogleFonts.spaceGrotesk(
+                    fontSize: 14,
+                    color: Colors.grey[600],
+                  ),
+                ),
+              ),
 
-              Row(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.only(left: 20),
-                    child: Align(
-                      alignment: Alignment.topLeft,
-                      child: Text(
-                        '${flights.length} flights available'.tr,
+              const Spacer(), // ✅ replaces SizedBox(width: 190)
+
+              GestureDetector(
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => FilterFlightScreen(),
+                    ),
+                  );
+                },
+                child: Padding(
+                  padding: const EdgeInsets.only(right: 15),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      SvgPicture.asset(
+                        'assets/icons/filters.svg',
+                        color: Color(0xff05A8C7),
+                        width: 16,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        'Filters'.tr,
                         style: GoogleFonts.spaceGrotesk(
                           fontSize: 14,
-                          color: Colors.grey[600],
+                          color: Color(0xff05A8C7),
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
-                    ),
+                    ],
                   ),
-                  SizedBox(width: 190),
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.of(context).push(MaterialPageRoute(
-                        builder: (context) => FilterFlightScreen(),
-                      ));
-                    },
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        SvgPicture.asset(
-                          'assets/icons/filters.svg',
-                          color: Color(0xff05A8C7),
-                        ),
-                        SizedBox(width: 4),
-                        Text(
-                          'Filters'.tr,
-                          style: GoogleFonts.spaceGrotesk(
-                            fontSize: 14,
-                            color: Color(0xff05A8C7),
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+                ),
               ),
             ],
           ),
-          SizedBox(height: 10,),
+        ],
+      ),
+
+      SizedBox(height: 10,),
           // Flight list
           Expanded(
             child: ListView.builder(
@@ -3449,37 +3212,6 @@ class FlightListItem extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildFlightImagePlaceholder(String? airlineName) {
-    return Container(
-      height: 180,
-      color: Colors.blueAccent.withOpacity(0.1),
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.flight,
-              size: 48,
-              color: Colors.blueAccent.withOpacity(0.3),
-            ),
-            if (airlineName != null)
-              Padding(
-                padding: const EdgeInsets.only(top: 8.0),
-                child: Text(
-                  airlineName,
-                  style: GoogleFonts.spaceGrotesk(
-                    color: Colors.blueAccent.withOpacity(0.6),
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
-          ],
-        ),
       ),
     );
   }
@@ -3650,23 +3382,6 @@ class OfferItem extends StatelessWidget {
   }
 }
 
-//old code
-// class OfferItem extends StatelessWidget {
-//   final home_item.Offer offer;
-//   final VoidCallback press;
-//
-//   const OfferItem({Key? key, required this.offer, required this.press})
-//       : super(key: key);
-//
-//   @override
-//   Widget build(BuildContext context) {
-//     return ListTile(
-//       title: Text(offer.title),
-//       subtitle: Text(offer.desc),
-//       onTap: press,
-//     );
-//   }
-// }
 
 //new code*******************************
 // ================ DESTINATION ITEM CARD ================
@@ -3779,84 +3494,4 @@ class DestinationItem extends StatelessWidget {
   }
 }
 
-
-//old code
-// class DestinationItem extends StatelessWidget {
-//   final home_item.Location location;
-//   final VoidCallback press;
-//
-//   const DestinationItem({Key? key, required this.location, required this.press})
-//       : super(key: key);
-//
-//   @override
-//   Widget build(BuildContext context) {
-//     return GestureDetector(
-//       onTap: press,
-//       child: Container(
-//         decoration: BoxDecoration(
-//           border: Border.all(color: Colors.grey[300]!),
-//           borderRadius: BorderRadius.circular(8),
-//         ),
-//         child: Column(
-//           crossAxisAlignment: CrossAxisAlignment.start,
-//           children: [
-//             ClipRRect(
-//               borderRadius: BorderRadius.vertical(top: Radius.circular(8)),
-//               child: Image.network(
-//                 location.imgUrl.isNotEmpty
-//                     ? location.imgUrl
-//                     : (location.bannerImgUrl ?? ''),
-//                 width: double.infinity,
-//                 height: 250,
-//                 fit: BoxFit.cover,
-//               ),
-//             ),
-//             SizedBox(height: 20),
-//             Padding(
-//               padding: const EdgeInsets.all(8.0),
-//               child: Column(
-//                 crossAxisAlignment: CrossAxisAlignment.start,
-//                 children: [
-//                   Row(
-//                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
-//                     children: [
-//                       Expanded(
-//                         child: Text(
-//                           location.name,
-//                           style: TextStyle(
-//                             fontSize: 16,
-//                             fontWeight: FontWeight.bold,
-//                           ),
-//                           overflow: TextOverflow.ellipsis,
-//                           maxLines: 2,
-//                         ),
-//                       ),
-//                       Text(
-//                         '${location.spaceCount} Spaces',
-//                         style: TextStyle(fontSize: 12),
-//                       ),
-//                       SizedBox(width: 8),
-//                       Text(
-//                         '${location.tourCount} Tours',
-//                         style: TextStyle(fontSize: 12),
-//                       ),
-//                       SizedBox(
-//                         width: 4,
-//                       ),
-//                       Text(
-//                         '${location.hotelCount} Hotels',
-//                         style: TextStyle(fontSize: 12),
-//                       ),
-//                     ],
-//                   ),
-//                   SizedBox(height: 10),
-//                 ],
-//               ),
-//             ),
-//           ],
-//         ),
-//       ),
-//     );
-//   }
-// }
 

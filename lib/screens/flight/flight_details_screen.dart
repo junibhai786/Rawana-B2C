@@ -972,15 +972,20 @@ class _AirlineTicketBookingState extends State<AirlineTicketBooking> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          'Number of Passengers'.tr,
-                          style: GoogleFonts.spaceGrotesk(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: Color(0xff1D2025),
+                        Expanded(
+                          child: Text(
+                            'Number of Passengers'.tr,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.spaceGrotesk(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xff1D2025),
+                            ),
                           ),
                         ),
                         Row(
+                          mainAxisSize: MainAxisSize.min,
                           children: [
                             InkWell(
                               onTap: () {
@@ -1006,7 +1011,7 @@ class _AirlineTicketBookingState extends State<AirlineTicketBooking> {
                                 ),
                               ),
                             ),
-                            SizedBox(width: 16),
+                            SizedBox(width: 12),
                             Text(
                               '$_number',
                               style: GoogleFonts.spaceGrotesk(
@@ -1015,7 +1020,7 @@ class _AirlineTicketBookingState extends State<AirlineTicketBooking> {
                                 color: Color(0xff1D2025),
                               ),
                             ),
-                            SizedBox(width: 16),
+                            SizedBox(width: 12),
                             InkWell(
                               onTap: () {
                                 _updateNumber(_number + 1);
@@ -1037,7 +1042,8 @@ class _AirlineTicketBookingState extends State<AirlineTicketBooking> {
                           ],
                         ),
                       ],
-                    ),
+                    )
+                    ,
                   ),
                 ],
               ),

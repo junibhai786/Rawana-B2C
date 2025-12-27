@@ -1,5 +1,4 @@
-// ignore_for_file: prefer_const_constructors, prefer_const_literals_to_create_immutables, sort_child_properties_last, unnecessary_to_list_in_spreads
-
+import 'package:google_fonts/google_fonts.dart';
 import 'package:moonbnd/Provider/home_provider.dart';
 import 'package:moonbnd/constants.dart';
 import 'package:moonbnd/screens/hotel/hotel_booking_history_screen.dart';
@@ -29,13 +28,13 @@ class _TourConfirmScreenState extends State<TourConfirmScreen> {
   Future<void> _fetchBookingDetails() async {
     final homeProvider = Provider.of<HomeProvider>(context, listen: false);
     await homeProvider.fetchBookingDetails(widget.bookingCode);
-    // Trigger a rebuild after fetching data
     setState(() {});
   }
 
   @override
   Widget build(BuildContext context) {
-    final hotelbookingdata = Provider.of<HomeProvider>(context, listen: true);
+    final bookingData = Provider.of<HomeProvider>(context).bookingResponse?.data?.booking;
+
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
@@ -46,8 +45,9 @@ class _TourConfirmScreenState extends State<TourConfirmScreen> {
           IconButton(
             icon: SvgPicture.asset('assets/icons/shareicon.svg'),
             onPressed: () {
-              Share.share(
-                  'Check out my booking details: ${hotelbookingdata.bookingResponse?.data?.booking?.shareUrl}');
+              if (bookingData?.shareUrl != null) {
+                Share.share('Check out my booking details: ${bookingData!.shareUrl}');
+              }
             },
           ),
         ],
@@ -55,160 +55,147 @@ class _TourConfirmScreenState extends State<TourConfirmScreen> {
         elevation: 0,
       ),
       body: SingleChildScrollView(
-        child: Padding(
-          padding: EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
+        padding: EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Column(
+                children: [
+                  Text(
+                    'Booking Confirmed'.tr,
+                    style: GoogleFonts.spaceGrotesk(
+                      fontSize: 26,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.green,
+                    ),
+                  ),
+                  SizedBox(height: 12),
+                  SvgPicture.asset('assets/icons/greentick.svg', height: 60),
+                  SizedBox(height: 16),
+                  Text(
+                    'Booking details have been sent to'.tr,
+                    style: GoogleFonts.spaceGrotesk(
+                      fontSize: 16,
+                      color: kPrimaryColor,
+                    ),
+                  ),
+                  Text(
+                    bookingData?.email ?? '',
+                    style: GoogleFonts.spaceGrotesk(
+                      fontSize: 16,
+                      decoration: TextDecoration.underline,
+                      color: kPrimaryColor,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(height: 24),
+
+            /// Booking Summary Card
+            Card(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              elevation: 2,
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Booking Confirmed'.tr,
-                      style: TextStyle(
-                          fontSize: 24,
-                          color: Colors.green,
-                          fontFamily: 'Inter'.tr,
-                          fontWeight: FontWeight.w600),
-                    ),
-                    SizedBox(height: 10),
-                    Container(
-                        padding: EdgeInsets.all(10),
-                        child: SvgPicture.asset('assets/icons/greentick.svg')),
-                    SizedBox(height: 10),
+                    _buildInfoRow('Booking Number'.tr, bookingData?.id.toString() ?? ''),
+                    _buildInfoRow(
+                        'Booking Date'.tr,
+                        bookingData?.createdAt != null
+                            ? DateFormat('d MMM yyyy').format(DateTime.parse(bookingData!.createdAt!))
+                            : ''),
+                    _buildInfoRow('Payment Method'.tr, bookingData?.gateway ?? ''),
+                    _buildStatusRow('Booking Status'.tr, bookingData?.status ?? ''),
                   ],
                 ),
               ),
-              SizedBox(height: 20),
-              Text(
-                'Booking details has been sent to'.tr,
-                style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w400,
-                    fontFamily: 'Inter'.tr,
-                    color: kPrimaryColor),
+            ),
+            SizedBox(height: 20),
+
+            /// Your Booking Details
+            Text('Your Booking'.tr,
+                style: GoogleFonts.spaceGrotesk(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
+                  color: kPrimaryColor,
+                )),
+            SizedBox(height: 10),
+            Card(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              elevation: 2,
+              child: Padding(
+                padding: EdgeInsets.all(16),
+                child: _buildBookingDetails(),
               ),
-              Text(
-                hotelbookingdata.bookingResponse?.data?.booking?.email ?? '',
-                style: TextStyle(
-                    fontSize: 16,
-                    fontFamily: 'Inter'.tr,
-                    decoration: TextDecoration.underline,
-                    fontWeight: FontWeight.w400,
-                    color: kPrimaryColor),
+            ),
+            SizedBox(height: 20),
+
+            /// User Information
+            Text('Your Information'.tr,
+                style: GoogleFonts.spaceGrotesk(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
+                  color: kPrimaryColor,
+                )),
+            SizedBox(height: 10),
+            Card(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              elevation: 2,
+              child: Padding(
+                padding: EdgeInsets.all(16),
+                child: _buildUserInfo(),
               ),
-              _buildInfoRow(
-                  'Booking Number'.tr,
-                  (hotelbookingdata.bookingResponse?.data?.booking?.id ?? 0)
-                      .toString()),
-              _buildInfoRow(
-                  'Booking Date'.tr,
-                  DateFormat('d MMM yyyy').format(DateTime.parse(
-                      hotelbookingdata.bookingResponse?.data?.booking?.createdAt
-                              .toString() ??
-                          DateTime.now().toString()))),
-              _buildInfoRow(
-                  'Payment Method'.tr,
-                  (hotelbookingdata.bookingResponse?.data?.booking?.gateway ??
-                      '')),
-              SizedBox(height: 10),
-              _buildStatusRow(
-                  'Booking Status'.tr,
-                  (hotelbookingdata.bookingResponse?.data?.booking?.status ??
-                      "")),
-              SizedBox(height: 20),
-              Divider(
-                thickness: 1,
+            ),
+            SizedBox(height: 30),
+
+            /// Buttons
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: kSecondaryColor,
+                minimumSize: Size(double.infinity, 50),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
               ),
-              SizedBox(height: 20),
-              Text('Your Booking'.tr,
-                  style: TextStyle(
-                      fontSize: 20,
-                      fontFamily: 'Inter'.tr,
-                      fontWeight: FontWeight.w600,
-                      color: kPrimaryColor)),
-              SizedBox(height: 10),
-              _buildBookingDetails(),
-              SizedBox(height: 20),
-              Text('Your Information'.tr,
-                  style: TextStyle(
-                      fontSize: 20,
-                      fontFamily: 'Inter'.tr,
-                      fontWeight: FontWeight.w600,
-                      color: kPrimaryColor)),
-              SizedBox(height: 10),
-              _buildUserInfo(),
-              SizedBox(height: 20),
-              ElevatedButton(
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      'Booking History'.tr,
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontFamily: 'Inter'.tr,
-                      ),
-                    ),
-                    SizedBox(
-                      height: 15,
-                    ),
-                    Icon(
-                      Icons.chevron_right,
-                      color: Colors.white,
-                    ),
-                  ],
-                ),
-                style: ElevatedButton.styleFrom(
-                  foregroundColor: Colors.white,
-                  backgroundColor: kSecondaryColor,
-                  minimumSize: Size(double.infinity, 50),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const BookingHistoryScreen(),
-                    ),
-                  );
-                },
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const BookingHistoryScreen()),
+                );
+              },
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text('Booking History'.tr,
+                      style: GoogleFonts.spaceGrotesk(fontSize: 18, fontWeight: FontWeight.w500)),
+                  SizedBox(width: 8),
+                  Icon(Icons.chevron_right, color: Colors.white),
+                ],
               ),
-              SizedBox(
-                height: 20,
+            ),
+            SizedBox(height: 16),
+            OutlinedButton(
+              style: OutlinedButton.styleFrom(
+                minimumSize: Size(double.infinity, 48),
+                side: BorderSide(color: Colors.black12),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               ),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  minimumSize: const Size.fromHeight(48),
-                  backgroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      side: BorderSide(width: 1, color: Colors.black12)),
-                ),
-                onPressed: () {
-                  Navigator.of(context).pushAndRemoveUntil(
-                    MaterialPageRoute(
-                      builder: (context) {
-                        return BottomNav();
-                      },
-                    ),
-                    (route) => false,
-                  );
-                },
-                child: Text(
-                  "Back to Home".tr,
-                  style: TextStyle(
-                    fontFamily: 'Inter'.tr,
-                    color: Colors.black,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                  ),
+              onPressed: () {
+                Navigator.of(context).pushAndRemoveUntil(
+                    MaterialPageRoute(builder: (_) => BottomNav()), (route) => false);
+              },
+              child: Text(
+                'Back to Home'.tr,
+                style: GoogleFonts.spaceGrotesk(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
+                  color: Colors.black,
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -216,22 +203,14 @@ class _TourConfirmScreenState extends State<TourConfirmScreen> {
 
   Widget _buildInfoRow(String label, String value) {
     return Padding(
-      padding: EdgeInsets.symmetric(vertical: 8.0),
+      padding: EdgeInsets.symmetric(vertical: 6),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label,
-              style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                  fontFamily: 'Inter'.tr,
-                  color: kPrimaryColor)),
-          Text(value,
-              style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w400,
-                  fontFamily: 'Inter'.tr,
-                  color: grey)),
+          Flexible(
+              child: Text(label,
+                  style: GoogleFonts.spaceGrotesk(fontSize: 16, fontWeight: FontWeight.w500, color: kPrimaryColor))),
+          Flexible(child: Text(value, textAlign: TextAlign.right, style: GoogleFonts.spaceGrotesk(fontSize: 16, color: grey))),
         ],
       ),
     );
@@ -239,22 +218,12 @@ class _TourConfirmScreenState extends State<TourConfirmScreen> {
 
   Widget _buildTotal(String label, String value) {
     return Padding(
-      padding: EdgeInsets.symmetric(vertical: 8.0),
+      padding: EdgeInsets.symmetric(vertical: 6),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label,
-              style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  fontFamily: 'Inter'.tr,
-                  color: kPrimaryColor)),
-          Text(value,
-              style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  fontFamily: 'Inter'.tr,
-                  color: kPrimaryColor)),
+          Text(label, style: GoogleFonts.spaceGrotesk(fontSize: 16, fontWeight: FontWeight.w600, color: kPrimaryColor)),
+          Text(value, style: GoogleFonts.spaceGrotesk(fontSize: 16, fontWeight: FontWeight.w600, color: kPrimaryColor)),
         ],
       ),
     );
@@ -262,28 +231,15 @@ class _TourConfirmScreenState extends State<TourConfirmScreen> {
 
   Widget _buildStatusRow(String label, String status) {
     return Padding(
-      padding: EdgeInsets.symmetric(vertical: 8.0),
+      padding: EdgeInsets.symmetric(vertical: 6),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label,
-              style: TextStyle(
-                  fontSize: 16,
-                  color: kPrimaryColor,
-                  fontFamily: 'Inter'.tr,
-                  fontWeight: FontWeight.w500)),
+          Text(label, style: GoogleFonts.spaceGrotesk(fontSize: 16, fontWeight: FontWeight.w500, color: kPrimaryColor)),
           Container(
-            padding: EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-            decoration: BoxDecoration(
-              color: kSecondaryColor,
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: Text(status,
-                style: TextStyle(
-                    color: Colors.white,
-                    fontFamily: 'Inter'.tr,
-                    fontWeight: FontWeight.w500,
-                    fontSize: 16)),
+            padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(color: kSecondaryColor, borderRadius: BorderRadius.circular(6)),
+            child: Text(status, style: GoogleFonts.spaceGrotesk(color: Colors.white, fontWeight: FontWeight.w500, fontSize: 16)),
           ),
         ],
       ),
@@ -291,7 +247,10 @@ class _TourConfirmScreenState extends State<TourConfirmScreen> {
   }
 
   Widget _buildBookingDetails() {
-    final hotelbookingdata = Provider.of<HomeProvider>(context, listen: true);
+    final bookingData = Provider.of<HomeProvider>(context).bookingResponse?.data?.booking;
+
+    if (bookingData == null) return SizedBox();
+
     return Column(
       children: [
         Row(
@@ -300,102 +259,67 @@ class _TourConfirmScreenState extends State<TourConfirmScreen> {
             ClipRRect(
               borderRadius: BorderRadius.circular(8),
               child: Image.network(
-                hotelbookingdata
-                        .bookingResponse?.data?.booking?.service!.gallery?[0] ??
-                    'assets/haven/house.png',
+                bookingData.service?.gallery?.first ?? 'assets/haven/house.png',
                 width: 96,
                 height: 80,
                 fit: BoxFit.cover,
               ),
             ),
-            SizedBox(width: 10),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.start,
-              children: [
-                SizedBox(
-                  width: 200,
-                  child: Text(
-                    hotelbookingdata
-                            .bookingResponse?.data?.booking?.service?.title ??
-                        '',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontFamily: 'Inter'.tr,
-                      fontWeight: FontWeight.bold,
-                    ),
+            SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    bookingData.service?.title ?? '',
+                    style: GoogleFonts.spaceGrotesk(fontSize: 18, fontWeight: FontWeight.bold),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
-                ),
-                Text(
-                    hotelbookingdata
-                            .bookingResponse?.data?.booking?.service?.address ??
-                        '',
-                    style: TextStyle(
-                      color: Colors.grey,
-                      fontFamily: 'Inter'.tr,
-                    )),
-              ],
+                  SizedBox(height: 4),
+                  Text(
+                    bookingData.service?.address ?? '',
+                    style: GoogleFonts.spaceGrotesk(fontSize: 14, color: Colors.grey),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
-        SizedBox(height: 10),
+        SizedBox(height: 12),
         _buildInfoRow('Dates'.tr,
-            '${DateFormat('d MMM').format(DateTime.parse(hotelbookingdata.bookingResponse?.data?.booking?.startDate ?? DateTime.now().toString()))} - ${DateFormat('d MMM').format(DateTime.parse(hotelbookingdata.bookingResponse?.data?.booking?.endDate ?? DateTime.now().toString()))}'),
-        ...(hotelbookingdata.bookingResponse?.data?.booking?.personTypes ?? [])
-            .map((personType) => _buildInfoRow(
-                "${personType.name}: ${personType.number} x \$${personType.price}",
-                "\$${(double.parse(personType.number ?? "0") * double.parse(personType.price ?? "0")).toStringAsFixed(2)}"))
-            .toList(),
-        ...(hotelbookingdata.bookingResponse?.data?.booking?.buyerFees ?? [])
-            .map((element) =>
-                _buildInfoRow(element.name ?? "", "\$${element.price}"))
-            .toList(),
-        ...(hotelbookingdata.bookingResponse?.data?.booking?.extraPrice ?? [])
-            .map((element) =>
-                _buildInfoRow(element.name ?? "", "\$${element.price}"))
-            .toList(),
+            '${DateFormat('d MMM').format(DateTime.parse(bookingData.startDate ?? DateTime.now().toString()))} - ${DateFormat('d MMM').format(DateTime.parse(bookingData.endDate ?? DateTime.now().toString()))}'),
+        ...(bookingData.personTypes ?? []).map((p) {
+          double total = (double.tryParse(p.number ?? '0') ?? 0) * (double.tryParse(p.price ?? '0') ?? 0);
+          return _buildInfoRow('${p.name}: ${p.number} x \$${p.price}', '\$${total.toStringAsFixed(2)}');
+        }),
+        ...(bookingData.buyerFees ?? []).map((f) => _buildInfoRow(f.name ?? '', '\$${f.price}')),
+        ...(bookingData.extraPrice ?? []).map((f) => _buildInfoRow(f.name ?? '', '\$${f.price}')),
         Divider(),
-        _buildTotal('Total'.tr,
-            '\$${hotelbookingdata.bookingResponse?.data?.booking?.total ?? '0'}'),
-        _buildTotal('Paid'.tr,
-            '\$${hotelbookingdata.bookingResponse?.data?.booking?.paid ?? '0'}'),
-        _buildTotal('Remain'.tr,
-            '\$${hotelbookingdata.bookingResponse?.data?.booking?.payNow ?? '0'}'),
-        Divider(),
+        _buildTotal('Total'.tr, '\$${bookingData.total ?? '0'}'),
+        _buildTotal('Paid'.tr, '\$${bookingData.paid ?? '0'}'),
+        _buildTotal('Remain'.tr, '\$${bookingData.payNow ?? '0'}'),
       ],
     );
   }
 
   Widget _buildUserInfo() {
-    final hotelbookingdata = Provider.of<HomeProvider>(context, listen: true);
+    final bookingData = Provider.of<HomeProvider>(context).bookingResponse?.data?.booking;
+    if (bookingData == null) return SizedBox();
+
     return Column(
       children: [
-        _buildInfoRow('First Name'.tr,
-            hotelbookingdata.bookingResponse?.data?.booking?.firstName ?? ''),
-        _buildInfoRow('Last Name'.tr,
-            hotelbookingdata.bookingResponse?.data?.booking?.lastName ?? ''),
-        _buildInfoRow('Email'.tr,
-            hotelbookingdata.bookingResponse?.data?.booking?.email ?? ''),
-        _buildInfoRow('Phone'.tr,
-            hotelbookingdata.bookingResponse?.data?.booking?.phone ?? ''),
-        _buildInfoRow('Address line 1'.tr,
-            hotelbookingdata.bookingResponse?.data?.booking?.address ?? ''),
-        _buildInfoRow('Address line 2'.tr,
-            hotelbookingdata.bookingResponse?.data?.booking?.address2 ?? ''),
-        _buildInfoRow('Country'.tr,
-            hotelbookingdata.bookingResponse?.data?.booking?.country ?? ''),
-        _buildInfoRow('State/Province/Region'.tr,
-            hotelbookingdata.bookingResponse?.data?.booking?.state ?? ''),
-        _buildInfoRow('City'.tr,
-            hotelbookingdata.bookingResponse?.data?.booking?.city ?? ''),
-        _buildInfoRow('ZIP code/Postal code'.tr,
-            hotelbookingdata.bookingResponse?.data?.booking?.zipCode ?? ''),
-        _buildInfoRow(
-            'Special Requirements'.tr,
-            hotelbookingdata.bookingResponse?.data?.booking?.customerNotes ??
-                ''),
+        _buildInfoRow('First Name'.tr, bookingData.firstName ?? ''),
+        _buildInfoRow('Last Name'.tr, bookingData.lastName ?? ''),
+        _buildInfoRow('Email'.tr, bookingData.email ?? ''),
+        _buildInfoRow('Phone'.tr, bookingData.phone ?? ''),
+        _buildInfoRow('Address line 1'.tr, bookingData.address ?? ''),
+        _buildInfoRow('Address line 2'.tr, bookingData.address2 ?? ''),
+        _buildInfoRow('Country'.tr, bookingData.country ?? ''),
+        _buildInfoRow('State/Province/Region'.tr, bookingData.state ?? ''),
+        _buildInfoRow('City'.tr, bookingData.city ?? ''),
+        _buildInfoRow('ZIP code/Postal code'.tr, bookingData.zipCode ?? ''),
+        _buildInfoRow('Special Requirements'.tr, bookingData.customerNotes ?? ''),
       ],
     );
   }

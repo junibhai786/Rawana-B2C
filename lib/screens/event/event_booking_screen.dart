@@ -2,6 +2,7 @@
 
 import 'dart:developer';
 
+import 'package:google_fonts/google_fonts.dart';
 import 'package:moonbnd/Provider/home_provider.dart';
 import 'package:moonbnd/constants.dart';
 import 'package:moonbnd/screens/event/event_booking_confirmation_screen.dart';
@@ -231,7 +232,12 @@ class _BookingScreenState extends State<BookingScreenForEvent> {
     }
     return Scaffold(
       appBar: AppBar(
-        title: Text('Your Booking'.tr),
+        title: Text('Your Booking'.tr,style:GoogleFonts.spaceGrotesk(
+          fontWeight: FontWeight.w700,
+          fontSize: 18,
+          color: Colors.black,
+
+        )),
         leading: BackButton(),
       ),
       body: SingleChildScrollView(
@@ -243,23 +249,23 @@ class _BookingScreenState extends State<BookingScreenForEvent> {
             Text(
               carbookingitem.bookingResponse?.data?.booking?.service?.title ??
                   "",
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w600,
-                color: kPrimaryColor,
-                fontFamily: 'Inter'.tr,
-              ),
+                style:GoogleFonts.spaceGrotesk(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 20,
+                  color: Colors.black,
+
+                )
             ),
             SizedBox(height: 10),
             Text(
               carbookingitem.bookingResponse?.data?.booking?.service?.address ??
                   "",
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w400,
-                color: grey,
-                fontFamily: 'Inter'.tr,
-              ),
+                style:GoogleFonts.spaceGrotesk(
+                    fontWeight: FontWeight.w400,
+                    fontSize: 14,
+                    color: Colors.black54
+
+                )
             ),
             SizedBox(height: 10),
             Row(
@@ -326,22 +332,23 @@ class _BookingScreenState extends State<BookingScreenForEvent> {
               children: [
                 Text(
                   'Vendor :'.tr,
-                  style: TextStyle(
-                      fontFamily: 'Inter'.tr,
-                      fontSize: 16,
+                    style:GoogleFonts.spaceGrotesk(
                       fontWeight: FontWeight.w600,
-                      color: kPrimaryColor),
+                      fontSize: 16,
+
+                    )
                 ),
                 SizedBox(width: 10),
                 Text(
                   carbookingitem.bookingResponse?.data?.booking?.service
                           ?.vendorDetails?.name ??
                       "",
-                  style: TextStyle(
-                      fontFamily: 'Inter'.tr,
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      color: kSecondaryColor),
+                    style:GoogleFonts.spaceGrotesk(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 16,
+                        color: Colors.black54
+
+                    )
                 ),
               ],
             ),
@@ -352,22 +359,23 @@ class _BookingScreenState extends State<BookingScreenForEvent> {
               children: [
                 Text(
                   'Start Date'.tr,
-                  style: TextStyle(
-                      fontFamily: 'Inter'.tr,
+                    style:GoogleFonts.spaceGrotesk(
+                      fontWeight: FontWeight.w600,
                       fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                      color: kPrimaryColor),
+
+                    )
                 ),
                 Text(
                     DateFormat("dd/MM/yyyy").format(DateTime.parse(
                         carbookingitem
                                 .bookingResponse?.data?.booking?.startDate ??
                             '')),
-                    style: TextStyle(
-                        fontSize: 16,
-                        fontFamily: 'Inter'.tr,
+                    style:GoogleFonts.spaceGrotesk(
                         fontWeight: FontWeight.w400,
-                        color: grey)),
+                        fontSize: 16,
+                        color: Colors.black54
+
+                    )),
                 // Row(
                 //   children: [
                 //     Text(
@@ -428,26 +436,28 @@ class _BookingScreenState extends State<BookingScreenForEvent> {
                         children: [
                           if (element.desc != "0")
                             Text(element.name,
-                                style: TextStyle(
-                                    fontFamily: 'Inter'.tr,
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w500,
-                                    color: kPrimaryColor)),
+                                style:GoogleFonts.spaceGrotesk(
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 16,
+
+                                )),
                           if (element.desc != "0")
                             Text("\$${element.desc}",
-                                style: TextStyle(
-                                    fontFamily: 'Inter'.tr,
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w500,
-                                    color: Colors.grey)),
+                                style:GoogleFonts.spaceGrotesk(
+                                    fontWeight: FontWeight.w400,
+                                    fontSize: 16,
+                                    color: Colors.black54
+
+                                )),
                         ],
                       ),
                       Text("${element.countValue}",
-                          style: TextStyle(
-                              fontSize: 16,
-                              fontFamily: 'Inter'.tr,
+                          style:GoogleFonts.spaceGrotesk(
                               fontWeight: FontWeight.w400,
-                              color: grey)),
+                              fontSize: 16,
+                              color: Colors.black54
+
+                          )),
                     ],
                   ),
                   SizedBox(height: 10),
@@ -504,29 +514,32 @@ class _BookingScreenState extends State<BookingScreenForEvent> {
             // Price details
             Text(
               'Extra Price :'.tr,
-              style: TextStyle(
-                  fontFamily: 'Inter'.tr,
-                  fontSize: 16,
+                style:GoogleFonts.spaceGrotesk(
                   fontWeight: FontWeight.w600,
-                  color: kPrimaryColor),
+                  fontSize: 16,
+
+
+                )
             ),
             SizedBox(height: 20),
             Row(
               children: [
                 Text("Rental Price".tr,
-                    style: TextStyle(
-                        fontFamily: 'Inter'.tr,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
-                        color: kPrimaryColor)),
+                    style:GoogleFonts.spaceGrotesk(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 16,
+
+
+                    )),
                 Spacer(),
                 Text(
                     "\$${carbookingitem.bookingResponse?.data?.booking?.service?.salePrice == 0 ? carbookingitem.bookingResponse?.data?.booking?.service?.price : carbookingitem.bookingResponse?.data?.booking?.service?.salePrice}",
-                    style: TextStyle(
-                        fontFamily: 'Inter'.tr,
-                        fontSize: 16,
+                    style:GoogleFonts.spaceGrotesk(
                         fontWeight: FontWeight.w400,
-                        color: grey)),
+                        fontSize: 16,
+                        color: Colors.black54
+
+                    )),
               ],
             ),
 
@@ -537,18 +550,19 @@ class _BookingScreenState extends State<BookingScreenForEvent> {
                 child: Row(
                   children: [
                     Text(element.name ?? "",
-                        style: TextStyle(
-                            fontFamily: 'Inter'.tr,
+                        style:GoogleFonts.spaceGrotesk(
+                            fontWeight: FontWeight.w600,
                             fontSize: 16,
-                            fontWeight: FontWeight.w500,
-                            color: kPrimaryColor)),
+                        )),
                     Spacer(),
                     Text("\$${element.price}",
-                        style: TextStyle(
-                            fontFamily: 'Inter'.tr,
-                            fontSize: 16,
+                        style:GoogleFonts.spaceGrotesk(
                             fontWeight: FontWeight.w400,
-                            color: grey)),
+                            fontSize: 16,
+                            color: Colors.black54
+
+                        )
+                    ),
                   ],
                 ),
               );
@@ -568,11 +582,12 @@ class _BookingScreenState extends State<BookingScreenForEvent> {
                             color: kPrimaryColor)),
                     Spacer(),
                     Text("\$${element.price}",
-                        style: TextStyle(
-                            fontFamily: 'Inter'.tr,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w400,
-                            color: grey)),
+                        style:GoogleFonts.spaceGrotesk(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 16,
+
+
+                        )),
                   ],
                 ),
               );
@@ -589,6 +604,12 @@ class _BookingScreenState extends State<BookingScreenForEvent> {
                   borderSide: BorderSide(width: 1),
                 ),
                 hintText: 'Coupon Code'.tr,
+                hintStyle:  GoogleFonts.spaceGrotesk(
+                    fontWeight: FontWeight.w400,
+                    fontSize: 16,
+                    color: Colors.black54
+
+                ),
                 contentPadding:
                     EdgeInsets.symmetric(vertical: 25, horizontal: 15),
                 suffixIcon: Padding(
@@ -651,18 +672,20 @@ class _BookingScreenState extends State<BookingScreenForEvent> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text('Total'.tr,
-                    style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 18,
-                        fontFamily: 'Inter'.tr,
-                        color: kPrimaryColor)),
+                    style:GoogleFonts.spaceGrotesk(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 16,
+
+
+                    )),
                 Text(
                     '\$${(carbookingitem.bookingResponse?.data?.booking?.total ?? 0)}',
-                    style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 18,
-                        fontFamily: 'Inter'.tr,
-                        color: kPrimaryColor)),
+                    style: GoogleFonts.spaceGrotesk(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 16,
+                        color: Colors.black
+
+                    )),
                 // Text(
                 //     '\$${(carbookingitem.bookingResponse?.data?.booking?.commission ?? 0).toInt() + int.parse("${widget.totalPrice}")}',
                 //     style: TextStyle(
@@ -675,11 +698,12 @@ class _BookingScreenState extends State<BookingScreenForEvent> {
 
             Divider(),
             Text('Credit want to pay?'.tr,
-                style: TextStyle(
-                    fontFamily: 'Inter'.tr,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: kPrimaryColor)),
+                style:GoogleFonts.spaceGrotesk(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 18,
+
+
+                )),
             SizedBox(height: 16),
 
             Container(
@@ -698,11 +722,12 @@ class _BookingScreenState extends State<BookingScreenForEvent> {
                       'Credit ${carbookingitem.creditbalance?.data?.creditBalance ?? '0'}'
                           .tr
                           .tr,
-                      style: TextStyle(
-                        color: Colors.black,
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
+                        style:GoogleFonts.spaceGrotesk(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 16,
+                            color: Colors.black
+
+                        )
                     ),
                   ),
 
@@ -749,18 +774,18 @@ class _BookingScreenState extends State<BookingScreenForEvent> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text('Pay now :'.tr,
-                    style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 18,
-                        fontFamily: 'Inter'.tr,
-                        color: kPrimaryColor)),
+                    style:GoogleFonts.spaceGrotesk(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 18,
+                    )),
                 Text(
                     '\$${hotelbookingitem.bookingResponse?.data?.booking?.total ?? 0} ',
-                    style: TextStyle(
+                    style:GoogleFonts.spaceGrotesk(
                         fontWeight: FontWeight.w600,
                         fontSize: 18,
-                        fontFamily: 'Inter'.tr,
-                        color: kPrimaryColor)),
+                        color: Colors.black
+
+                    )),
               ],
             ),
             SizedBox(height: 16),
@@ -775,42 +800,26 @@ class _BookingScreenState extends State<BookingScreenForEvent> {
                 children: [
                   Text(
                     'Booking Submission'.tr,
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w600,
-                      color: kPrimaryColor,
-                      fontFamily: 'Inter'.tr,
-                    ),
+                      style:GoogleFonts.spaceGrotesk(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 18,
+                          color: Colors.black
+
+                      )
                   ),
                   SizedBox(height: 16),
 
                   // First Name
                   Text('First Name*'.tr,
-                      style: TextStyle(
+                      style: GoogleFonts.spaceGrotesk(
+                        fontWeight: FontWeight.w400,
                         fontSize: 16,
-                        fontFamily: 'Inter'.tr,
                       )),
                   SizedBox(height: 8),
                   TextFormField(
                     controller: _firstNameController, // Added controller
-                    decoration: InputDecoration(
-                      hintText: 'Enter your first name'.tr,
-                      border: OutlineInputBorder(
-                        borderRadius:
-                            BorderRadius.circular(8.0), // Set border radius
-                        borderSide: BorderSide(
-                            color: Colors.grey), // Default border color
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8.0),
-                        borderSide: BorderSide(
-                            color: Colors.blue), // Focused border color
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8.0),
-                        borderSide: BorderSide(
-                            color: Colors.grey), // Enabled border color
-                      ),
+                    decoration: _greyFilledDecoration(
+                      'Enter your first name'.tr,
                     ),
                     keyboardType: TextInputType.name,
                     inputFormatters: [
@@ -832,31 +841,15 @@ class _BookingScreenState extends State<BookingScreenForEvent> {
 
                   // Last Name
                   Text('Last Name*'.tr,
-                      style: TextStyle(
+                      style: GoogleFonts.spaceGrotesk(
+                        fontWeight: FontWeight.w400,
                         fontSize: 16,
-                        fontFamily: 'Inter'.tr,
                       )),
                   SizedBox(height: 8),
                   TextFormField(
                     controller: _lastNameController, // Added controller
-                    decoration: InputDecoration(
-                      hintText: 'Enter your last name'.tr,
-                      border: OutlineInputBorder(
-                        borderRadius:
-                            BorderRadius.circular(8.0), // Set border radius
-                        borderSide: BorderSide(
-                            color: Colors.grey), // Default border color
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8.0),
-                        borderSide: BorderSide(
-                            color: Colors.blue), // Focused border color
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8.0),
-                        borderSide: BorderSide(
-                            color: Colors.grey), // Enabled border color
-                      ),
+                    decoration: _greyFilledDecoration(
+                      'Enter your last name'.tr,
                     ),
                     inputFormatters: [
                       FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z\s]')),
@@ -876,27 +869,15 @@ class _BookingScreenState extends State<BookingScreenForEvent> {
 
                   // Email
                   Text('Email*'.tr,
-                      style: TextStyle(
+                      style: GoogleFonts.spaceGrotesk(
+                        fontWeight: FontWeight.w400,
                         fontSize: 16,
-                        fontFamily: 'Inter'.tr,
                       )),
                   SizedBox(height: 8),
                   TextFormField(
                     controller: _emailController, // Added controller
-                    decoration: InputDecoration(
-                      hintText: 'Enter your email'.tr,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8.0),
-                        borderSide: BorderSide(color: Colors.grey),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8.0),
-                        borderSide: BorderSide(color: Colors.blue),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8.0),
-                        borderSide: BorderSide(color: Colors.grey),
-                      ),
+                    decoration:_greyFilledDecoration(
+                      'Enter your email'.tr,
                     ),
                     keyboardType: TextInputType.emailAddress,
 
@@ -916,30 +897,15 @@ class _BookingScreenState extends State<BookingScreenForEvent> {
 
                   // Phone
                   Text('Phone*'.tr,
-                      style: TextStyle(
+                      style: GoogleFonts.spaceGrotesk(
+                        fontWeight: FontWeight.w400,
                         fontSize: 16,
-                        fontFamily: 'Inter'.tr,
                       )),
                   SizedBox(height: 8),
                   TextFormField(
                     controller: _phoneController, // Added controller
-                    decoration: InputDecoration(
-                      hintText: 'Enter your phone number'.tr,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8.0),
-                        borderSide: BorderSide(
-                            color: Colors.grey), // Default border color
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8.0),
-                        borderSide: BorderSide(
-                            color: Colors.blue), // Focused border color
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8.0),
-                        borderSide: BorderSide(
-                            color: Colors.grey), // Enabled border color
-                      ),
+                    decoration: _greyFilledDecoration(
+                      'Enter your phone number'.tr,
                     ),
                     keyboardType: TextInputType.phone,
                     inputFormatters: [
@@ -962,28 +928,15 @@ class _BookingScreenState extends State<BookingScreenForEvent> {
 
                   // Address Line 1
                   Text('Address Line 1'.tr,
-                      style: TextStyle(fontFamily: 'Inter'.tr, fontSize: 16)),
+                      style: GoogleFonts.spaceGrotesk(
+                        fontWeight: FontWeight.w400,
+                        fontSize: 16,
+                      )),
                   SizedBox(height: 8),
                   TextFormField(
                     controller: _addressLine1Controller, // Added controller
-                    decoration: InputDecoration(
-                      hintText: 'Enter your address'.tr,
-                      border: OutlineInputBorder(
-                        borderRadius:
-                            BorderRadius.circular(8.0), // Set border radius
-                        borderSide: BorderSide(
-                            color: Colors.grey), // Default border color
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8.0),
-                        borderSide: BorderSide(
-                            color: Colors.blue), // Focused border color
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8.0),
-                        borderSide: BorderSide(
-                            color: Colors.grey), // Enabled border color
-                      ),
+                    decoration: _greyFilledDecoration(
+                      'Enter your address'.tr,
                     ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
@@ -996,28 +949,15 @@ class _BookingScreenState extends State<BookingScreenForEvent> {
 
                   // Address Line 2
                   Text('Address Line 2'.tr,
-                      style: TextStyle(fontFamily: 'Inter'.tr, fontSize: 16)),
+                      style: GoogleFonts.spaceGrotesk(
+                        fontWeight: FontWeight.w400,
+                        fontSize: 16,
+                      )),
                   SizedBox(height: 8),
                   TextFormField(
                     controller: _addressLine2Controller, // Added controller
-                    decoration: InputDecoration(
-                      hintText: 'Enter your address (optional)'.tr,
-                      border: OutlineInputBorder(
-                        borderRadius:
-                            BorderRadius.circular(8.0), // Set border radius
-                        borderSide: BorderSide(
-                            color: Colors.grey), // Default border color
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8.0),
-                        borderSide: BorderSide(
-                            color: Colors.blue), // Focused border color
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8.0),
-                        borderSide: BorderSide(
-                            color: Colors.grey), // Enabled border color
-                      ),
+                    decoration: _greyFilledDecoration(
+                      'Enter your address (optional)'.tr,
                     ),
                     // validator: (value) {
                     //   if (value == null || value.isEmpty) {
@@ -1029,41 +969,39 @@ class _BookingScreenState extends State<BookingScreenForEvent> {
                   SizedBox(height: 12),
                   // Country Dropdown
                   Text('Country*'.tr,
-                      style: TextStyle(fontFamily: 'Inter'.tr, fontSize: 16)),
+                      style: GoogleFonts.spaceGrotesk(
+                        fontWeight: FontWeight.w400,
+                        fontSize: 16,
+                      )),
                   SizedBox(height: 8),
+
                   DropdownButtonFormField<String>(
-                    decoration: InputDecoration(
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8.0),
-                        borderSide: BorderSide(color: Colors.grey),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8.0),
-                        borderSide: BorderSide(color: Colors.blue),
-                      ),
+                    decoration: _greyFilledDecoration(
+                      'Enter your country'.tr,
                     ),
-                    hint: Text('Select your country'),
-                    items: carbookingitem.countryResponse!.data.isNotEmpty
+                    hint: const Text('Select your country'),
+
+                    items: (carbookingitem.countryResponse?.data?.isNotEmpty ?? false)
                         ? carbookingitem.countryResponse!.data.map((country) {
-                            return DropdownMenuItem<String>(
-                              value: country.code,
-                              child: Text(country.name),
-                            );
-                          }).toList()
-                        : [
-                            // Ensure there's a fallback if the list is empty
-                            DropdownMenuItem<String>(
-                              value: null,
-                              child: Text('No countries available'),
-                            ),
-                          ],
+                      return DropdownMenuItem<String>(
+                        value: country.code,
+                        child: Text(country.name),
+                      );
+                    }).toList()
+                        : const [
+                      DropdownMenuItem<String>(
+                        value: null,
+                        child: Text('No countries available'),
+                      ),
+                    ],
+
                     onChanged: (value) {
                       log('$value valuecountry');
                       setState(() {
-                        selectedCountry =
-                            value; // Update selectedCountry on change
+                        selectedCountry = value;
                       });
                     },
+
                     validator: (value) {
                       if (value == null) {
                         return 'Please select a country';
@@ -1071,6 +1009,7 @@ class _BookingScreenState extends State<BookingScreenForEvent> {
                       return null;
                     },
                   ),
+
                   SizedBox(height: 12),
                   // State/Province/Region
                   Text('State/Province/Region'.tr,
@@ -1078,24 +1017,8 @@ class _BookingScreenState extends State<BookingScreenForEvent> {
                   SizedBox(height: 8),
                   TextFormField(
                     controller: _stateController, // Added controller
-                    decoration: InputDecoration(
-                      hintText: 'Enter your state or region'.tr,
-                      border: OutlineInputBorder(
-                        borderRadius:
-                            BorderRadius.circular(8.0), // Set border radius
-                        borderSide: BorderSide(
-                            color: Colors.grey), // Default border color
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8.0),
-                        borderSide: BorderSide(
-                            color: Colors.blue), // Focused border color
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8.0),
-                        borderSide: BorderSide(
-                            color: Colors.grey), // Enabled border color
-                      ),
+                    decoration: _greyFilledDecoration(
+                      'Enter your state or region'.tr,
                     ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
@@ -1107,28 +1030,15 @@ class _BookingScreenState extends State<BookingScreenForEvent> {
                   SizedBox(height: 12),
 // City
                   Text('City'.tr,
-                      style: TextStyle(fontFamily: 'Inter'.tr, fontSize: 16)),
+                      style: GoogleFonts.spaceGrotesk(
+                        fontWeight: FontWeight.w400,
+                        fontSize: 16,
+                      )),
                   SizedBox(height: 8),
                   TextFormField(
                     controller: _cityController, // Added controller
-                    decoration: InputDecoration(
-                      hintText: 'Enter your city'.tr,
-                      border: OutlineInputBorder(
-                        borderRadius:
-                            BorderRadius.circular(8.0), // Set border radius
-                        borderSide: BorderSide(
-                            color: Colors.grey), // Default border color
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8.0),
-                        borderSide: BorderSide(
-                            color: Colors.blue), // Focused border color
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8.0),
-                        borderSide: BorderSide(
-                            color: Colors.grey), // Enabled border color
-                      ),
+                    decoration: _greyFilledDecoration(
+                      'Enter your city'.tr,
                     ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
@@ -1141,28 +1051,15 @@ class _BookingScreenState extends State<BookingScreenForEvent> {
 
                   // ZIP code/Postal code
                   Text('ZIP Code/Postal Code'.tr,
-                      style: TextStyle(fontFamily: 'Inter'.tr, fontSize: 16)),
+                      style: GoogleFonts.spaceGrotesk(
+                        fontWeight: FontWeight.w400,
+                        fontSize: 16,
+                      )),
                   SizedBox(height: 8),
                   TextFormField(
                     controller: _zipCodeController, // Added controller
-                    decoration: InputDecoration(
-                      hintText: 'Enter your postal code'.tr,
-                      border: OutlineInputBorder(
-                        borderRadius:
-                            BorderRadius.circular(8.0), // Set border radius
-                        borderSide: BorderSide(
-                            color: Colors.grey), // Default border color
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8.0),
-                        borderSide: BorderSide(
-                            color: Colors.blue), // Focused border color
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8.0),
-                        borderSide: BorderSide(
-                            color: Colors.grey), // Enabled border color
-                      ),
+                    decoration: _greyFilledDecoration(
+                      'Enter your postal code'.tr,
                     ),
                     keyboardType: TextInputType.text,
                     inputFormatters: [
@@ -1188,14 +1085,16 @@ class _BookingScreenState extends State<BookingScreenForEvent> {
 
                   // Special Requirements
                   Text('Special Requirements'.tr,
-                      style: TextStyle(fontFamily: 'Inter'.tr, fontSize: 16)),
+                      style: GoogleFonts.spaceGrotesk(
+                        fontWeight: FontWeight.w400,
+                        fontSize: 16,
+                      )),
                   SizedBox(height: 8),
                   TextFormField(
                     controller:
                         _specialRequirementsController, // Added controller
-                    decoration: InputDecoration(
-                      hintText: 'Enter any special requests'.tr,
-                      border: OutlineInputBorder(),
+                    decoration:_greyFilledDecoration(
+                      'Enter any special requests'.tr,
                     ),
                     maxLines: 3,
                     keyboardType: TextInputType.text,
@@ -1223,11 +1122,10 @@ class _BookingScreenState extends State<BookingScreenForEvent> {
                   // Payment Method
                   Text(
                     'Payment Method'.tr,
-                    style: TextStyle(
-                        fontFamily: 'Inter'.tr,
-                        fontSize: 24,
+                      style: GoogleFonts.spaceGrotesk(
                         fontWeight: FontWeight.w600,
-                        color: kPrimaryColor),
+                        fontSize: 24,
+                      )
                   ),
                   SizedBox(height: 16),
 
@@ -1242,7 +1140,11 @@ class _BookingScreenState extends State<BookingScreenForEvent> {
                       ),
                     ),
                     child: RadioListTile(
-                      title: Text('Offline Payment'.tr),
+                      title: Text('Offline Payment'.tr,style: GoogleFonts.spaceGrotesk(
+                        fontWeight: FontWeight.w400,
+                        fontSize: 16,
+                        color: Colors.black,
+                      )),
                       value: "offline",
                       groupValue: hotelbookingitem.paymentMethod,
                       onChanged: (value) {
@@ -1263,7 +1165,11 @@ class _BookingScreenState extends State<BookingScreenForEvent> {
                       ),
                     ),
                     child: RadioListTile(
-                      title: Text('Online Payment'.tr),
+                      title: Text('Online Payment'.tr,style: GoogleFonts.spaceGrotesk(
+                        fontWeight: FontWeight.w400,
+                        fontSize: 16,
+                        color: Colors.black,
+                      )),
                       value: "online",
                       groupValue: hotelbookingitem.paymentMethod,
                       onChanged: (value) {
@@ -1287,7 +1193,10 @@ class _BookingScreenState extends State<BookingScreenForEvent> {
                       Expanded(
                           child: Text(
                               'I have read and accept the Terms & Conditions'
-                                  .tr)),
+                                  .tr,style: GoogleFonts.spaceGrotesk(
+                            fontWeight: FontWeight.w400,
+                            fontSize: 12,
+                          ))),
                     ],
                   ),
                   SizedBox(height: 16),
@@ -1331,4 +1240,23 @@ class _BookingScreenState extends State<BookingScreenForEvent> {
       )),
     );
   }
+}
+InputDecoration _greyFilledDecoration(String hint) {
+  return InputDecoration(
+    hintText: hint,
+    filled: true,
+    hintStyle: GoogleFonts.spaceGrotesk(
+      fontSize: 16,
+      fontWeight: FontWeight.w400,
+      color: Colors.black54,
+    ),
+    fillColor: Colors.grey.shade200,
+    border: InputBorder.none,
+    enabledBorder: InputBorder.none,
+    focusedBorder: InputBorder.none,
+    errorBorder: InputBorder.none,
+    focusedErrorBorder: InputBorder.none,
+    contentPadding:
+    const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+  );
 }

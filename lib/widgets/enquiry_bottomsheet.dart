@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:moonbnd/constants.dart';
 import 'package:get/get.dart';
 import 'package:provider/provider.dart';
@@ -86,158 +87,197 @@ class _EnquiryBottomSheetState extends State<EnquiryBottomSheet> {
 
   @override
   Widget build(BuildContext context) {
-    // Get keyboard height to adjust bottom padding
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
 
-    return Padding(
-      padding: EdgeInsets.only(
-        bottom: bottomInset,
-        left: 16,
-        right: 16,
-        top: 16,
-      ),
-      child: Form(
-        key: _formKey,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Enquiry'.tr,
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
+    return SafeArea(
+      child: SingleChildScrollView(
+        padding: EdgeInsets.only(
+          bottom: bottomInset + 16,
+          left: 16,
+          right: 16,
+          top: 16,
+        ),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Header
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Enquiry'.tr,
+                    style: GoogleFonts.spaceGrotesk(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.black,
+                    ),
                   ),
-                ),
-                IconButton(
-                  onPressed: () => Navigator.pop(context),
-                  icon: const Icon(Icons.close),
-                ),
-              ],
-            ),
-            Divider(thickness: 1),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _nameController,
-              decoration: InputDecoration(
-                labelText: 'Name*'.tr,
-                border: OutlineInputBorder(),
-              ),
-              style: TextStyle(height: 1),
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Please enter your name'.tr;
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _emailController,
-              keyboardType: TextInputType.emailAddress,
-              decoration: InputDecoration(
-                labelText: 'Email*'.tr,
-                border: OutlineInputBorder(),
-              ),
-              style: TextStyle(height: 1),
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Please enter your email'.tr;
-                }
-                if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
-                    .hasMatch(value)) {
-                  return 'Please enter a valid email address'.tr;
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _phoneController,
-              keyboardType: TextInputType.phone,
-              decoration: InputDecoration(
-                labelText: 'Phone*'.tr,
-                border: OutlineInputBorder(),
-              ),
-              style: TextStyle(height: 1),
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Please enter your phone number'.tr;
-                }
-                if (!RegExp(r'^\+?[\d\s-]{10,}$').hasMatch(value)) {
-                  return 'Please enter a valid phone number'.tr;
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _noteController,
-              maxLines: 3,
-              decoration: InputDecoration(
-                labelText: 'Note*'.tr,
-                border: OutlineInputBorder(),
-              ),
-              style: TextStyle(height: 1),
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Please enter a note'.tr;
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 24),
-            Divider(thickness: 1),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: TextButton(
+                  IconButton(
                     onPressed: () => Navigator.pop(context),
-                    child: Text(
-                      'Cancel'.tr,
-                      style: TextStyle(
+                    icon: const Icon(Icons.close),
+                  ),
+                ],
+              ),
+
+              const Divider(height: 24),
+
+              // Name
+              _buildInputField(
+                controller: _nameController,
+                label: 'Name*'.tr,
+                validator: (value) =>
+                value == null || value.isEmpty
+                    ? 'Please enter your name'.tr
+                    : null,
+              ),
+
+              const SizedBox(height: 16),
+
+              // Email
+              _buildInputField(
+                controller: _emailController,
+                label: 'Email*'.tr,
+                keyboardType: TextInputType.emailAddress,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter your email'.tr;
+                  }
+                  if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
+                      .hasMatch(value)) {
+                    return 'Please enter a valid email address'.tr;
+                  }
+                  return null;
+                },
+              ),
+
+              const SizedBox(height: 16),
+
+              // Phone
+              _buildInputField(
+                controller: _phoneController,
+                label: 'Phone*'.tr,
+                keyboardType: TextInputType.phone,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter your phone number'.tr;
+                  }
+                  if (!RegExp(r'^\+?[\d\s-]{10,}$').hasMatch(value)) {
+                    return 'Please enter a valid phone number'.tr;
+                  }
+                  return null;
+                },
+              ),
+
+              const SizedBox(height: 16),
+
+              // Note
+              _buildInputField(
+                controller: _noteController,
+                label: 'Note*'.tr,
+                maxLines: 3,
+                validator: (value) =>
+                value == null || value.isEmpty
+                    ? 'Please enter a note'.tr
+                    : null,
+              ),
+
+              const SizedBox(height: 24),
+              const Divider(),
+              const SizedBox(height: 16),
+
+              // Buttons
+              Row(
+                children: [
+                  Expanded(
+                    child: TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: Text(
+                        'Cancel'.tr,
+                        style: GoogleFonts.spaceGrotesk(
                           color: kPrimaryColor,
                           fontSize: 16,
-                          fontFamily: 'Inter',
+                          fontWeight: FontWeight.w600,
+                          decoration: TextDecoration.underline,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  SizedBox(
+                    width: 150,
+                    child: ElevatedButton(
+                      onPressed: _submitEnquiry,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: kSecondaryColor,
+                        minimumSize: const Size(0, 52),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                      ),
+                      child: Text(
+                        'Send Now'.tr,
+                        style: GoogleFonts.spaceGrotesk(
+                          fontSize: 16,
                           fontWeight: FontWeight.w700,
-                          decoration: TextDecoration.underline),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 16),
-                SizedBox(
-                  width: 150,
-                  child: ElevatedButton(
-                    onPressed: _submitEnquiry,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: kSecondaryColor,
-                      foregroundColor: Colors.white,
-                      minimumSize: const Size(0, 55),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(5),
-                      ),
-                    ),
-                    child: Text(
-                      'Send Now'.tr,
-                      style: TextStyle(
-                        color: kBackgroundColor,
-                        fontSize: 16,
-                        fontFamily: 'Inter',
-                        fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                        ),
                       ),
                     ),
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-          ],
+                ],
+              ),
+
+              const SizedBox(height: 16),
+            ],
+          ),
         ),
       ),
     );
   }
+
 }
+Widget _buildInputField({
+  required TextEditingController controller,
+  required String label,
+  int maxLines = 1,
+  TextInputType keyboardType = TextInputType.text,
+  String? Function(String?)? validator,
+}) {
+  return TextFormField(
+    controller: controller,
+    maxLines: maxLines,
+    keyboardType: keyboardType,
+    validator: validator,
+    style: GoogleFonts.spaceGrotesk(
+      fontSize: 14,
+      color: Colors.black,
+    ),
+    decoration: InputDecoration(
+      labelText: label,
+      labelStyle: GoogleFonts.spaceGrotesk(
+        fontSize: 14,
+        color: Colors.grey[600],
+      ),
+
+      // ✅ Grey background
+      filled: true,
+      fillColor: const Color(0xFFF1F5F9), // light grey
+
+      // ❌ Remove all borders
+      border: InputBorder.none,
+      enabledBorder: InputBorder.none,
+      focusedBorder: InputBorder.none,
+      errorBorder: InputBorder.none,
+      focusedErrorBorder: InputBorder.none,
+
+      // Padding for better height & touch
+      contentPadding: const EdgeInsets.symmetric(
+        horizontal: 16,
+        vertical: 14,
+      ),
+    ),
+  );
+}
+

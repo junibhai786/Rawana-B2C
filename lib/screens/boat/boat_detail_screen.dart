@@ -1209,7 +1209,7 @@ class _CarRentalDetailsScreenState extends State<BoatDetailsScreen> {
 
                                                 setState1(() {});
                                               }),
-                                          Text(element.name ?? "",style: GoogleFonts.spaceGrotesk(),),
+                                          Text(element.name ?? "",style: GoogleFonts.spaceGrotesk(color: Colors.black54),),
                                           Spacer(),
                                           Text("\$${element.price}",style: GoogleFonts.spaceGrotesk(),),
                                         ],
@@ -1228,9 +1228,9 @@ class _CarRentalDetailsScreenState extends State<BoatDetailsScreen> {
                                         bottom: 10, left: 15, right: 15),
                                     child: Row(
                                       children: [
-                                        Text(element.name),
+                                        Text(element.name,style: GoogleFonts.spaceGrotesk(color: Colors.black54)),
                                         Spacer(),
-                                        Text("\$${element.price}"),
+                                        Text("\$${element.price}",style: GoogleFonts.spaceGrotesk()),
                                       ],
                                     ),
                                   );
@@ -1721,16 +1721,16 @@ class _CarRentalDetailsScreenState extends State<BoatDetailsScreen> {
                               color: textColor,
                             ),
                           ),
-                          Text(
-                            'Based on ${boatDetail.data?.reviewScore?.totalReview ?? 0} reviews'
-                                .tr,
-                            textAlign: TextAlign.center,
-                            style: GoogleFonts.spaceGrotesk( fontWeight: FontWeight.w400, // Regular
-                              fontSize: 14,
-                              height: 20 / 14,
-                              letterSpacing: 0,
-                              color: textColor,),
-                          ),
+                          // Text(
+                          //   'Based on ${boatDetail.data?.reviewScore?.totalReview ?? 0} reviews'
+                          //       .tr,
+                          //   textAlign: TextAlign.center,
+                          //   style: GoogleFonts.spaceGrotesk( fontWeight: FontWeight.w400, // Regular
+                          //     fontSize: 14,
+                          //     height: 20 / 14,
+                          //     letterSpacing: 0,
+                          //     color: textColor,),
+                          // ),
 
                         ],
                       ),

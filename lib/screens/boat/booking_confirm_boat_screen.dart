@@ -1,15 +1,16 @@
-// ignore_for_file: prefer_const_constructors, prefer_const_literals_to_create_immutables, sort_child_properties_last
+// ignore_for_file: prefer_const_constructors, prefer_const_literals_to_create_immutables
 
-import 'package:moonbnd/Provider/home_provider.dart';
-import 'package:moonbnd/screens/hotel/hotel_booking_history_screen.dart';
-import 'package:moonbnd/widgets/bottom_navigation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
-import 'package:moonbnd/constants.dart';
 import 'package:intl/intl.dart';
+import 'package:moonbnd/Provider/home_provider.dart';
+import 'package:moonbnd/constants.dart';
+import 'package:moonbnd/screens/hotel/hotel_booking_history_screen.dart';
+import 'package:moonbnd/widgets/bottom_navigation.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class BookingConfirmedScreenForBoat extends StatefulWidget {
   final String bookingCode;
@@ -17,17 +18,18 @@ class BookingConfirmedScreenForBoat extends StatefulWidget {
 
   @override
   State<BookingConfirmedScreenForBoat> createState() =>
-      _BookingConfirmedScreenState();
+      _BookingConfirmedScreenForBoatState();
 }
 
-class _BookingConfirmedScreenState
+class _BookingConfirmedScreenForBoatState
     extends State<BookingConfirmedScreenForBoat> {
   int calculatedTime = 0;
   double rentalPrice = 0.0;
+
   @override
   void initState() {
     super.initState();
-    _fetchBookingDetails().then((cka) {
+    _fetchBookingDetails().then((_) {
       calculateRentalPrice();
     });
   }
@@ -35,435 +37,301 @@ class _BookingConfirmedScreenState
   Future<void> _fetchBookingDetails() async {
     final homeProvider = Provider.of<HomeProvider>(context, listen: false);
     await homeProvider.fetchBookingDetails(widget.bookingCode);
-
     setState(() {});
   }
 
   void calculateRentalPrice() {
-    final carbookingitem = Provider.of<HomeProvider>(context, listen: false);
+    final data = Provider.of<HomeProvider>(context, listen: false);
+    final booking = data.bookingResponse?.data?.booking;
 
-    if (carbookingitem.bookingResponse?.data?.booking?.days == 0) {
-      calculatedTime =
-          int.parse("${carbookingitem.bookingResponse?.data?.booking?.hours}");
-
-      rentalPrice = calculatedTime *
-          double.parse(carbookingitem
-                  .bookingResponse?.data?.booking?.service?.pricePerHour ??
-              "1");
+    if (booking?.days == 0) {
+      calculatedTime = int.parse("${booking?.hours}");
+      rentalPrice =
+          calculatedTime * double.parse(booking?.service?.pricePerHour ?? "1");
     } else {
-      calculatedTime =
-          int.parse("${carbookingitem.bookingResponse?.data?.booking?.days}");
-      rentalPrice = calculatedTime *
-          double.parse(carbookingitem
-                  .bookingResponse?.data?.booking?.service?.pricePerDay ??
-              "1");
+      calculatedTime = int.parse("${booking?.days}");
+      rentalPrice =
+          calculatedTime * double.parse(booking?.service?.pricePerDay ?? "1");
     }
     setState(() {});
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final hotelbookingdata = Provider.of<HomeProvider>(context, listen: true);
-    // ignore: deprecated_member_use
-    WillPopScope(
-      onWillPop: () async {
-        Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(
-            builder: (context) {
-              return BottomNav();
-            },
-          ),
-          (route) => false,
-        );
-        return true;
-      },
-      child: Container(), // This container is just a placeholder
+  // ---------------- SPACE GROTESK ----------------
+  TextStyle sg({
+    double size = 14,
+    FontWeight weight = FontWeight.w400,
+    Color color = Colors.black,
+  }) {
+    return GoogleFonts.spaceGrotesk(
+      fontSize: size,
+      fontWeight: weight,
+      color: color,
+      height: 1.4,
     );
-    return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: SvgPicture.asset('assets/icons/arrowleft.svg'),
-          onPressed: () => Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(
-              builder: (context) {
-                return BottomNav();
-              },
+  }
+
+  // ---------------- INFO ROW ----------------
+  Widget infoItem(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            flex: 4,
+            child: Text(
+              label,
+              style: sg(size: 13, color: grey),
             ),
-            (route) => false,
           ),
-        ),
-        actions: [
-          IconButton(
-            icon: SvgPicture.asset('assets/icons/shareicon.svg'),
-            onPressed: () async {
-              await Share.share(
-                  hotelbookingdata.bookingResponse?.data?.booking?.shareUrl ??
-                      "");
-            },
+          Expanded(
+            flex: 6,
+            child: Text(
+              value,
+              style: sg(size: 14, weight: FontWeight.w500),
+              textAlign: TextAlign.right,
+            ),
           ),
         ],
-        backgroundColor: Colors.white,
-        elevation: 0,
       ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: EdgeInsets.all(16.0),
+    );
+  }
+
+  // ---------------- STATUS CHIP ----------------
+  Widget statusItem(String status) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.green.withOpacity(.1),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        status,
+        style: sg(
+          size: 13,
+          weight: FontWeight.w600,
+          color: Colors.green,
+        ),
+      ),
+    );
+  }
+
+  // ---------------- SECTION CARD ----------------
+  Widget section(String title, Widget child) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 20),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(.04),
+            blurRadius: 10,
+            offset: Offset(0, 4),
+          )
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title, style: sg(size: 18, weight: FontWeight.w600)),
+          const SizedBox(height: 14),
+          child,
+        ],
+      ),
+    );
+  }
+
+  // ---------------- BOOKING HEADER ----------------
+  Widget bookingHeader(HomeProvider data) {
+    return Row(
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(10),
+          child: Image.network(
+            data.bookingResponse?.data?.booking?.service?.gallery?.first ?? '',
+            width: 90,
+            height: 80,
+            fit: BoxFit.cover,
+          ),
+        ),
+        const SizedBox(width: 14),
+        Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Center(
-                child: Column(
-                  children: [
-                    Text(
-                      'Booking Confirmed'.tr,
-                      style: TextStyle(
-                          fontSize: 24,
-                          color: Colors.green,
-                          fontFamily: 'Inter'.tr,
-                          fontWeight: FontWeight.w600),
-                    ),
-                    SizedBox(height: 10),
-                    Container(
-                        padding: EdgeInsets.all(10),
-                        child: SvgPicture.asset('assets/icons/greentick.svg')),
-                    SizedBox(height: 10),
-                  ],
-                ),
-              ),
-              SizedBox(height: 20),
               Text(
-                'Booking details has been sent to'.tr,
-                style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w400,
-                    fontFamily: 'Inter'.tr,
-                    color: kPrimaryColor),
+                data.bookingResponse?.data?.booking?.service?.title ?? '',
+                style: sg(size: 16, weight: FontWeight.w600),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 6),
+              Text(
+                data.bookingResponse?.data?.booking?.service?.address ?? '',
+                style: sg(size: 13, color: grey),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ---------------- BOOKING DETAILS ----------------
+  Widget bookingDetails(HomeProvider data) {
+    final booking = data.bookingResponse?.data?.booking;
+
+    return section(
+      'Booking Summary'.tr,
+      Column(
+        children: [
+          bookingHeader(data),
+          const SizedBox(height: 16),
+          Divider(height: 1),
+          infoItem(
+            'Start Date'.tr,
+            DateFormat('dd MMM yyyy')
+                .format(DateTime.parse("${booking?.startDate}")),
+          ),
+          infoItem('Time'.tr, booking?.startTime ?? ''),
+          infoItem(
+            booking?.days == 0 ? 'Hours' : 'Days',
+            '$calculatedTime',
+          ),
+          infoItem('Rental Price'.tr, '\$$rentalPrice'),
+          Divider(height: 24),
+          infoItem('Total'.tr, '\$${booking?.total ?? ""}'),
+          infoItem('Paid'.tr, '\$${booking?.paid ?? ""}'),
+          infoItem('Remaining'.tr, '\$${booking?.payNow ?? ""}'),
+        ],
+      ),
+    );
+  }
+
+  // ---------------- USER INFO ----------------
+  Widget userInfo(HomeProvider data) {
+    final b = data.bookingResponse?.data?.booking;
+    return section(
+      'Customer Information'.tr,
+      Column(
+        children: [
+          infoItem('Name'.tr, '${b?.firstName ?? ''} ${b?.lastName ?? ''}'),
+          infoItem('Email'.tr, b?.email ?? ''),
+          infoItem('Phone'.tr, b?.phone ?? ''),
+          infoItem('Address'.tr, '${b?.address ?? ''} ${b?.address2 ?? ''}'),
+          infoItem('City'.tr, b?.city ?? ''),
+          infoItem('State'.tr, b?.state ?? ''),
+          infoItem('ZIP'.tr, b?.zipCode ?? ''),
+          infoItem('Country'.tr, b?.country ?? ''),
+          infoItem('Notes'.tr, b?.customerNotes ?? ''),
+        ],
+      ),
+    );
+  }
+
+  // ---------------- BUILD ----------------
+  @override
+  Widget build(BuildContext context) {
+    final data = Provider.of<HomeProvider>(context);
+
+    return WillPopScope(
+      onWillPop: () async {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => BottomNav()),
+              (route) => false,
+        );
+        return true;
+      },
+      child: Scaffold(
+        backgroundColor: Colors.grey.shade100,
+        appBar: AppBar(
+          backgroundColor: Colors.white,
+          elevation: 0,
+          leading: IconButton(
+            icon: SvgPicture.asset('assets/icons/arrowleft.svg'),
+            onPressed: () {
+              Navigator.of(context).pushAndRemoveUntil(
+                MaterialPageRoute(builder: (_) => BottomNav()),
+                    (route) => false,
+              );
+            },
+          ),
+          actions: [
+            IconButton(
+              icon: SvgPicture.asset('assets/icons/shareicon.svg'),
+              onPressed: () async {
+                await Share.share(
+                  data.bookingResponse?.data?.booking?.shareUrl ?? "",
+                );
+              },
+            ),
+          ],
+        ),
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            children: [
+              SvgPicture.asset('assets/icons/greentick.svg', height: 70),
+              const SizedBox(height: 12),
+              Text(
+                'Booking Confirmed'.tr,
+                style: sg(size: 22, weight: FontWeight.w600),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'Confirmation sent to'.tr,
+                style: sg(size: 13, color: grey),
               ),
               Text(
-                hotelbookingdata.bookingResponse?.data?.booking?.email ?? "",
-                style: TextStyle(
-                    fontSize: 16,
-                    fontFamily: 'Inter'.tr,
-                    decoration: TextDecoration.underline,
-                    fontWeight: FontWeight.w400,
-                    color: kPrimaryColor),
+                data.bookingResponse?.data?.booking?.email ?? '',
+                style: sg(size: 14, weight: FontWeight.w500),
               ),
-              _buildInfoRow(
-                  'Booking Number'.tr,
-                  (hotelbookingdata.bookingResponse?.data?.booking!.id ?? 0)
-                      .toString()),
-              _buildInfoRow(
-                  'Booking Date'.tr,
-                  DateFormat("dd/MM/yyyy").format(DateTime.parse(
-                      "${hotelbookingdata.bookingResponse?.data?.booking?.createdAt}"))),
-              _buildInfoRow(
-                  'Payment Method'.tr,
-                  (hotelbookingdata.bookingResponse?.data?.booking?.gateway ??
-                      '')),
-              SizedBox(height: 10),
-              _buildStatusRow(
-                  'Booking Status'.tr,
-                  (hotelbookingdata.bookingResponse?.data?.booking?.status ??
-                      "")),
-              SizedBox(height: 20),
-              Divider(
-                thickness: 1,
+              const SizedBox(height: 14),
+              statusItem(
+                data.bookingResponse?.data?.booking?.status ?? '',
               ),
-              SizedBox(height: 20),
-              Text('Your Booking'.tr,
-                  style: TextStyle(
-                      fontSize: 20,
-                      fontFamily: 'Inter'.tr,
-                      fontWeight: FontWeight.w600,
-                      color: kPrimaryColor)),
-              SizedBox(height: 10),
-              _buildBookingDetails(),
-              SizedBox(height: 20),
-              Text('Your Information'.tr,
-                  style: TextStyle(
-                      fontSize: 20,
-                      fontFamily: 'Inter'.tr,
-                      fontWeight: FontWeight.w600,
-                      color: kPrimaryColor)),
-              SizedBox(height: 10),
-              _buildUserInfo(),
-              SizedBox(height: 20),
+              const SizedBox(height: 24),
+              bookingDetails(data),
+              userInfo(data),
+              const SizedBox(height: 12),
               ElevatedButton(
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      'Booking History'.tr,
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontFamily: 'Inter'.tr,
-                      ),
-                    ),
-                    SizedBox(
-                      height: 15,
-                    ),
-                    Icon(
-                      Icons.chevron_right,
-                      color: Colors.white,
-                    ),
-                  ],
-                ),
                 style: ElevatedButton.styleFrom(
-                  foregroundColor: Colors.white,
                   backgroundColor: kSecondaryColor,
-                  minimumSize: Size(double.infinity, 50),
+                  minimumSize: const Size.fromHeight(50),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(10),
                   ),
                 ),
                 onPressed: () {
                   Navigator.of(context).push(
                     MaterialPageRoute(
-                        builder: (context) => BookingHistoryScreen()),
-                  );
-                },
-              ),
-              SizedBox(height: 20),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  minimumSize: const Size.fromHeight(48),
-                  backgroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      side: BorderSide(width: 1, color: Colors.black12)),
-                ),
-                onPressed: () {
-                  Navigator.of(context).pushAndRemoveUntil(
-                    MaterialPageRoute(
-                      builder: (context) {
-                        return BottomNav();
-                      },
-                    ),
-                    (route) => false,
+                        builder: (_) => BookingHistoryScreen()),
                   );
                 },
                 child: Text(
-                  "Back to Home".tr,
-                  style: TextStyle(
-                    fontFamily: 'Inter'.tr,
-                    color: Colors.black,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  'Booking History'.tr,
+                  style: sg(color: Colors.white, size: 16),
+                ),
+              ),
+              const SizedBox(height: 10),
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pushAndRemoveUntil(
+                    MaterialPageRoute(builder: (_) => BottomNav()),
+                        (route) => false,
+                  );
+                },
+                child: Text(
+                  'Back to Home'.tr,
+                  style: sg(weight: FontWeight.w500),
                 ),
               ),
             ],
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildInfoRow(String label, String value) {
-    return Padding(
-      padding: EdgeInsets.symmetric(vertical: 8.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.end,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 130,
-            child: Text(label,
-                style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                    fontFamily: 'Inter'.tr,
-                    color: kPrimaryColor)),
-          ),
-          Spacer(),
-          Container(
-            alignment: Alignment.centerRight,
-            width: 200,
-            child: Text(value,
-                style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w400,
-                    fontFamily: 'Inter'.tr,
-                    color: grey)),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTotal(String label, String value) {
-    return Padding(
-      padding: EdgeInsets.symmetric(vertical: 8.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(label,
-              style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  fontFamily: 'Inter'.tr,
-                  color: kPrimaryColor)),
-          Text(value,
-              style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  fontFamily: 'Inter'.tr,
-                  color: kPrimaryColor)),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStatusRow(String label, String status) {
-    return Padding(
-      padding: EdgeInsets.symmetric(vertical: 8.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(label,
-              style: TextStyle(
-                  fontSize: 16,
-                  color: kPrimaryColor,
-                  fontFamily: 'Inter'.tr,
-                  fontWeight: FontWeight.w500)),
-          Container(
-            padding: EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-            decoration: BoxDecoration(
-              color: kSecondaryColor,
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: Text(status,
-                style: TextStyle(
-                    color: Colors.white,
-                    fontFamily: 'Inter'.tr,
-                    fontWeight: FontWeight.w500,
-                    fontSize: 16)),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildBookingDetails() {
-    final hotelbookingdata = Provider.of<HomeProvider>(context, listen: true);
-    return Column(
-      children: [
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: Image.network(
-                hotelbookingdata
-                        .bookingResponse?.data?.booking?.service!.gallery?[0] ??
-                    'assets/haven/house.png',
-                width: 96,
-                height: 80,
-                fit: BoxFit.cover,
-              ),
-            ),
-            SizedBox(width: 10),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.start,
-              children: [
-                Text(
-                    hotelbookingdata
-                            .bookingResponse?.data?.booking?.service?.title ??
-                        '',
-                    style: TextStyle(
-                        fontSize: 18,
-                        fontFamily: 'Inter'.tr,
-                        fontWeight: FontWeight.bold)),
-                SizedBox(
-                  width: 230,
-                  child: Text(
-                      hotelbookingdata.bookingResponse?.data?.booking?.service
-                              ?.address ??
-                          '',
-                      style: TextStyle(
-                        color: Colors.grey,
-                        fontFamily: 'Inter'.tr,
-                      )),
-                ),
-              ],
-            ),
-          ],
-        ),
-        SizedBox(height: 10),
-        _buildInfoRow(
-            'Start Date'.tr,
-            DateFormat("dd/MM/yyyy").format(
-              DateTime.parse(
-                  "${hotelbookingdata.bookingResponse?.data?.booking?.startDate}"),
-            )),
-        _buildInfoRow(
-          'Time'.tr,
-          hotelbookingdata.bookingResponse?.data?.booking?.startTime ?? "",
-        ),
-        _buildInfoRow(
-          hotelbookingdata.bookingResponse?.data?.booking?.days == 0
-              ? 'Hours'
-              : 'Days',
-          '$calculatedTime',
-        ),
-        _buildInfoRow(
-          'Rental Price'.tr,
-          "\$$rentalPrice",
-        ),
-        ...(hotelbookingdata.bookingResponse?.data?.booking?.buyerFees)!
-            .map((element) {
-          return _buildInfoRow(element.name ?? "", "\$${element.price}");
-        }),
-        ...(hotelbookingdata.bookingResponse?.data?.booking?.extraPrice)!
-            .map((element) {
-          return _buildInfoRow(element.name ?? "", "\$${element.price}");
-        }),
-        Divider(color: Colors.grey, thickness: 1),
-        _buildTotal(
-          'Total'.tr,
-          "\$${hotelbookingdata.bookingResponse?.data?.booking?.total ?? ""}",
-        ),
-        _buildTotal('Paid'.tr,
-            '\$ ${hotelbookingdata.bookingResponse?.data?.booking?.paid ?? ""}'),
-        _buildTotal(
-          'Remain'.tr,
-          "\$${hotelbookingdata.bookingResponse?.data?.booking?.payNow ?? ""}",
-        ),
-        Divider(),
-      ],
-    );
-  }
-
-  Widget _buildUserInfo() {
-    final hotelbookingdata = Provider.of<HomeProvider>(context, listen: true);
-    return Column(
-      children: [
-        _buildInfoRow('First Name'.tr,
-            hotelbookingdata.bookingResponse?.data?.booking?.firstName ?? ''),
-        _buildInfoRow('Last Name'.tr,
-            hotelbookingdata.bookingResponse?.data?.booking?.lastName ?? ''),
-        _buildInfoRow('Email'.tr,
-            hotelbookingdata.bookingResponse?.data?.booking?.email ?? ''),
-        _buildInfoRow('Phone'.tr,
-            hotelbookingdata.bookingResponse?.data?.booking?.phone ?? ''),
-        _buildInfoRow('Address line 1'.tr,
-            hotelbookingdata.bookingResponse?.data?.booking?.address ?? ''),
-        _buildInfoRow('Address line 2'.tr,
-            hotelbookingdata.bookingResponse?.data?.booking?.address2 ?? ''),
-        _buildInfoRow('City'.tr,
-            hotelbookingdata.bookingResponse?.data?.booking?.city ?? ''),
-        _buildInfoRow('State/Province/Region'.tr,
-            hotelbookingdata.bookingResponse?.data?.booking?.state ?? ''),
-        _buildInfoRow('ZIP code/Postal code'.tr,
-            hotelbookingdata.bookingResponse?.data?.booking?.zipCode ?? ''),
-        _buildInfoRow('Country'.tr,
-            hotelbookingdata.bookingResponse?.data?.booking?.country ?? ''),
-        _buildInfoRow(
-            'Special Requirements'.tr,
-            hotelbookingdata.bookingResponse?.data?.booking?.customerNotes ??
-                ''),
-      ],
     );
   }
 }
