@@ -67,7 +67,7 @@ class Event {
   String? video;
   List<Faqs>? faqs;
   List<TicketTypes>? ticketTypes;
-  int? duration;
+  String? duration;
   String? startTime;
   int? price;
   int? salePrice;

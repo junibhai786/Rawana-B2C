@@ -103,6 +103,9 @@ class PropertyData {
   });
 
   factory PropertyData.fromHotel(Hotel hotel) {
+    final reviewScoreMap =
+    hotel.reviewScore is Map ? hotel.reviewScore as Map : null;
+
     return PropertyData(
       propertyName: hotel.title ?? '',
       images: hotel.gallery ?? [],
@@ -112,13 +115,19 @@ class PropertyData {
       rating: hotel.starRate ?? 0,
       tag: hotel.checkOutTime ?? '',
       date: hotel.checkInTime ?? '',
-      price: hotel.price ?? "",
+      price: hotel.price ?? '',
       address: hotel.address ?? '',
-      reviewcount: hotel.reviewCount ?? 0,
-      reviewtext: hotel.reviewText ?? '',
-      reviewscore: hotel.reviewScore ?? '',
+
+      // ✅ FIXED REVIEW FIELDS
+      reviewscore:
+      reviewScoreMap?['score_total']?.toString() ?? '0',
+      reviewcount:
+      reviewScoreMap?['total_review'] ?? 0,
+      reviewtext:
+      reviewScoreMap?['review_text'] ?? '',
     );
   }
+
 }
 
 class CarData {
@@ -197,7 +206,8 @@ class EvenData {
   final dynamic rating;
   final int reviewcount;
   final dynamic reviewscore;
-  final int price, duration, discount, isfeatured;
+  final int price, discount, isfeatured;
+  String? duration;
   final List<String> images;
   final int? id;
   bool isWishlist;
@@ -221,24 +231,27 @@ class EvenData {
   });
 
   factory EvenData.fromEvent(Event event) {
+    final reviewScoreMap = event.reviewScore is Map ? event.reviewScore as Map : null;
+
     return EvenData(
       propertyName: event.title ?? '',
       id: event.id ?? 0,
       isWishlist: event.isInWishlist ?? false,
       images: event.gallery ?? [],
       slug: event.slug ?? '',
-      rating: event.reviewScore,
+      rating: reviewScoreMap?['score_total'] ?? 0, // dynamic is ok
       time: event.startTime ?? '',
       price: event.price ?? 0,
       address: event.address ?? '',
-      reviewcount: event.reviewCount ?? 0,
-      reviewtext: event.reviewText ?? '',
-      reviewscore: event.reviewScore,
-      duration: event.duration ?? 0,
+      reviewcount: reviewScoreMap?['total_review'] ?? 0,
+      reviewtext: reviewScoreMap?['review_text']?.toString() ?? '',
+      reviewscore: reviewScoreMap?['score_total']?.toString() ?? '0',
+      duration: event.duration ?? '',
       discount: event.discount ?? 0,
       isfeatured: event.isFeatured ?? 0,
     );
   }
+
 }
 
 class TourData {
@@ -270,24 +283,30 @@ class TourData {
   });
 
   factory TourData.fromTour(Tour tour) {
+    final reviewScoreMap =
+    tour.reviewScore is Map ? tour.reviewScore as Map : null;
+
     return TourData(
       propertyName: tour.title ?? '',
       images: tour.gallery ?? [],
       slug: tour.slug ?? '',
       id: tour.id ?? 0,
       isWishlist: tour.isInWishlist ?? false,
-      // rating: tour.reviewScore ?? '0',
       date: tour.startDate ?? '',
       price: tour.price ?? '',
       salePrice: tour.salePrice ?? '',
       address: tour.address ?? '',
-      reviewcount: tour.reviewCount.toString(),
-      reviewtext: tour.reviewText ?? '',
-      reviewscore: tour.reviewScore.toString(),
+
+      // ✅ FIX REVIEW FIELDS
+      reviewcount: reviewScoreMap?['total_review']?.toString() ?? '0',
+      reviewtext: reviewScoreMap?['review_text']?.toString() ?? '',
+      reviewscore: reviewScoreMap?['score_total']?.toString() ?? '0',
+
       isfeatured: tour.isFeatured ?? 0,
       discount: tour.discount ?? 0,
     );
   }
+
 }
 
 class SpaceData {

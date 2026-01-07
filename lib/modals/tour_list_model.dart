@@ -69,7 +69,7 @@ class Tour {
   String? video;
   String? price;
   String? salePrice;
-  int? duration;
+  String? duration;
   int? minPeople;
   int? maxPeople;
   List<Faqs>? faqs;

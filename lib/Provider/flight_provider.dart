@@ -56,6 +56,9 @@ class FlightProvider with ChangeNotifier {
       if (searchParams?['start'] != null)
         'start': DateFormat('yyyy-MM-dd')
             .format(searchParams!['start'] as DateTime),
+      if (searchParams?['end'] != null)
+        'end': DateFormat('yyyy-MM-dd')
+            .format(searchParams!['end'] as DateTime),
 
       if (searchParams?['children'] != null)
         'children': searchParams!['children'].toString(),

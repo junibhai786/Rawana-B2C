@@ -50,7 +50,7 @@ Widget buildPropertyCard({
   String? status,
   bool manageView = false,
   String? extraInfo,
-  int? duration,
+String? duration,
 }) {
   return GestureDetector(
     onTap: onTap, // This will now trigger navigation

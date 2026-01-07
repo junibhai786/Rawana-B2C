@@ -306,7 +306,7 @@ class VendorHotelProvider with ChangeNotifier {
       addhotellocations = addhotellocation;
       notifyListeners();
     } else {
-      log("Failed to fetch hotel details. Error: ${result['message']}");
+      log("Failed to fetch hotel details (7). Error: ${result['message']}");
       return null;
     }
   }
@@ -850,7 +850,7 @@ class VendorHotelProvider with ChangeNotifier {
       hotellists = hotellist;
       notifyListeners();
     } else {
-      log("Failed to fetch hotel details. Error: ${result['message']}");
+      log("Failed to fetch hotel details  (8). Error: ${result['message']}");
       return null;
     }
   }
@@ -876,7 +876,7 @@ class VendorHotelProvider with ChangeNotifier {
       notifyListeners();
       return hotellistdetail?.data;
     } else {
-      log("Failed to fetch hotel details. Error: ${result['message']}");
+      log("Failed to fetch hotel details (6). Error: ${result['message']}");
       return null;
     }
   }

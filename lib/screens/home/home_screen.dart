@@ -106,10 +106,10 @@ class _HomeScreenState extends State<HomeScreen>
   final TextEditingController _cityController = TextEditingController();
   final TextEditingController _fromCityController = TextEditingController();
   final TextEditingController _toCityController = TextEditingController();
-  List<dynamic> _citySuggestions = [];
-  List<dynamic> _fromcitySuggestions = [];
-  List<dynamic> _tocitySuggestions = [];
-  bool _isSearchingCity = false;
+  final ScrollController _cityScrollController = ScrollController();
+  final ScrollController _departureCityScrollController = ScrollController();
+  final ScrollController _destinationCityScrollController = ScrollController();
+
 
   @override
   void initState() {
@@ -168,6 +168,8 @@ class _HomeScreenState extends State<HomeScreen>
       case 1:
       // ignore: use_build_context_synchronously
         await Provider.of<HomeProvider>(context, listen: false)
+
+
             .hotellistapi(index, searchParams: {}).then((_) {
           setState(() {
             isLoading = false;
@@ -233,35 +235,47 @@ class _HomeScreenState extends State<HomeScreen>
 //zeeshan
 
   // Flight Passenger Selector
-  void _showPassengerSelector() {
-    showModalBottomSheet(
+  void _showPassengerSelector() async {
+    final int? result = await showModalBottomSheet<int>(
       context: context,
+      isScrollControlled: true,
       builder: (context) {
+        int tempPassengerCount = _passengerCount;
+
         return StatefulBuilder(
-          builder: (context, setState) {
-            return Container(
-              padding: EdgeInsets.all(20),
+          builder: (context, modalSetState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom,
+                left: 20,
+                right: 20,
+                top: 20,
+              ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  /// Header
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
                         'Passengers'.tr,
                         style: GoogleFonts.spaceGrotesk(
-                          color: Colors.black,
                           fontWeight: FontWeight.w700,
                           fontSize: 18,
-                        )
+                        ),
                       ),
                       IconButton(
-                        icon: Icon(Icons.close,color: Colors.redAccent,),
+                        icon: const Icon(Icons.close,
+                            color: Colors.redAccent),
                         onPressed: () => Navigator.pop(context),
                       ),
                     ],
                   ),
-                  SizedBox(height: 20),
+
+                  const SizedBox(height: 20),
+
+                  /// Passenger Counter
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -276,28 +290,29 @@ class _HomeScreenState extends State<HomeScreen>
                       Row(
                         children: [
                           IconButton(
-                            icon: Icon(Icons.remove_circle_outline),
-                            onPressed: _passengerCount > 1
+                            icon: const Icon(
+                                Icons.remove_circle_outline),
+                            onPressed: tempPassengerCount > 1
                                 ? () {
-                              setState(() {
-                                _passengerCount--;
+                              modalSetState(() {
+                                tempPassengerCount--;
                               });
                             }
                                 : null,
                           ),
                           Text(
-                            '$_passengerCount',
+                            '$tempPassengerCount',
                             style: GoogleFonts.spaceGrotesk(
-                              color: Colors.black,
                               fontWeight: FontWeight.w700,
                               fontSize: 18,
-                            )
+                            ),
                           ),
                           IconButton(
-                            icon: Icon(Icons.add_circle_outline),
+                            icon: const Icon(
+                                Icons.add_circle_outline),
                             onPressed: () {
-                              setState(() {
-                                _passengerCount++;
+                              modalSetState(() {
+                                tempPassengerCount++;
                               });
                             },
                           ),
@@ -305,16 +320,18 @@ class _HomeScreenState extends State<HomeScreen>
                       ),
                     ],
                   ),
-                  SizedBox(height: 20),
+
+                  const SizedBox(height: 20),
+
+                  /// Apply Button
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
                       onPressed: () {
-                        Navigator.pop(context);
-                        setState(() {});
+                        Navigator.pop(context, tempPassengerCount);
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Color(0xFF05A8C7),
+                        backgroundColor: const Color(0xFF05A8C7),
                       ),
                       child: Text('Apply'.tr),
                     ),
@@ -326,7 +343,15 @@ class _HomeScreenState extends State<HomeScreen>
         );
       },
     );
+
+    /// ✅ Update parent state AFTER modal closes
+    if (result != null) {
+      setState(() {
+        _passengerCount = result;
+      });
+    }
   }
+
 
 
 
@@ -426,14 +451,65 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
 
-  //Show city selection for hotel....
+
+  void _cityScrollListener() {
+    final homeProvider = context.read<HomeProvider>();
+
+    if (_cityScrollController.position.pixels >=
+        _cityScrollController.position.maxScrollExtent - 100 &&
+        homeProvider.hasMore &&
+        !homeProvider.isLoadingMore) {
+      homeProvider.fetchLocations(
+        page: homeProvider.currentPage + 1,
+        loadMore: true,
+      );
+    }
+  }
+
+
+
+  void _departureCityScrollListener() {
+    final homeProvider = context.read<HomeProvider>();
+
+    if (_departureCityScrollController.position.pixels >=
+        _departureCityScrollController.position.maxScrollExtent - 100 &&
+        homeProvider.hasMore &&
+        !homeProvider.isLoadingMore) {
+      homeProvider.fetchLocations(
+        page: homeProvider.currentPage + 1,
+        loadMore: true,
+      );
+    }
+  }
+
+  void _destinationCityScrollListener() {
+    final homeProvider = context.read<HomeProvider>();
+
+    if (_destinationCityScrollController.position.pixels >=
+        _destinationCityScrollController.position.maxScrollExtent - 100 &&
+        homeProvider.hasMore &&
+        !homeProvider.isLoadingMore) {
+      homeProvider.fetchLocations(
+        page: homeProvider.currentPage + 1,
+        loadMore: true,
+      );
+    }
+  }
+
+
   void _showCitySelection(BuildContext context) async {
     final homeProvider = context.read<HomeProvider>();
 
-    // ✅ fetch first
+    // Fetch first page if empty
     if (homeProvider.locations.isEmpty) {
-      await homeProvider.fetchLocations();
+      await homeProvider.fetchLocations(page: 1);
     }
+
+    // Remove old listeners to avoid duplication
+    _cityScrollController.removeListener(_cityScrollListener);
+
+    // Add pagination listener
+    _cityScrollController.addListener(_cityScrollListener);
 
     showModalBottomSheet(
       context: context,
@@ -469,24 +545,43 @@ class _HomeScreenState extends State<HomeScreen>
 
                   const SizedBox(height: 16),
 
-                  /// 📍 City list
+                  /// 📍 City list + pagination
                   Expanded(
-                    child: provider.isLocationLoading
+                    child: provider.isLocationLoading &&
+                        provider.locations.isEmpty
                         ? const Center(child: CircularProgressIndicator())
                         : provider.filteredLocations.isEmpty
                         ? const Center(child: Text('No locations found'))
                         : ListView.builder(
-                      itemCount: provider.filteredLocations.length,
+                      controller: _cityScrollController,
+                      itemCount:
+                      provider.filteredLocations.length +
+                          (provider.isLoadingMore ? 1 : 0),
                       itemBuilder: (context, index) {
-                        final city = provider.filteredLocations[index];
+                        // Bottom loader
+                        if (index ==
+                            provider.filteredLocations.length) {
+                          return const Padding(
+                            padding: EdgeInsets.all(16),
+                            child: Center(
+                                child:
+                                CircularProgressIndicator()),
+                          );
+                        }
+
+                        final city =
+                        provider.filteredLocations[index];
 
                         return ListTile(
-                          leading: const Icon(Icons.location_on),
+                          leading:
+                          const Icon(Icons.location_on),
                           title: Text(city.title ?? ''),
                           onTap: () {
-                            provider.selectCity(city.title ?? '');
-                            _cityController.text = provider.selectedCity;
-                            _selectedCity=city.id;
+                            provider
+                                .selectCity(city.title ?? '');
+                            _cityController.text =
+                                provider.selectedCity;
+                            _selectedCity = city.id;
                             Navigator.pop(context);
                           },
                         );
@@ -501,15 +596,98 @@ class _HomeScreenState extends State<HomeScreen>
       },
     );
   }
+  //Show city selection for hotel....
+  // void _showCitySelection(BuildContext context) async {
+  //   final homeProvider = context.read<HomeProvider>();
+  //
+  //   // ✅ fetch first
+  //   if (homeProvider.locations.isEmpty) {
+  //     await homeProvider.fetchLocations();
+  //   }
+  //
+  //   showModalBottomSheet(
+  //     context: context,
+  //     isScrollControlled: true,
+  //     shape: const RoundedRectangleBorder(
+  //       borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+  //     ),
+  //     builder: (_) {
+  //       return Consumer<HomeProvider>(
+  //         builder: (context, provider, _) {
+  //           return Container(
+  //             padding: const EdgeInsets.all(16),
+  //             height: MediaQuery.of(context).size.height * 0.7,
+  //             child: Column(
+  //               children: [
+  //                 const Text(
+  //                   'Select City or Destination',
+  //                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+  //                 ),
+  //                 const SizedBox(height: 16),
+  //
+  //                 /// 🔍 Search
+  //                 TextField(
+  //                   onChanged: provider.filterLocations,
+  //                   decoration: InputDecoration(
+  //                     hintText: 'Search city...',
+  //                     prefixIcon: const Icon(Icons.search),
+  //                     border: OutlineInputBorder(
+  //                       borderRadius: BorderRadius.circular(8),
+  //                     ),
+  //                   ),
+  //                 ),
+  //
+  //                 const SizedBox(height: 16),
+  //
+  //                 /// 📍 City list
+  //                 Expanded(
+  //                   child: provider.isLocationLoading
+  //                       ? const Center(child: CircularProgressIndicator())
+  //                       : provider.filteredLocations.isEmpty
+  //                       ? const Center(child: Text('No locations found'))
+  //                       : ListView.builder(
+  //                     itemCount: provider.filteredLocations.length,
+  //                     itemBuilder: (context, index) {
+  //                       final city = provider.filteredLocations[index];
+  //
+  //                       return ListTile(
+  //                         leading: const Icon(Icons.location_on),
+  //                         title: Text(city.title ?? ''),
+  //                         onTap: () {
+  //                           provider.selectCity(city.title ?? '');
+  //                           _cityController.text = provider.selectedCity;
+  //                           _selectedCity=city.id;
+  //                           Navigator.pop(context);
+  //                         },
+  //                       );
+  //                     },
+  //                   ),
+  //                 ),
+  //               ],
+  //             ),
+  //           );
+  //         },
+  //       );
+  //     },
+  //   );
+  // }
 
 
   void _showDepartureLocation(BuildContext context) async {
     final homeProvider = context.read<HomeProvider>();
 
-    // ✅ fetch first
+    // Fetch first page if empty
     if (homeProvider.locations.isEmpty) {
-      await homeProvider.fetchLocations();
+      await homeProvider.fetchLocations(page: 1);
     }
+
+    // Prevent duplicate listeners
+    _departureCityScrollController
+        .removeListener(_departureCityScrollListener);
+
+    // Add pagination listener
+    _departureCityScrollController
+        .addListener(_departureCityScrollListener);
 
     showModalBottomSheet(
       context: context,
@@ -527,7 +705,8 @@ class _HomeScreenState extends State<HomeScreen>
                 children: [
                   const Text(
                     'Select City or Destination',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                        fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 16),
 
@@ -545,24 +724,46 @@ class _HomeScreenState extends State<HomeScreen>
 
                   const SizedBox(height: 16),
 
-                  /// 📍 City list
+                  /// 📍 City list + pagination
                   Expanded(
-                    child: provider.isLocationLoading
-                        ? const Center(child: CircularProgressIndicator())
+                    child: provider.isLocationLoading &&
+                        provider.locations.isEmpty
+                        ? const Center(
+                        child: CircularProgressIndicator())
                         : provider.filteredLocations.isEmpty
-                        ? const Center(child: Text('No locations found'))
+                        ? const Center(
+                        child: Text('No locations found'))
                         : ListView.builder(
-                      itemCount: provider.filteredLocations.length,
+                      controller:
+                      _departureCityScrollController,
+                      itemCount:
+                      provider.filteredLocations.length +
+                          (provider.isLoadingMore ? 1 : 0),
                       itemBuilder: (context, index) {
-                        final city = provider.filteredLocations[index];
+                        // Bottom loader
+                        if (index ==
+                            provider.filteredLocations.length) {
+                          return const Padding(
+                            padding: EdgeInsets.all(16),
+                            child: Center(
+                                child:
+                                CircularProgressIndicator()),
+                          );
+                        }
+
+                        final city =
+                        provider.filteredLocations[index];
 
                         return ListTile(
-                          leading: const Icon(Icons.location_on),
+                          leading: const Icon(
+                              Icons.location_on),
                           title: Text(city.title ?? ''),
                           onTap: () {
-                            provider.selectDepartureCity(city.title ?? '');
-                            _fromCityController.text = provider.departureCity;
-                            fromWhereLocation=city.id;
+                            provider.selectDepartureCity(
+                                city.title ?? '');
+                            _fromCityController.text =
+                                provider.departureCity;
+                            fromWhereLocation = city.id;
                             Navigator.pop(context);
                           },
                         );
@@ -577,16 +778,25 @@ class _HomeScreenState extends State<HomeScreen>
       },
     );
   }
+
 
 
 
   void _showDestinationLocation(BuildContext context) async {
     final homeProvider = context.read<HomeProvider>();
 
-    // ✅ fetch first
+    // Fetch first page if empty
     if (homeProvider.locations.isEmpty) {
-      await homeProvider.fetchLocations();
+      await homeProvider.fetchLocations(page: 1);
     }
+
+    // Prevent duplicate listeners
+    _destinationCityScrollController
+        .removeListener(_destinationCityScrollListener);
+
+    // Add pagination listener
+    _destinationCityScrollController
+        .addListener(_destinationCityScrollListener);
 
     showModalBottomSheet(
       context: context,
@@ -604,7 +814,8 @@ class _HomeScreenState extends State<HomeScreen>
                 children: [
                   const Text(
                     'Select City or Destination',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                        fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 16),
 
@@ -622,24 +833,46 @@ class _HomeScreenState extends State<HomeScreen>
 
                   const SizedBox(height: 16),
 
-                  /// 📍 City list
+                  /// 📍 City list + pagination
                   Expanded(
-                    child: provider.isLocationLoading
-                        ? const Center(child: CircularProgressIndicator())
+                    child: provider.isLocationLoading &&
+                        provider.locations.isEmpty
+                        ? const Center(
+                        child: CircularProgressIndicator())
                         : provider.filteredLocations.isEmpty
-                        ? const Center(child: Text('No locations found'))
+                        ? const Center(
+                        child: Text('No locations found'))
                         : ListView.builder(
-                      itemCount: provider.filteredLocations.length,
+                      controller:
+                      _destinationCityScrollController,
+                      itemCount:
+                      provider.filteredLocations.length +
+                          (provider.isLoadingMore ? 1 : 0),
                       itemBuilder: (context, index) {
-                        final city = provider.filteredLocations[index];
+                        // Bottom loader
+                        if (index ==
+                            provider.filteredLocations.length) {
+                          return const Padding(
+                            padding: EdgeInsets.all(16),
+                            child: Center(
+                                child:
+                                CircularProgressIndicator()),
+                          );
+                        }
+
+                        final city =
+                        provider.filteredLocations[index];
 
                         return ListTile(
-                          leading: const Icon(Icons.location_on),
+                          leading: const Icon(
+                              Icons.location_on),
                           title: Text(city.title ?? ''),
                           onTap: () {
-                            provider.selectDestinationCity(city.title ?? '');
-                            _toCityController.text = provider.destinationCity;
-                            toWhereLocation=city.id;
+                            provider.selectDestinationCity(
+                                city.title ?? '');
+                            _toCityController.text =
+                                provider.destinationCity;
+                            toWhereLocation = city.id;
                             Navigator.pop(context);
                           },
                         );
@@ -654,6 +887,7 @@ class _HomeScreenState extends State<HomeScreen>
       },
     );
   }
+
 
   Widget _buildFlightSearchSection(BuildContext context) {
     String departureDateText = _flightDepartureDate != null
@@ -1050,6 +1284,7 @@ class _HomeScreenState extends State<HomeScreen>
                   'from_where': fromWhereLocation,
                   'to_where': toWhereLocation,
                   'start': _flightDepartureDate,
+                  'end':_flightReturnDate,
                   'children': _passengerCount,
                 }).then((_) {
                   setState(() {
@@ -2956,6 +3191,10 @@ class TourListItem extends StatelessWidget {
             shrinkWrap: true,
             itemCount: tourList.data?.length,
             itemBuilder: (context, index) {
+              if (tourList.data == null || tourList.data!.isEmpty) {
+                return const SizedBox.shrink();
+              }
+
               var tourData = TourData.fromTour(tourList.data![index]);
               return Padding(
                 padding: const EdgeInsets.only(bottom: 32.0),
@@ -3040,7 +3279,13 @@ class BoatListItem extends StatelessWidget {
             shrinkWrap: true,
             itemCount: boatList.data?.length,
             itemBuilder: (context, index) {
-              var boatData = BoatData.fromBoat(boatList.data![index]);
+              final list = boatList.data;
+              if (list == null || list.isEmpty || index >= list.length) {
+                return const SizedBox.shrink();
+              }
+
+              final boatData = BoatData.fromBoat(list[index]);
+
               return Padding(
                 padding: const EdgeInsets.only(bottom: 32.0),
                 child: BoatItem(

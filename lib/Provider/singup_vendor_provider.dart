@@ -219,7 +219,7 @@ class VendorAuthProvider with ChangeNotifier {
       notificationmodelreads = notificationmodelread;
       notifyListeners();
     } else {
-      debugPrint("Failed to fetch hotel details. Error: ${result['message']}");
+      debugPrint("Failed to fetch hotel details (10) . Error: ${result['message']}");
       return null;
     }
   }
@@ -289,7 +289,7 @@ class VendorAuthProvider with ChangeNotifier {
       notificationcountmodels = notificationcountmodel;
       notifyListeners();
     } else {
-      debugPrint("Failed to fetch hotel details. Error: ${result['message']}");
+      debugPrint("Failed to fetch hotel details (11). Error: ${result['message']}");
       return null;
     }
   }
@@ -361,7 +361,7 @@ class VendorAuthProvider with ChangeNotifier {
       notificationmodelunreads = notificationmodelunread;
       notifyListeners();
     } else {
-      debugPrint("Failed to fetch hotel details. Error: ${result['message']}");
+      debugPrint("Failed to fetch hotel details (12). Error: ${result['message']}");
       return null;
     }
   }
@@ -486,7 +486,7 @@ class VendorAuthProvider with ChangeNotifier {
       cartypess = cartypes;
       notifyListeners();
     } else {
-      log("Failed to fetch hotel details. Error: ${result['message']}");
+      log("Failed to fetch hotel details (13). Error: ${result['message']}");
       return null;
     }
   }
@@ -508,7 +508,7 @@ class VendorAuthProvider with ChangeNotifier {
       notificationmodels = notificationmodel;
       notifyListeners();
     } else {
-      log("Failed to fetch hotel details. Error: ${result['message']}");
+      log("Failed to fetch hotel details. (14) Error: ${result['message']}");
       return null;
     }
   }
@@ -533,7 +533,7 @@ class VendorAuthProvider with ChangeNotifier {
       carfeaturess = carfeatures;
       notifyListeners();
     } else {
-      log("Failed to fetch hotel details. Error: ${result['message']}");
+      log("Failed to fetch hotel details (15). Error: ${result['message']}");
       return null;
     }
   }
@@ -558,7 +558,7 @@ class VendorAuthProvider with ChangeNotifier {
       alltrasactions = alltrasaction;
       notifyListeners();
     } else {
-      log("Failed to fetch hotel details. Error: ${result['message']}");
+      log("Failed to fetch hotel details (16). Error: ${result['message']}");
       return null;
     }
   }
@@ -580,7 +580,7 @@ class VendorAuthProvider with ChangeNotifier {
       creditbalances = creditbalance;
       notifyListeners();
     } else {
-      log("Failed to fetch hotel details. Error: ${result['message']}");
+      log("Failed to fetch hotel details (17). Error: ${result['message']}");
       return null;
     }
   }
@@ -602,7 +602,7 @@ class VendorAuthProvider with ChangeNotifier {
       pendingcredits = pendingcredit;
       notifyListeners();
     } else {
-      log("Failed to fetch hotel details. Error: ${result['message']}");
+      log("Failed to fetch hotel details (18). Error: ${result['message']}");
       return null;
     }
   }
@@ -627,7 +627,7 @@ class VendorAuthProvider with ChangeNotifier {
       buycredits = buycredit;
       notifyListeners();
     } else {
-      log("Failed to fetch hotel details. Error: ${result['message']}");
+      log("Failed to fetch hotel details (19). Error: ${result['message']}");
       return null;
     }
   }

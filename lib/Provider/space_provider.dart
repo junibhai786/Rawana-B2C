@@ -337,7 +337,7 @@ class SpaceProvider with ChangeNotifier {
       spaceVendor = txxspaceVendor;
       notifyListeners();
     } else {
-      log("Failed to fetch hotel details. Error: ${result['message']}");
+      log("Failed to fetch hotel details (9). Error: ${result['message']}");
       EasyLoading.showToast(result['message'],
           maskType: EasyLoadingMaskType.black);
       return null;

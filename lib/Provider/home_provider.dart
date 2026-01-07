@@ -77,6 +77,10 @@ class HomeProvider with ChangeNotifier {
   LocationResponse? locationResponse;
   List<LocationItem> locations = [];
   List<LocationItem> filteredLocations = [];
+
+  bool isLoadingMore = false;
+  int currentPage = 1;
+  bool hasMore = true;
   ////end
   int _selectedHomeTab = 0;
   TabController? tabController;
@@ -114,44 +118,101 @@ class HomeProvider with ChangeNotifier {
     notifyListeners();
   }
   //Fetch locations for hotel search Api
-  Future<void> fetchLocations() async {
-    log('******************************Check A *******************************************');
 
-  //  if (locations.isNotEmpty) return; // 🛑 cache
+  Future<void> fetchLocations({int page = 1, bool loadMore = false}) async {
+    if (isLocationLoading || isLoadingMore) return;
+    if (!hasMore && loadMore) return;
 
-    isLocationLoading = true;
+    if (loadMore) {
+      isLoadingMore = true;
+    } else {
+      isLocationLoading = true;
+      currentPage = 1;
+      locations.clear();
+      filteredLocations.clear();
+    }
+
     notifyListeners();
 
     try {
-      final url = Uri.parse(ApiUrls.baseUrl + ApiUrls.hotellocations);
-log('*************************************************************************${url.toString()}');
+      final url = Uri.parse(
+        '${ApiUrls.baseUrl}${ApiUrls.hotellocations}?page=$page',
+      );
+
+      log('Fetching locations page: $page');
+
       final response = await http.get(url);
 
       if (response.statusCode == 200) {
-        log('*******************************   Response is 200  *************************');
-        final Map<String, dynamic> json = jsonDecode(response.body) as Map<String, dynamic>;
-        log(json.toString());
-        log('******************************Check B *******************************************');
+        final Map<String, dynamic> json =
+        jsonDecode(response.body) as Map<String, dynamic>;
 
         final parsed = LocationResponse.fromJson(json);
-log('response is ${parsed.toString()}');
-        locationResponse = parsed;
-        locations = parsed.data ?? [];
-        filteredLocations = locations;
-      } else {
-        log('*******************************   Response Failed  *************************');
 
-        debugPrint('Failed to fetch locations: ${response.statusCode}');
+        final newLocations = parsed.data ?? [];
+
+        if (newLocations.isEmpty) {
+          hasMore = false;
+        } else {
+          currentPage = page;
+          locations.addAll(newLocations);
+          filteredLocations = locations;
+        }
       }
     } catch (e) {
-      log('*******************************   Response in catch *************************');
-
       debugPrint('Fetch locations error: $e');
     } finally {
       isLocationLoading = false;
+      isLoadingMore = false;
       notifyListeners();
     }
   }
+
+
+
+
+
+
+
+
+//   Future<void> fetchLocations() async {
+//     log('******************************Check A *******************************************');
+//
+//   //  if (locations.isNotEmpty) return; // 🛑 cache
+//
+//     isLocationLoading = true;
+//     notifyListeners();
+//
+//     try {
+//       final url = Uri.parse(ApiUrls.baseUrl + ApiUrls.hotellocations);
+// log('*************************************************************************${url.toString()}');
+//       final response = await http.get(url);
+//
+//       if (response.statusCode == 200) {
+//         log('*******************************   Response is 200  *************************');
+//         final Map<String, dynamic> json = jsonDecode(response.body) as Map<String, dynamic>;
+//         log(json.toString());
+//         log('******************************Check B *******************************************');
+//
+//         final parsed = LocationResponse.fromJson(json);
+// log('response is ${parsed.toString()}');
+//         locationResponse = parsed;
+//         locations = parsed.data ?? [];
+//         filteredLocations = locations;
+//       } else {
+//         log('*******************************   Response Failed  *************************');
+//
+//         debugPrint('Failed to fetch locations: ${response.statusCode}');
+//       }
+//     } catch (e) {
+//       log('*******************************   Response in catch *************************');
+//
+//       debugPrint('Fetch locations error: $e');
+//     } finally {
+//       isLocationLoading = false;
+//       notifyListeners();
+//     }
+//   }
 
 
   void filterLocations(String query) {
@@ -341,7 +402,7 @@ log('response is ${parsed.toString()}');
       notifyListeners();
       return true;
     } else {
-      log("Failed to fetch hotel details. Error: ${result['message']}");
+      log("Failed to fetch hotel details (4). Error: ${result['message']}");
       EasyLoading.showToast(result['message'],
           maskType: EasyLoadingMaskType.black);
       return null;
@@ -367,7 +428,7 @@ log('response is ${parsed.toString()}');
       notifyListeners();
       return true;
     } else {
-      log("Failed to fetch hotel details. Error: ${result['message']}");
+      log("Failed to fetch hotel details (5) . Error: ${result['message']}");
       EasyLoading.showToast(result['message'],
           maskType: EasyLoadingMaskType.black);
       return null;
@@ -422,68 +483,226 @@ log('response is ${parsed.toString()}');
             home_item.HomeItem(type: home_item.ItemType.offer, item: offer)));
         log("Processed ${offers.length} offers");
       }
+      dynamic rawData = result['data'];
+      List blocks = [];
 
-      if (result['data']['data']['Hotel'] != null) {
-        print("Hotel data: ${result['data']['data']['Hotel']}");
-        List<Hotel> offers = (result['data']['data']['Hotel'] as List)
-            .map((item) => Hotel.fromJson(item))
-            .toList();
-        homeItems.addAll(offers.map((offer) =>
-            home_item.HomeItem(type: home_item.ItemType.hotel, item: offer)));
-        log("Processed ${offers.length} offers");
-      }
+      if (rawData is List) {
+        blocks = rawData;
+      } else if (rawData is Map && rawData['data'] is List) {
+        blocks = rawData['data'];
+      } else {
+        log("❌ Unexpected data format: ${rawData.runtimeType}");
 
-      if (result['data']['data']['Tour'] != null) {
-        List<Tour> offers = (result['data']['data']['Tour'] as List)
-            .map((item) => Tour.fromJson(item))
-            .toList();
-        homeItems.addAll(offers.map((offer) =>
-            home_item.HomeItem(type: home_item.ItemType.tour, item: offer)));
-        log("Processed ${offers.length} offers");
       }
+      for (final block in blocks) {
+        if (block is! Map<String, dynamic>) continue;
 
-      if (result['data']['data']['Car'] != null) {
-        List<Car> offers = (result['data']['data']['Car'] as List)
-            .map((item) => Car.fromJson(item))
-            .toList();
-        homeItems.addAll(offers.map((offer) =>
-            home_item.HomeItem(type: home_item.ItemType.car, item: offer)));
-        log("Processed ${offers.length} offers");
-      }
-      if (result['data']['data']['Event'] != null) {
-        List<Event> offers = (result['data']['data']['Event'] as List)
-            .map((item) => Event.fromJson(item))
-            .toList();
-        homeItems.addAll(offers.map((offer) =>
-            home_item.HomeItem(type: home_item.ItemType.event, item: offer)));
-        log("Processed ${offers.length} offers");
-      }
-      if (result['data']['data']['Boat'] != null) {
-        List<Boat> offers = (result['data']['data']['Boat'] as List)
-            .map((item) => Boat.fromJson(item))
-            .toList();
-        homeItems.addAll(offers.map((offer) =>
-            home_item.HomeItem(type: home_item.ItemType.boat, item: offer)));
-        log("Processed ${offers.length} offers");
-      }
-      if (result['data']['data']['Space'] != null) {
-        List<Space> offers = (result['data']['data']['Space'] as List)
-            .map((item) => Space.fromJson(item))
-            .toList();
-        homeItems.addAll(offers.map((offer) =>
-            home_item.HomeItem(type: home_item.ItemType.space, item: offer)));
-        log("Processed ${offers.length} offers");
-      }
+        if (block['type'] == 'list_hotel') {
+          final model = block['model'];
 
-      if (result['data']['data']['Location'] != null) {
-        List<home_item.Location> locations =
-            (result['data']['data']['Location'] as List)
-                .map((item) => home_item.Location.fromJson(item))
+          if (model is Map && model['data'] is List) {
+            final List hotelList = model['data'];
+
+            final offers = hotelList
+                .map((e) => Hotel.fromJson(e))
                 .toList();
-        homeItems.addAll(locations.map((location) => home_item.HomeItem(
-            type: home_item.ItemType.location, item: location)));
-        log("Processed ${locations.length} locations");
+
+            homeItems.addAll(
+              offers.map(
+                    (offer) => home_item.HomeItem(
+                  type: home_item.ItemType.hotel,
+                  item: offer,
+                ),
+              ),
+            );
+
+            log("✅ Processed ${offers.length} hotels");
+          }
+        }
       }
+
+
+
+
+
+      // if (result['data']['data']['Tour'] != null) {
+      //   List<Tour> offers = (result['data']['data']['Tour'] as List)
+      //       .map((item) => Tour.fromJson(item))
+      //       .toList();
+      //   homeItems.addAll(offers.map((offer) =>
+      //       home_item.HomeItem(type: home_item.ItemType.tour, item: offer)));
+      //   log("Processed ${offers.length} offers");
+      // }
+
+
+      for (final block in blocks) {
+        if (block is! Map<String, dynamic>) continue;
+
+        if (block['type'] == 'list_tours') {
+          final model = block['model'];
+
+          if (model is Map && model['data'] is List) {
+            final List tourList = model['data'];
+
+            final List<Tour> offers = tourList
+                .map((item) => Tour.fromJson(item))
+                .toList();
+
+            homeItems.addAll(
+              offers.map(
+                    (offer) => home_item.HomeItem(
+                  type: home_item.ItemType.tour,
+                  item: offer,
+                ),
+              ),
+            );
+
+            log("✅ Processed ${offers.length} tours");
+          } else {
+            log("⚠️ list_tours has no valid data list");
+          }
+        }
+      }
+
+
+      for (final block in blocks) {
+        if (block is! Map<String, dynamic>) continue;
+
+        final String? type = block['type'];
+        final model = block['model'];
+
+        if (model is! Map || model['data'] is! List) {
+          log("⚠️ $type has no valid data list");
+          continue;
+        }
+
+        final List dataList = model['data'];
+
+        switch (type) {
+
+          case 'list_car':
+            final cars = dataList
+                .map((e) => Car.fromJson(e))
+                .toList();
+
+            homeItems.addAll(
+              cars.map((e) => home_item.HomeItem(
+                type: home_item.ItemType.car,
+                item: e,
+              )),
+            );
+
+            log("✅ Processed ${cars.length} cars");
+            break;
+
+          case 'list_event':
+            final events = dataList
+                .map((e) => Event.fromJson(e))
+                .toList();
+
+            homeItems.addAll(
+              events.map((e) => home_item.HomeItem(
+                type: home_item.ItemType.event,
+                item: e,
+              )),
+            );
+
+            log("✅ Processed ${events.length} events");
+            break;
+
+          case 'list_boat':
+            final boats = dataList
+                .map((e) => Boat.fromJson(e))
+                .toList();
+
+            homeItems.addAll(
+              boats.map((e) => home_item.HomeItem(
+                type: home_item.ItemType.boat,
+                item: e,
+              )),
+            );
+
+            log("✅ Processed ${boats.length} boats");
+            break;
+
+          case 'list_space':
+            final spaces = dataList
+                .map((e) => Space.fromJson(e))
+                .toList();
+
+            homeItems.addAll(
+              spaces.map((e) => home_item.HomeItem(
+                type: home_item.ItemType.space,
+                item: e,
+              )),
+            );
+
+            log("✅ Processed ${spaces.length} spaces");
+            break;
+
+          case 'list_location':
+            final locations = dataList
+                .map((e) => home_item.Location.fromJson(e))
+                .toList();
+
+            homeItems.addAll(
+              locations.map(
+                    (location) => home_item.HomeItem(
+                  type: home_item.ItemType.location,
+                  item: location,
+                ),
+              ),
+            );
+
+            log("✅ Processed ${locations.length} locations");
+            break;
+
+        }
+      }
+
+
+      // if (result['data']['data']['Car'] != null) {
+      //   List<Car> offers = (result['data']['data']['Car'] as List)
+      //       .map((item) => Car.fromJson(item))
+      //       .toList();
+      //   homeItems.addAll(offers.map((offer) =>
+      //       home_item.HomeItem(type: home_item.ItemType.car, item: offer)));
+      //   log("Processed ${offers.length} offers");
+      // }
+      // if (result['data']['data']['Event'] != null) {
+      //   List<Event> offers = (result['data']['data']['Event'] as List)
+      //       .map((item) => Event.fromJson(item))
+      //       .toList();
+      //   homeItems.addAll(offers.map((offer) =>
+      //       home_item.HomeItem(type: home_item.ItemType.event, item: offer)));
+      //   log("Processed ${offers.length} offers");
+      // }
+      // if (result['data']['data']['Boat'] != null) {
+      //   List<Boat> offers = (result['data']['data']['Boat'] as List)
+      //       .map((item) => Boat.fromJson(item))
+      //       .toList();
+      //   homeItems.addAll(offers.map((offer) =>
+      //       home_item.HomeItem(type: home_item.ItemType.boat, item: offer)));
+      //   log("Processed ${offers.length} offers");
+      // }
+      // if (result['data']['data']['Space'] != null) {
+      //   List<Space> offers = (result['data']['data']['Space'] as List)
+      //       .map((item) => Space.fromJson(item))
+      //       .toList();
+      //   homeItems.addAll(offers.map((offer) =>
+      //       home_item.HomeItem(type: home_item.ItemType.space, item: offer)));
+      //   log("Processed ${offers.length} offers");
+      // }
+
+      // if (result['data']['data']['Location'] != null) {
+      //   List<home_item.Location> locations =
+      //       (result['data']['data']['Location'] as List)
+      //           .map((item) => home_item.Location.fromJson(item))
+      //           .toList();
+      //   homeItems.addAll(locations.map((location) => home_item.HomeItem(
+      //       type: home_item.ItemType.location, item: location)));
+      //   log("Processed ${locations.length} locations");
+      // }
 
       // Process other categories (hotel, car, event, tour, space, boat, flight)
       final categories = [
@@ -779,7 +998,7 @@ log('response is ${parsed.toString()}');
       hotelDetail = HotelDetail.fromJson(result['data']);
       notifyListeners();
     } else {
-      log("Failed to fetch hotel details. Error: ${result['message']}");
+      log("Failed to fetch hotel details (1). Error: ${result['message']}");
       return null;
     }
   }
@@ -805,7 +1024,7 @@ log('response is ${parsed.toString()}');
       vendorcarDetail = _vendorcarDetail;
       notifyListeners();
     } else {
-      log("Failed to fetch hotel details. Error: ${result['message']}");
+      log("Failed to fetch hotel details (2). Error: ${result['message']}");
       return null;
     }
   }
@@ -822,7 +1041,7 @@ log('response is ${parsed.toString()}');
         _token ?? '',
         requiresAuth: true);
 
-    log("${result['success']} success check");
+    log("${result['success']} success checkkkkk");
     if (result['success']) {
       log("Car Details Response: ${result['data']}");
       _carDetail = CarDetailModal.fromJson(result['data']);
@@ -831,7 +1050,7 @@ log('response is ${parsed.toString()}');
       carDetail = _carDetail;
       notifyListeners();
     } else {
-      log("Failed to fetch hotel details. Error: ${result['message']}");
+      log("Failed to fetch hotel details (3). Error: ${result['message']}");
       return null;
     }
   }
