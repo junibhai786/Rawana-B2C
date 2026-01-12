@@ -173,7 +173,23 @@ class Boat {
     mapLng = json['map_lng'];
     mapZoom = json['map_zoom'];
     isFeatured = json['is_featured'];
-    gallery = json['gallery'] != null ? json['gallery'].cast<String>() : [];
+
+    // ✅ Handle both gallery array and single image URL
+    if (json['gallery'] != null) {
+      gallery = json['gallery'].cast<String>();
+    } else if (json['image'] != null && json['image'].toString().isNotEmpty) {
+      // ✅ If no gallery but image exists, use it
+      gallery = [json['image'].toString()];
+      print("IMAGE URL => ${json['image']}");
+    } else if (json['banner_img_url'] != null &&
+        json['banner_img_url'].toString().isNotEmpty) {
+      // ✅ Fallback to banner_img_url
+      gallery = [json['banner_img_url'].toString()];
+      print("IMAGE URL => ${json['banner_img_url']}");
+    } else {
+      gallery = [];
+    }
+
     video = json['video'];
     if (json['faqs'] != null) {
       faqs = <Faqs>[];
@@ -204,7 +220,7 @@ class Boat {
     }
     cancelPolicy = json['cancel_policy'];
     termsInformation = json['terms_information'];
-    reviewScore = json['review_score'];
+    reviewScore = json['review_score'] ?? 0;
     status = json['status'];
     defaultState = json['default_state'];
     enableServiceFee = json['enable_service_fee'];

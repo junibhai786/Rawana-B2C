@@ -157,12 +157,24 @@ class Hotel {
     mapLng = json['map_lng'];
     mapZoom = json['map_zoom'];
     isFeatured = json['is_featured'];
+
+    // ✅ Handle both gallery array and single image URL
     if (json['gallery'] != null) {
       gallery = <String>[];
       json['gallery'].forEach((v) {
         gallery?.add(v);
       });
+    } else if (json['image'] != null && json['image'].toString().isNotEmpty) {
+      // ✅ If no gallery but image exists, use it
+      gallery = [json['image'].toString()];
+      print("IMAGE URL => ${json['image']}");
+    } else if (json['banner_img_url'] != null &&
+        json['banner_img_url'].toString().isNotEmpty) {
+      // ✅ Fallback to banner_img_url
+      gallery = [json['banner_img_url'].toString()];
+      print("IMAGE URL => ${json['banner_img_url']}");
     }
+
     video = json['video'];
     if (json['policy'] != null) {
       policy = <Policy>[];
@@ -183,7 +195,8 @@ class Hotel {
     deletedAt = json['deleted_at'];
     createdAt = json['created_at'];
     updatedAt = json['updated_at'];
-    reviewScore = json['review_score'].toString();
+    reviewScore =
+        json['review_score'] != null ? json['review_score'].toString() : '0';
     icalImportUrl = json['ical_import_url'];
     enableExtraPrice = json['enable_extra_price'];
     if (json['extra_price'] != null) {
@@ -492,6 +505,4 @@ class Location {
     data['translation'] = translation;
     return data;
   }
-
-
 }

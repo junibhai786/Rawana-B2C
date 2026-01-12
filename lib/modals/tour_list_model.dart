@@ -193,15 +193,32 @@ class Tour {
     categoryId = json['category_id'];
     locationId = json['location_id'];
     address = json['address'];
-    mapLat = json['map_lat'];
-    mapLng = json['map_lng'];
+    mapLat = json['map_lat'] != null ? json['map_lat'].toString() : null;
+    mapLng = json['map_lng'] != null ? json['map_lng'].toString() : null;
     mapZoom = json['map_zoom'];
     isFeatured = json['is_featured'];
-    gallery = json['gallery'] != null ? json['gallery'].cast<String>() : [];
+
+    // ✅ Handle both gallery array and single image URL
+    if (json['gallery'] != null) {
+      gallery = json['gallery'].cast<String>();
+    } else if (json['image'] != null && json['image'].toString().isNotEmpty) {
+      // ✅ If no gallery but image exists, use it
+      gallery = [json['image'].toString()];
+      print("IMAGE URL => ${json['image']}");
+    } else if (json['banner_img_url'] != null &&
+        json['banner_img_url'].toString().isNotEmpty) {
+      // ✅ Fallback to banner_img_url
+      gallery = [json['banner_img_url'].toString()];
+      print("IMAGE URL => ${json['banner_img_url']}");
+    } else {
+      gallery = [];
+    }
+
     video = json['video'];
-    price = json['price'];
-    salePrice = json['sale_price'];
-    duration = json['duration'];
+    price = json['price'] != null ? json['price'].toString() : null;
+    salePrice =
+        json['sale_price'] != null ? json['sale_price'].toString() : null;
+    duration = json['duration'] != null ? json['duration'].toString() : null;
     minPeople = json['min_people'];
     maxPeople = json['max_people'];
     if (json['faqs'] != null) {
@@ -242,7 +259,7 @@ class Tour {
         itinerary!.add(Itinerary.fromJson(v));
       });
     }
-    reviewScore = json['review_score'];
+    reviewScore = json['review_score'] ?? 0;
     icalImportUrl = json['ical_import_url'];
     enableServiceFee = json['enable_service_fee'];
     serviceFee = json['service_fee'];

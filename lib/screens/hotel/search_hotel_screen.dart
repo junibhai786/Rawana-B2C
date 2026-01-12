@@ -26,7 +26,8 @@ class HotelSearchResultsScreen extends StatefulWidget {
   });
 
   @override
-  State<HotelSearchResultsScreen> createState() => _HotelSearchResultsScreenState();
+  State<HotelSearchResultsScreen> createState() =>
+      _HotelSearchResultsScreenState();
 }
 
 class _HotelSearchResultsScreenState extends State<HotelSearchResultsScreen> {
@@ -47,7 +48,6 @@ class _HotelSearchResultsScreenState extends State<HotelSearchResultsScreen> {
     log('CheckIn ${widget.checkInDate}');
     log('Checkout ${widget.checkOutDate}');
     log('Guests ${widget.guests}');
-
 
     await Provider.of<HomeProvider>(context, listen: false)
         .hotellistapi(1, searchParams: {
@@ -283,22 +283,34 @@ class _HotelCardWidgetState extends State<_HotelCardWidget> {
 
   @override
   Widget build(BuildContext context) {
-    final name = widget.hotel.translation?.title ?? widget.hotel.title ?? 'Hotel Name';
+    final name =
+        widget.hotel.translation?.title ?? widget.hotel.title ?? 'Hotel Name';
     final rating = double.tryParse(widget.hotel.reviewScore ?? '4.5') ?? 4.5;
-    final location = widget.hotel.location?.name ?? widget.hotel.address ?? widget.city ?? 'Paris, France';
+    final location = widget.hotel.location?.name ??
+        widget.hotel.address ??
+        widget.city ??
+        'Paris, France';
     final reviewCount = widget.hotel.reviewCount ?? 100;
     final distance = 2.3;
 
     final originalPrice = double.tryParse(widget.hotel.price ?? '0');
-    final salePrice = widget.hotel.salePrice != null ? double.tryParse(widget.hotel.salePrice.toString()) : null;
+    final salePrice = widget.hotel.salePrice != null
+        ? double.tryParse(widget.hotel.salePrice.toString())
+        : null;
     final discountedPrice = salePrice ?? originalPrice;
 
-    final amenities = widget.hotel.policy?.map((p) => p.title ?? '').where((title) => title.isNotEmpty).toList() ??
+    final amenities = widget.hotel.policy
+            ?.map((p) => p.title ?? '')
+            .where((title) => title.isNotEmpty)
+            .toList() ??
         ['WiFi', 'Pool', 'Breakfast'];
 
     final isBestSeller = widget.hotel.isFeatured == 1 || rating >= 4.8;
-    final isLuxury = widget.hotel.starRate != null && widget.hotel.starRate! >= 4 || rating >= 4.7;
-    final isPopular = widget.hotel.reviewCount != null && widget.hotel.reviewCount! > 500;
+    final isLuxury =
+        widget.hotel.starRate != null && widget.hotel.starRate! >= 4 ||
+            rating >= 4.7;
+    final isPopular =
+        widget.hotel.reviewCount != null && widget.hotel.reviewCount! > 500;
 
     final hasPrice = originalPrice != null && originalPrice > 0;
 
@@ -332,9 +344,11 @@ class _HotelCardWidgetState extends State<_HotelCardWidget> {
             ),
             child: Stack(
               children: [
-                if (widget.hotel.bannerImgUrl != null && widget.hotel.bannerImgUrl!.isNotEmpty)
+                if (widget.hotel.bannerImgUrl != null &&
+                    widget.hotel.bannerImgUrl!.isNotEmpty)
                   ClipRRect(
-                    borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+                    borderRadius:
+                        BorderRadius.vertical(top: Radius.circular(12)),
                     child: Image.network(
                       widget.hotel.bannerImgUrl!,
                       fit: BoxFit.cover,
@@ -342,7 +356,6 @@ class _HotelCardWidgetState extends State<_HotelCardWidget> {
                       height: 180,
                     ),
                   ),
-
                 Positioned(
                   top: 12,
                   left: 12,
@@ -352,7 +365,8 @@ class _HotelCardWidgetState extends State<_HotelCardWidget> {
                       if (isPopular)
                         Container(
                           margin: EdgeInsets.only(bottom: 6),
-                          padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          padding:
+                              EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                           decoration: BoxDecoration(
                             color: Color(0xff4CAF50),
                             borderRadius: BorderRadius.circular(9999),
@@ -366,7 +380,8 @@ class _HotelCardWidgetState extends State<_HotelCardWidget> {
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.trending_up, size: 14, color: Colors.white),
+                              Icon(Icons.trending_up,
+                                  size: 14, color: Colors.white),
                               SizedBox(width: 4),
                               Text(
                                 'Popular',
@@ -379,11 +394,11 @@ class _HotelCardWidgetState extends State<_HotelCardWidget> {
                             ],
                           ),
                         ),
-
                       if (isBestSeller)
                         Container(
                           margin: EdgeInsets.only(bottom: 6),
-                          padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          padding:
+                              EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                           decoration: BoxDecoration(
                             color: Color(0xffF3C85B),
                             borderRadius: BorderRadius.circular(9999),
@@ -403,10 +418,10 @@ class _HotelCardWidgetState extends State<_HotelCardWidget> {
                             ),
                           ),
                         ),
-
                       if (isLuxury)
                         Container(
-                          padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          padding:
+                              EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                           decoration: BoxDecoration(
                             color: Color(0xffF3C85B),
                             borderRadius: BorderRadius.circular(9999),
@@ -429,7 +444,6 @@ class _HotelCardWidgetState extends State<_HotelCardWidget> {
                     ],
                   ),
                 ),
-
                 Positioned(
                   top: 12,
                   right: 12,
@@ -462,7 +476,6 @@ class _HotelCardWidgetState extends State<_HotelCardWidget> {
               ],
             ),
           ),
-
           Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
@@ -506,9 +519,7 @@ class _HotelCardWidgetState extends State<_HotelCardWidget> {
                     ),
                   ],
                 ),
-
                 SizedBox(height: 8),
-
                 Row(
                   children: [
                     SvgPicture.asset(
@@ -529,9 +540,7 @@ class _HotelCardWidgetState extends State<_HotelCardWidget> {
                     ),
                   ],
                 ),
-
                 SizedBox(height: 8),
-
                 Row(
                   children: [
                     Text(
@@ -560,9 +569,7 @@ class _HotelCardWidgetState extends State<_HotelCardWidget> {
                     ),
                   ],
                 ),
-
                 SizedBox(height: 12),
-
                 Wrap(
                   spacing: 8,
                   runSpacing: 6,
@@ -584,16 +591,17 @@ class _HotelCardWidgetState extends State<_HotelCardWidget> {
                     );
                   }).toList(),
                 ),
-
                 Divider(),
-
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        if (hasPrice && discountedPrice != null && originalPrice != null && originalPrice > discountedPrice)
+                        if (hasPrice &&
+                            discountedPrice != null &&
+                            originalPrice != null &&
+                            originalPrice > discountedPrice)
                           Text(
                             '\$${originalPrice.toInt()}',
                             style: GoogleFonts.spaceGrotesk(
@@ -607,7 +615,8 @@ class _HotelCardWidgetState extends State<_HotelCardWidget> {
                           TextSpan(
                             children: [
                               TextSpan(
-                                text: '\$${(discountedPrice ?? originalPrice)?.toInt() ?? 0}',
+                                text:
+                                    '\$${(discountedPrice ?? originalPrice)?.toInt() ?? 0}',
                                 style: GoogleFonts.spaceGrotesk(
                                   fontSize: 24,
                                   fontWeight: FontWeight.w400,
@@ -634,7 +643,7 @@ class _HotelCardWidgetState extends State<_HotelCardWidget> {
                           MaterialPageRoute(
                             builder: (context) => RoomDetailScreen(
                               hotelId: widget.hotel.id!,
-                               // Pass hotel data here
+                              // Pass hotel data here
                             ),
                           ),
                         );
@@ -645,7 +654,8 @@ class _HotelCardWidgetState extends State<_HotelCardWidget> {
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                        padding:
+                            EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                         elevation: 2,
                       ),
                       child: Text(

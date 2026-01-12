@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
-import 'package:moonbnd/constants.dart'; // Assuming kColor1 is defined here
+import 'package:moonbnd/constants.dart';
 
 class ImageCarouselWithDots extends StatefulWidget {
   final List<String> images;
@@ -8,7 +8,6 @@ class ImageCarouselWithDots extends StatefulWidget {
   const ImageCarouselWithDots({super.key, required this.images});
 
   @override
-  // ignore: library_private_types_in_public_api
   _ImageCarouselWithDotsState createState() => _ImageCarouselWithDotsState();
 }
 
@@ -28,6 +27,21 @@ class _ImageCarouselWithDotsState extends State<ImageCarouselWithDots> {
 
   @override
   Widget build(BuildContext context) {
+    // 🔍 DEBUG PRINT
+    print("🖼 ImageCarousel images count: ${widget.images.length}");
+
+    // 🔐 IMPORTANT SAFETY CHECK
+    if (widget.images.isEmpty) {
+      print("⚠️ Image list is EMPTY — carousel not built");
+
+      return const SizedBox(
+        height: 200,
+        child: Center(
+          child: Text("No images available"),
+        ),
+      );
+    }
+
     return Directionality(
       textDirection: TextDirection.ltr,
       child: Stack(
@@ -41,12 +55,15 @@ class _ImageCarouselWithDotsState extends State<ImageCarouselWithDots> {
                 controller: _pageController,
                 itemCount: widget.images.length,
                 onPageChanged: (index) {
+                  print("➡️ Page changed to index: $index");
                   setState(() {
                     currentPage = index;
                   });
                 },
                 itemBuilder: (context, index) {
                   final imageUrl = widget.images[index];
+                  print("📸 Loading image [$index]: $imageUrl");
+
                   return _isNetworkImage(imageUrl)
                       ? Image.network(
                           imageUrl,
@@ -63,8 +80,10 @@ class _ImageCarouselWithDotsState extends State<ImageCarouselWithDots> {
                               ),
                             );
                           },
-                          errorBuilder: (context, error, stackTrace) =>
-                              const Icon(Icons.error),
+                          errorBuilder: (context, error, stackTrace) {
+                            print("❌ Image load error: $error");
+                            return const Icon(Icons.error);
+                          },
                         )
                       : Image.asset(
                           imageUrl,
@@ -74,6 +93,8 @@ class _ImageCarouselWithDotsState extends State<ImageCarouselWithDots> {
               ),
             ),
           ),
+
+          // ✅ SmoothPageIndicator (SAFE NOW)
           Positioned(
             bottom: 10,
             child: SmoothPageIndicator(

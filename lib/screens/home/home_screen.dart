@@ -80,13 +80,13 @@ class _HomeScreenState extends State<HomeScreen>
   DateTime? _checkInDate;
   DateTime? _checkOutDate;
   int _guestCount = 1;
-  int?  _selectedCity = 0;
-  int ?fromWhereLocation=0;
-  int?toWhereLocation=0;
-  DateTime?fromDate;
-  DateTime?toDate;
+  int? _selectedCity = 0;
+  int? fromWhereLocation = 0;
+  int? toWhereLocation = 0;
+  DateTime? fromDate;
+  DateTime? toDate;
 
-  String _selectedToCity='';
+  String _selectedToCity = '';
 
   // Flight search variables
   bool _isRoundTrip = true;
@@ -96,13 +96,13 @@ class _HomeScreenState extends State<HomeScreen>
   String _departureCity = '';
   String _destinationCity = '';
 
-
   @override
   void dispose() {
     final homeProvider = Provider.of<HomeProvider>(context, listen: false);
     homeProvider.tabController?.dispose();
     super.dispose();
   }
+
   final TextEditingController _cityController = TextEditingController();
   final TextEditingController _fromCityController = TextEditingController();
   final TextEditingController _toCityController = TextEditingController();
@@ -110,6 +110,11 @@ class _HomeScreenState extends State<HomeScreen>
   final ScrollController _departureCityScrollController = ScrollController();
   final ScrollController _destinationCityScrollController = ScrollController();
 
+  // Form keys for validation
+  final GlobalKey<FormState> _flightFormKey = GlobalKey<FormState>();
+  final GlobalKey<FormState> _hotelFormKey = GlobalKey<FormState>();
+  bool _flightValidationAttempted = false;
+  bool _hotelValidationAttempted = false;
 
   @override
   void initState() {
@@ -117,7 +122,8 @@ class _HomeScreenState extends State<HomeScreen>
     final homeProvider = Provider.of<HomeProvider>(context, listen: false);
 
     homeProvider.fetchLocations(); // ✅ preload cities
-    homeProvider.tabController = TabController(length: categoryDatas.length, vsync: this);
+    homeProvider.tabController =
+        TabController(length: categoryDatas.length, vsync: this);
 
     // Add listener to handle both tap and swipe
     homeProvider.tabController?.addListener(() {
@@ -166,10 +172,8 @@ class _HomeScreenState extends State<HomeScreen>
         });
         break;
       case 1:
-      // ignore: use_build_context_synchronously
+        // ignore: use_build_context_synchronously
         await Provider.of<HomeProvider>(context, listen: false)
-
-
             .hotellistapi(index, searchParams: {}).then((_) {
           setState(() {
             isLoading = false;
@@ -177,7 +181,7 @@ class _HomeScreenState extends State<HomeScreen>
         });
         break;
       case 2:
-      // ignore: use_build_context_synchronously
+        // ignore: use_build_context_synchronously
         await Provider.of<TourProvider>(context, listen: false)
             .tourlistapi(index, searchParams: {}).then((_) {
           setState(() {
@@ -186,7 +190,7 @@ class _HomeScreenState extends State<HomeScreen>
         });
         break;
       case 3:
-      // ignore: use_build_context_synchronously
+        // ignore: use_build_context_synchronously
         await Provider.of<SpaceProvider>(context, listen: false)
             .spacelistapi(index, searchParams: {}).then((_) {
           setState(() {
@@ -195,7 +199,7 @@ class _HomeScreenState extends State<HomeScreen>
         });
         break;
       case 4:
-      // ignore: use_build_context_synchronously
+        // ignore: use_build_context_synchronously
         await Provider.of<HomeProvider>(context, listen: false)
             .carlistapi(index, searchParams: {}).then((_) {
           setState(() {
@@ -204,7 +208,7 @@ class _HomeScreenState extends State<HomeScreen>
         });
         break;
       case 5:
-      // ignore: use_build_context_synchronously
+        // ignore: use_build_context_synchronously
         await Provider.of<EventProvider>(context, listen: false)
             .eventlistapi(index, searchParams: {}).then((_) {
           setState(() {
@@ -213,7 +217,7 @@ class _HomeScreenState extends State<HomeScreen>
         });
         break;
       case 6:
-      // ignore: use_build_context_synchronously
+        // ignore: use_build_context_synchronously
         await Provider.of<FlightProvider>(context, listen: false)
             .flightlistapi(index, searchParams: {}).then((_) {
           setState(() {
@@ -222,7 +226,7 @@ class _HomeScreenState extends State<HomeScreen>
         });
         break;
       case 7:
-      // ignore: use_build_context_synchronously
+        // ignore: use_build_context_synchronously
         await Provider.of<BoatProvider>(context, listen: false)
             .boatlistapi(index, searchParams: {}).then((_) {
           setState(() {
@@ -266,8 +270,7 @@ class _HomeScreenState extends State<HomeScreen>
                         ),
                       ),
                       IconButton(
-                        icon: const Icon(Icons.close,
-                            color: Colors.redAccent),
+                        icon: const Icon(Icons.close, color: Colors.redAccent),
                         onPressed: () => Navigator.pop(context),
                       ),
                     ],
@@ -290,14 +293,13 @@ class _HomeScreenState extends State<HomeScreen>
                       Row(
                         children: [
                           IconButton(
-                            icon: const Icon(
-                                Icons.remove_circle_outline),
+                            icon: const Icon(Icons.remove_circle_outline),
                             onPressed: tempPassengerCount > 1
                                 ? () {
-                              modalSetState(() {
-                                tempPassengerCount--;
-                              });
-                            }
+                                    modalSetState(() {
+                                      tempPassengerCount--;
+                                    });
+                                  }
                                 : null,
                           ),
                           Text(
@@ -308,8 +310,7 @@ class _HomeScreenState extends State<HomeScreen>
                             ),
                           ),
                           IconButton(
-                            icon: const Icon(
-                                Icons.add_circle_outline),
+                            icon: const Icon(Icons.add_circle_outline),
                             onPressed: () {
                               modalSetState(() {
                                 tempPassengerCount++;
@@ -352,9 +353,6 @@ class _HomeScreenState extends State<HomeScreen>
     }
   }
 
-
-
-
   void _showGuestSelector() {
     showModalBottomSheet(
       context: context,
@@ -369,16 +367,17 @@ class _HomeScreenState extends State<HomeScreen>
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                          'Guests'.tr,
+                      Text('Guests'.tr,
                           style: GoogleFonts.spaceGrotesk(
                             color: Colors.black,
                             fontWeight: FontWeight.w700,
                             fontSize: 18,
-                          )
-                      ),
+                          )),
                       IconButton(
-                        icon: Icon(Icons.close,color: Colors.redAccent,),
+                        icon: Icon(
+                          Icons.close,
+                          color: Colors.redAccent,
+                        ),
                         onPressed: () => Navigator.pop(context),
                       ),
                     ],
@@ -401,20 +400,18 @@ class _HomeScreenState extends State<HomeScreen>
                             icon: Icon(Icons.remove_circle_outline),
                             onPressed: _guestCount > 1
                                 ? () {
-                              setState(() {
-                                _guestCount--;
-                              });
-                            }
+                                    setState(() {
+                                      _guestCount--;
+                                    });
+                                  }
                                 : null,
                           ),
-                          Text(
-                              '$_guestCount',
+                          Text('$_guestCount',
                               style: GoogleFonts.spaceGrotesk(
                                 color: Colors.black,
                                 fontWeight: FontWeight.w700,
                                 fontSize: 18,
-                              )
-                          ),
+                              )),
                           IconButton(
                             icon: Icon(Icons.add_circle_outline),
                             onPressed: () {
@@ -450,13 +447,11 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
-
-
   void _cityScrollListener() {
     final homeProvider = context.read<HomeProvider>();
 
     if (_cityScrollController.position.pixels >=
-        _cityScrollController.position.maxScrollExtent - 100 &&
+            _cityScrollController.position.maxScrollExtent - 100 &&
         homeProvider.hasMore &&
         !homeProvider.isLoadingMore) {
       homeProvider.fetchLocations(
@@ -466,13 +461,11 @@ class _HomeScreenState extends State<HomeScreen>
     }
   }
 
-
-
   void _departureCityScrollListener() {
     final homeProvider = context.read<HomeProvider>();
 
     if (_departureCityScrollController.position.pixels >=
-        _departureCityScrollController.position.maxScrollExtent - 100 &&
+            _departureCityScrollController.position.maxScrollExtent - 100 &&
         homeProvider.hasMore &&
         !homeProvider.isLoadingMore) {
       homeProvider.fetchLocations(
@@ -486,7 +479,7 @@ class _HomeScreenState extends State<HomeScreen>
     final homeProvider = context.read<HomeProvider>();
 
     if (_destinationCityScrollController.position.pixels >=
-        _destinationCityScrollController.position.maxScrollExtent - 100 &&
+            _destinationCityScrollController.position.maxScrollExtent - 100 &&
         homeProvider.hasMore &&
         !homeProvider.isLoadingMore) {
       homeProvider.fetchLocations(
@@ -495,7 +488,6 @@ class _HomeScreenState extends State<HomeScreen>
       );
     }
   }
-
 
   void _showCitySelection(BuildContext context) async {
     final homeProvider = context.read<HomeProvider>();
@@ -548,45 +540,41 @@ class _HomeScreenState extends State<HomeScreen>
                   /// 📍 City list + pagination
                   Expanded(
                     child: provider.isLocationLoading &&
-                        provider.locations.isEmpty
+                            provider.locations.isEmpty
                         ? const Center(child: CircularProgressIndicator())
                         : provider.filteredLocations.isEmpty
-                        ? const Center(child: Text('No locations found'))
-                        : ListView.builder(
-                      controller: _cityScrollController,
-                      itemCount:
-                      provider.filteredLocations.length +
-                          (provider.isLoadingMore ? 1 : 0),
-                      itemBuilder: (context, index) {
-                        // Bottom loader
-                        if (index ==
-                            provider.filteredLocations.length) {
-                          return const Padding(
-                            padding: EdgeInsets.all(16),
-                            child: Center(
-                                child:
-                                CircularProgressIndicator()),
-                          );
-                        }
+                            ? const Center(child: Text('No locations found'))
+                            : ListView.builder(
+                                controller: _cityScrollController,
+                                itemCount: provider.filteredLocations.length +
+                                    (provider.isLoadingMore ? 1 : 0),
+                                itemBuilder: (context, index) {
+                                  // Bottom loader
+                                  if (index ==
+                                      provider.filteredLocations.length) {
+                                    return const Padding(
+                                      padding: EdgeInsets.all(16),
+                                      child: Center(
+                                          child: CircularProgressIndicator()),
+                                    );
+                                  }
 
-                        final city =
-                        provider.filteredLocations[index];
+                                  final city =
+                                      provider.filteredLocations[index];
 
-                        return ListTile(
-                          leading:
-                          const Icon(Icons.location_on),
-                          title: Text(city.title ?? ''),
-                          onTap: () {
-                            provider
-                                .selectCity(city.title ?? '');
-                            _cityController.text =
-                                provider.selectedCity;
-                            _selectedCity = city.id;
-                            Navigator.pop(context);
-                          },
-                        );
-                      },
-                    ),
+                                  return ListTile(
+                                    leading: const Icon(Icons.location_on),
+                                    title: Text(city.title ?? ''),
+                                    onTap: () {
+                                      provider.selectCity(city.title ?? '');
+                                      _cityController.text =
+                                          provider.selectedCity;
+                                      _selectedCity = city.id;
+                                      Navigator.pop(context);
+                                    },
+                                  );
+                                },
+                              ),
                   ),
                 ],
               ),
@@ -672,7 +660,6 @@ class _HomeScreenState extends State<HomeScreen>
   //   );
   // }
 
-
   void _showDepartureLocation(BuildContext context) async {
     final homeProvider = context.read<HomeProvider>();
 
@@ -682,12 +669,10 @@ class _HomeScreenState extends State<HomeScreen>
     }
 
     // Prevent duplicate listeners
-    _departureCityScrollController
-        .removeListener(_departureCityScrollListener);
+    _departureCityScrollController.removeListener(_departureCityScrollListener);
 
     // Add pagination listener
-    _departureCityScrollController
-        .addListener(_departureCityScrollListener);
+    _departureCityScrollController.addListener(_departureCityScrollListener);
 
     showModalBottomSheet(
       context: context,
@@ -705,8 +690,7 @@ class _HomeScreenState extends State<HomeScreen>
                 children: [
                   const Text(
                     'Select City or Destination',
-                    style: TextStyle(
-                        fontSize: 18, fontWeight: FontWeight.bold),
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 16),
 
@@ -727,48 +711,42 @@ class _HomeScreenState extends State<HomeScreen>
                   /// 📍 City list + pagination
                   Expanded(
                     child: provider.isLocationLoading &&
-                        provider.locations.isEmpty
-                        ? const Center(
-                        child: CircularProgressIndicator())
+                            provider.locations.isEmpty
+                        ? const Center(child: CircularProgressIndicator())
                         : provider.filteredLocations.isEmpty
-                        ? const Center(
-                        child: Text('No locations found'))
-                        : ListView.builder(
-                      controller:
-                      _departureCityScrollController,
-                      itemCount:
-                      provider.filteredLocations.length +
-                          (provider.isLoadingMore ? 1 : 0),
-                      itemBuilder: (context, index) {
-                        // Bottom loader
-                        if (index ==
-                            provider.filteredLocations.length) {
-                          return const Padding(
-                            padding: EdgeInsets.all(16),
-                            child: Center(
-                                child:
-                                CircularProgressIndicator()),
-                          );
-                        }
+                            ? const Center(child: Text('No locations found'))
+                            : ListView.builder(
+                                controller: _departureCityScrollController,
+                                itemCount: provider.filteredLocations.length +
+                                    (provider.isLoadingMore ? 1 : 0),
+                                itemBuilder: (context, index) {
+                                  // Bottom loader
+                                  if (index ==
+                                      provider.filteredLocations.length) {
+                                    return const Padding(
+                                      padding: EdgeInsets.all(16),
+                                      child: Center(
+                                          child: CircularProgressIndicator()),
+                                    );
+                                  }
 
-                        final city =
-                        provider.filteredLocations[index];
+                                  final city =
+                                      provider.filteredLocations[index];
 
-                        return ListTile(
-                          leading: const Icon(
-                              Icons.location_on),
-                          title: Text(city.title ?? ''),
-                          onTap: () {
-                            provider.selectDepartureCity(
-                                city.title ?? '');
-                            _fromCityController.text =
-                                provider.departureCity;
-                            fromWhereLocation = city.id;
-                            Navigator.pop(context);
-                          },
-                        );
-                      },
-                    ),
+                                  return ListTile(
+                                    leading: const Icon(Icons.location_on),
+                                    title: Text(city.title ?? ''),
+                                    onTap: () {
+                                      provider.selectDepartureCity(
+                                          city.title ?? '');
+                                      _fromCityController.text =
+                                          provider.departureCity;
+                                      fromWhereLocation = city.id;
+                                      Navigator.pop(context);
+                                    },
+                                  );
+                                },
+                              ),
                   ),
                 ],
               ),
@@ -778,9 +756,6 @@ class _HomeScreenState extends State<HomeScreen>
       },
     );
   }
-
-
-
 
   void _showDestinationLocation(BuildContext context) async {
     final homeProvider = context.read<HomeProvider>();
@@ -814,8 +789,7 @@ class _HomeScreenState extends State<HomeScreen>
                 children: [
                   const Text(
                     'Select City or Destination',
-                    style: TextStyle(
-                        fontSize: 18, fontWeight: FontWeight.bold),
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 16),
 
@@ -836,48 +810,42 @@ class _HomeScreenState extends State<HomeScreen>
                   /// 📍 City list + pagination
                   Expanded(
                     child: provider.isLocationLoading &&
-                        provider.locations.isEmpty
-                        ? const Center(
-                        child: CircularProgressIndicator())
+                            provider.locations.isEmpty
+                        ? const Center(child: CircularProgressIndicator())
                         : provider.filteredLocations.isEmpty
-                        ? const Center(
-                        child: Text('No locations found'))
-                        : ListView.builder(
-                      controller:
-                      _destinationCityScrollController,
-                      itemCount:
-                      provider.filteredLocations.length +
-                          (provider.isLoadingMore ? 1 : 0),
-                      itemBuilder: (context, index) {
-                        // Bottom loader
-                        if (index ==
-                            provider.filteredLocations.length) {
-                          return const Padding(
-                            padding: EdgeInsets.all(16),
-                            child: Center(
-                                child:
-                                CircularProgressIndicator()),
-                          );
-                        }
+                            ? const Center(child: Text('No locations found'))
+                            : ListView.builder(
+                                controller: _destinationCityScrollController,
+                                itemCount: provider.filteredLocations.length +
+                                    (provider.isLoadingMore ? 1 : 0),
+                                itemBuilder: (context, index) {
+                                  // Bottom loader
+                                  if (index ==
+                                      provider.filteredLocations.length) {
+                                    return const Padding(
+                                      padding: EdgeInsets.all(16),
+                                      child: Center(
+                                          child: CircularProgressIndicator()),
+                                    );
+                                  }
 
-                        final city =
-                        provider.filteredLocations[index];
+                                  final city =
+                                      provider.filteredLocations[index];
 
-                        return ListTile(
-                          leading: const Icon(
-                              Icons.location_on),
-                          title: Text(city.title ?? ''),
-                          onTap: () {
-                            provider.selectDestinationCity(
-                                city.title ?? '');
-                            _toCityController.text =
-                                provider.destinationCity;
-                            toWhereLocation = city.id;
-                            Navigator.pop(context);
-                          },
-                        );
-                      },
-                    ),
+                                  return ListTile(
+                                    leading: const Icon(Icons.location_on),
+                                    title: Text(city.title ?? ''),
+                                    onTap: () {
+                                      provider.selectDestinationCity(
+                                          city.title ?? '');
+                                      _toCityController.text =
+                                          provider.destinationCity;
+                                      toWhereLocation = city.id;
+                                      Navigator.pop(context);
+                                    },
+                                  );
+                                },
+                              ),
                   ),
                 ],
               ),
@@ -887,7 +855,6 @@ class _HomeScreenState extends State<HomeScreen>
       },
     );
   }
-
 
   Widget _buildFlightSearchSection(BuildContext context) {
     String departureDateText = _flightDepartureDate != null
@@ -904,437 +871,573 @@ class _HomeScreenState extends State<HomeScreen>
 
     return Padding(
       padding: const EdgeInsets.only(left: 20, right: 20, bottom: 20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Trip type selection
-          Row(
-            children: [
-              _buildTripTypeButton(
-                'One-way',
-
-                !_isRoundTrip,
-                    () {
-                  setState(() {
-                    _isRoundTrip = false;
-                  });
-                },
-              ),
-              SizedBox(width: 12),
-              _buildTripTypeButton(
-                'Round-Trip',
-
-                _isRoundTrip,
-                    () {
-                  setState(() {
-                    _isRoundTrip = true;
-                  });
-                },
-              ),
-            ],
-          ),
-          SizedBox(height: 16),
-
-          // From field
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'From'.tr,
-                style: GoogleFonts.spaceGrotesk(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w400,
-                  color: Color(0xff1D2025),
+      child: Form(
+        key: _flightFormKey,
+        autovalidateMode: _flightValidationAttempted
+            ? AutovalidateMode.always
+            : AutovalidateMode.disabled,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Trip type selection
+            Row(
+              children: [
+                _buildTripTypeButton(
+                  'One-way',
+                  !_isRoundTrip,
+                  () {
+                    setState(() {
+                      _isRoundTrip = false;
+                    });
+                  },
                 ),
-              ),
-              SizedBox(height: 4),
-              GestureDetector(
-                onTap: () {
-                  _showDepartureLocation(context);
-                },
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  children: [
-                    Container(
-                      height: 47,
-                      padding: EdgeInsets.symmetric(horizontal: 12,),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Color(0xffE5E7EB)),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Row(
-                        children: [
-                          SvgPicture.asset(
-                            'assets/icons/location.svg',
-                            width: 20,
-                            height: 20,
-                            color: Color(0xff6B7280),
+                SizedBox(width: 12),
+                _buildTripTypeButton(
+                  'Round-Trip',
+                  _isRoundTrip,
+                  () {
+                    setState(() {
+                      _isRoundTrip = true;
+                    });
+                  },
+                ),
+              ],
+            ),
+            SizedBox(height: 16),
+
+            // From field
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'From'.tr,
+                  style: GoogleFonts.spaceGrotesk(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w400,
+                    color: Color(0xff1D2025),
+                  ),
+                ),
+                SizedBox(height: 4),
+                GestureDetector(
+                  onTap: () {
+                    _showDepartureLocation(context);
+                  },
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      TextFormField(
+                        controller: _fromCityController,
+                        readOnly: true,
+                        onTap: () {
+                          _showDepartureLocation(context);
+                        },
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'Please select departure city'.tr;
+                          }
+                          if (fromWhereLocation == null ||
+                              fromWhereLocation == 0) {
+                            return 'Please select a valid city'.tr;
+                          }
+                          return null;
+                        },
+                        decoration: InputDecoration(
+                          hintText: 'Departure City'.tr,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide(color: Color(0xffE5E7EB)),
                           ),
-                          SizedBox(width: 8),
-                          Expanded(
-                            child: AbsorbPointer(
-                              child: TextField(
-                                controller: _fromCityController,
-                                decoration: InputDecoration(
-                                  hintText: 'Departure City'.tr,
-                                  border: InputBorder.none,
-                                  hintStyle: GoogleFonts.spaceGrotesk(
-                                    fontSize: 14,
-                                    color: const Color(0xff6B7280),
-                                  ),
-                                ),
-                                style: GoogleFonts.spaceGrotesk(
-                                  fontSize: 14,
-                                  color: const Color(0xff1D2025),
-                                ),
-                              ),
-                            ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide(color: Color(0xffE5E7EB)),
                           ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-            ],
-          ),
-          SizedBox(height: 12),
-
-          // To field
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'To'.tr,
-                style: GoogleFonts.spaceGrotesk(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w400,
-                  color: Color(0xff1D2025),
-                ),
-              ),
-              SizedBox(height: 4),
-              GestureDetector(
-                onTap: () {
-                  _showDestinationLocation(context);
-                },
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.start,
-
-                  children: [
-                    Container(
-                      height: 47,
-                      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Color(0xffE5E7EB)),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Row(
-                        children: [
-                          SvgPicture.asset(
-                            'assets/icons/location.svg',
-                            width: 20,
-                            height: 20,
-                            color: Color(0xff6B7280),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide(color: Color(0xFF05A8C7)),
                           ),
-                          SizedBox(width: 8),
-                          Expanded(
-                            child: AbsorbPointer(
-                              child: TextField(
-                                controller: _toCityController,
-                                decoration: InputDecoration(
-                                  hintText: 'Destination City'.tr,
-                                  border: InputBorder.none,
-                                  hintStyle: GoogleFonts.spaceGrotesk(
-                                    fontSize: 14,
-                                    color: const Color(0xff6B7280),
-                                  ),
-                                ),
-                                style: GoogleFonts.spaceGrotesk(
-                                  fontSize: 14,
-                                  color: const Color(0xff1D2025),
-                                ),
-                              ),
-                            ),
+                          errorBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide(color: Colors.red),
                           ),
-                        ],
-                      ),
-                    ),
-
-
-
-                    // if (_tocitySuggestions.isNotEmpty)
-                    //   Container(
-                    //     margin: const EdgeInsets.only(top: 4),
-                    //     constraints: const BoxConstraints(maxHeight: 250),
-                    //     decoration: BoxDecoration(
-                    //       color: Colors.white,
-                    //       border: Border.all(color: const Color(0xffE5E7EB)),
-                    //       borderRadius: BorderRadius.circular(8),
-                    //     ),
-                    //     child: ListView.separated(
-                    //       shrinkWrap: true,
-                    //       itemCount: _tocitySuggestions.length,
-                    //       separatorBuilder: (_, __) => const Divider(height: 1),
-                    //       itemBuilder: (context, index) {
-                    //         final suggestion = _tocitySuggestions[index];
-                    //
-                    //         return ListTile(
-                    //           dense: true,
-                    //           leading: const Icon(Icons.location_on, size: 20),
-                    //           title: Text(
-                    //             suggestion['description'],
-                    //             style: GoogleFonts.spaceGrotesk(fontSize: 14),
-                    //           ),
-                    //           onTap: () {
-                    //             setState(() {
-                    //               _selectedToCity = suggestion['description'];
-                    //               _toCityController.text = _selectedToCity;
-                    //              _tocitySuggestions.clear();
-                    //             });
-                    //
-                    //             FocusScope.of(context).unfocus();
-                    //           },
-                    //         );
-                    //       },
-                    //     ),
-                    //   ),
-
-                  ],
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 12),
-
-          // Date selection
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Departure Date'.tr,
-                style: GoogleFonts.spaceGrotesk(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w400,
-                  color: Color(0xff1D2025),
-                ),
-              ),
-              SizedBox(height: 4),
-              Row(
-                children: [
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: () async {
-                        final DateTime? picked = await showDatePicker(
-                          context: context,
-                          initialDate: DateTime.now(),
-                          firstDate: DateTime.now(),
-                          lastDate: DateTime(2100),
-                        );
-                        if (picked != null) {
-                          setState(() {
-                            _flightDepartureDate = picked;
-                          });
-                        }
-                      },
-                      child: Container(
-                        height: 47,
-                        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                        decoration: BoxDecoration(
-                          border: Border.all(color: Color(0xffE5E7EB)),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Row(
-                          children: [
-                            SvgPicture.asset(
-                              'assets/icons/calendar.svg',
+                          focusedErrorBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide(color: Colors.red),
+                          ),
+                          contentPadding: EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 14),
+                          prefixIcon: Padding(
+                            padding: const EdgeInsets.all(12.0),
+                            child: SvgPicture.asset(
+                              'assets/icons/location.svg',
                               width: 20,
                               height: 20,
                               color: Color(0xff6B7280),
                             ),
-                            SizedBox(width: 8),
-                            Text(
-                              departureDateText,
-                              style: GoogleFonts.spaceGrotesk(
-                                fontSize: 14,
-                                color: _flightDepartureDate != null
-                                    ? Color(0xff1D2025)
-                                    : Color(0xff6B7280),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                  if (_isRoundTrip) SizedBox(width: 12),
-                  if (_isRoundTrip)
-                    Expanded(
-                      child: GestureDetector(
-                        onTap: () async {
-                          final DateTime? picked = await showDatePicker(
-                            context: context,
-                            initialDate: _flightDepartureDate ?? DateTime.now(),
-                            firstDate: _flightDepartureDate ?? DateTime.now(),
-                            lastDate: DateTime(2100),
-                          );
-                          if (picked != null) {
-                            setState(() {
-                              _flightReturnDate = picked;
-                            });
-                          }
-                        },
-                        child: Container(
-                          height: 47,
-                          padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                          decoration: BoxDecoration(
-                            border: Border.all(color: Color(0xffE5E7EB)),
-                            borderRadius: BorderRadius.circular(8),
                           ),
-                          child: Row(
-                            children: [
-                              SvgPicture.asset(
-                                'assets/icons/calendar.svg',
-                                width: 20,
-                                height: 20,
-                                color: Color(0xff6B7280),
-                              ),
-                              SizedBox(width: 8),
-                              Text(
-                                _flightReturnDate != null
-                                    ? '${_flightReturnDate!.day}/${_flightReturnDate!.month}/${_flightReturnDate!.year}'
-                                    : 'Return'.tr,
-                                style: GoogleFonts.spaceGrotesk(
-                                  fontSize: 14,
-                                  color: _flightReturnDate != null
-                                      ? Color(0xff1D2025)
-                                      : Color(0xff6B7280),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-            ],
-          ),
-          SizedBox(height: 12),
-
-          // Passengers field
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Passengers'.tr,
-                style: GoogleFonts.spaceGrotesk(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w400,
-                  color: Color(0xff1D2025),
-                ),
-              ),
-              SizedBox(height: 4),
-              GestureDetector(
-                onTap: _showPassengerSelector,
-                child: Container(
-                  height: 47,
-                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Color(0xffE5E7EB)),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Row(
-                    children: [
-                      SvgPicture.asset(
-                        'assets/icons/user.svg',
-                        width: 20,
-                        height: 20,
-                        color: Color(0xff6B7280),
-                      ),
-                      SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          passengerText,
-                          style: GoogleFonts.spaceGrotesk(
+                          hintStyle: GoogleFonts.spaceGrotesk(
                             fontSize: 14,
-                            color: Color(0xff1D2025),
+                            color: const Color(0xff6B7280),
                           ),
+                        ),
+                        style: GoogleFonts.spaceGrotesk(
+                          fontSize: 14,
+                          color: const Color(0xff1D2025),
                         ),
                       ),
                     ],
                   ),
                 ),
-              ),
-            ],
-          ),
-          SizedBox(height: 24),
+              ],
+            ),
+            SizedBox(height: 12),
 
-          // Search Button
-          Container(
-            width: double.infinity,
-            height: 48,
-            child: ElevatedButton(
-              onPressed: () {
-                // You need to get the flight data from somewhere
-                // For example, from a provider
-
-                final flightProvider = Provider.of<FlightProvider>(context, listen: false);
-                flightProvider.flightlistapi(2,searchParams: {
-                  'from_where': fromWhereLocation,
-                  'to_where': toWhereLocation,
-                  'start': _flightDepartureDate,
-                  'end':_flightReturnDate,
-                  'children': _passengerCount,
-                }).then((_) {
-                  setState(() {
-                    isLoading = false;
-                  });
-                });
-                final flightList = flightProvider.flightListPerCategory[6] ?? FlightList();
-
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => FlightListItem(flightList: flightList),
+            // To field
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'To'.tr,
+                  style: GoogleFonts.spaceGrotesk(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w400,
+                    color: Color(0xff1D2025),
                   ),
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Color(0xFF05A8C7),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
                 ),
-                elevation: 0,
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  SvgPicture.asset(
-                    'assets/icons/search.svg',
-                    width: 20,
-                    height: 20,
-                    color: Colors.white,
+                SizedBox(height: 4),
+                GestureDetector(
+                  onTap: () {
+                    _showDestinationLocation(context);
+                  },
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      TextFormField(
+                        controller: _toCityController,
+                        readOnly: true,
+                        onTap: () {
+                          _showDestinationLocation(context);
+                        },
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'Please select destination city'.tr;
+                          }
+                          if (toWhereLocation == null || toWhereLocation == 0) {
+                            return 'Please select a valid city'.tr;
+                          }
+                          if (fromWhereLocation != null &&
+                              toWhereLocation != null &&
+                              fromWhereLocation == toWhereLocation) {
+                            return 'Departure and destination must be different'
+                                .tr;
+                          }
+                          return null;
+                        },
+                        decoration: InputDecoration(
+                          hintText: 'Destination City'.tr,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide(color: Color(0xffE5E7EB)),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide(color: Color(0xffE5E7EB)),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide(color: Color(0xFF05A8C7)),
+                          ),
+                          errorBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide(color: Colors.red),
+                          ),
+                          focusedErrorBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide(color: Colors.red),
+                          ),
+                          contentPadding: EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 14),
+                          prefixIcon: Padding(
+                            padding: const EdgeInsets.all(12.0),
+                            child: SvgPicture.asset(
+                              'assets/icons/location.svg',
+                              width: 20,
+                              height: 20,
+                              color: Color(0xff6B7280),
+                            ),
+                          ),
+                          hintStyle: GoogleFonts.spaceGrotesk(
+                            fontSize: 14,
+                            color: const Color(0xff6B7280),
+                          ),
+                        ),
+                        style: GoogleFonts.spaceGrotesk(
+                          fontSize: 14,
+                          color: const Color(0xff1D2025),
+                        ),
+                      ),
+
+                      // if (_tocitySuggestions.isNotEmpty)
+                      //   Container(
+                      //     margin: const EdgeInsets.only(top: 4),
+                      //     constraints: const BoxConstraints(maxHeight: 250),
+                      //     decoration: BoxDecoration(
+                      //       color: Colors.white,
+                      //       border: Border.all(color: const Color(0xffE5E7EB)),
+                      //       borderRadius: BorderRadius.circular(8),
+                      //     ),
+                      //     child: ListView.separated(
+                      //       shrinkWrap: true,
+                      //       itemCount: _tocitySuggestions.length,
+                      //       separatorBuilder: (_, __) => const Divider(height: 1),
+                      //       itemBuilder: (context, index) {
+                      //         final suggestion = _tocitySuggestions[index];
+                      //
+                      //         return ListTile(
+                      //           dense: true,
+                      //           leading: const Icon(Icons.location_on, size: 20),
+                      //           title: Text(
+                      //             suggestion['description'],
+                      //             style: GoogleFonts.spaceGrotesk(fontSize: 14),
+                      //           ),
+                      //           onTap: () {
+                      //             setState(() {
+                      //               _selectedToCity = suggestion['description'];
+                      //               _toCityController.text = _selectedToCity;
+                      //              _tocitySuggestions.clear();
+                      //             });
+                      //
+                      //             FocusScope.of(context).unfocus();
+                      //           },
+                      //         );
+                      //       },
+                      //     ),
+                      //   ),
+                    ],
                   ),
-                  SizedBox(width: 8),
-                  Text(
-                    'Search Flights'.tr,
-                    style: GoogleFonts.spaceGrotesk(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
+                ),
+              ],
+            ),
+            SizedBox(height: 12),
+
+            // Date selection
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Departure Date'.tr,
+                  style: GoogleFonts.spaceGrotesk(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w400,
+                    color: Color(0xff1D2025),
+                  ),
+                ),
+                SizedBox(height: 4),
+                Row(
+                  children: [
+                    Expanded(
+                      child: FormField<DateTime>(
+                        initialValue: _flightDepartureDate,
+                        validator: (value) {
+                          if (_flightDepartureDate == null) {
+                            return 'Required'.tr;
+                          }
+                          return null;
+                        },
+                        builder: (formFieldState) {
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              GestureDetector(
+                                onTap: () async {
+                                  final DateTime? picked = await showDatePicker(
+                                    context: context,
+                                    initialDate: DateTime.now(),
+                                    firstDate: DateTime.now(),
+                                    lastDate: DateTime(2100),
+                                  );
+                                  if (picked != null) {
+                                    setState(() {
+                                      _flightDepartureDate = picked;
+                                      formFieldState.didChange(picked);
+                                    });
+                                  }
+                                },
+                                child: Container(
+                                  height: 47,
+                                  padding: EdgeInsets.symmetric(
+                                      horizontal: 12, vertical: 8),
+                                  decoration: BoxDecoration(
+                                    border: Border.all(
+                                        color: formFieldState.hasError
+                                            ? Colors.red
+                                            : Color(0xffE5E7EB)),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      SvgPicture.asset(
+                                        'assets/icons/calendar.svg',
+                                        width: 20,
+                                        height: 20,
+                                        color: Color(0xff6B7280),
+                                      ),
+                                      SizedBox(width: 8),
+                                      Text(
+                                        departureDateText,
+                                        style: GoogleFonts.spaceGrotesk(
+                                          fontSize: 14,
+                                          color: _flightDepartureDate != null
+                                              ? Color(0xff1D2025)
+                                              : Color(0xff6B7280),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              if (formFieldState.hasError)
+                                Padding(
+                                  padding:
+                                      const EdgeInsets.only(left: 12, top: 4),
+                                  child: Text(
+                                    formFieldState.errorText ?? '',
+                                    style: TextStyle(
+                                      color: Colors.red,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          );
+                        },
+                      ),
+                    ),
+                    if (_isRoundTrip) SizedBox(width: 12),
+                    if (_isRoundTrip)
+                      Expanded(
+                        child: FormField<DateTime>(
+                          initialValue: _flightReturnDate,
+                          validator: (value) {
+                            if (_isRoundTrip && _flightReturnDate == null) {
+                              return 'Required'.tr;
+                            }
+                            if (_isRoundTrip &&
+                                _flightDepartureDate != null &&
+                                _flightReturnDate != null &&
+                                _flightReturnDate!
+                                    .isBefore(_flightDepartureDate!)) {
+                              return 'Must be after departure'.tr;
+                            }
+                            return null;
+                          },
+                          builder: (formFieldState) {
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                GestureDetector(
+                                  onTap: () async {
+                                    final DateTime? picked =
+                                        await showDatePicker(
+                                      context: context,
+                                      initialDate: _flightDepartureDate ??
+                                          DateTime.now(),
+                                      firstDate: _flightDepartureDate ??
+                                          DateTime.now(),
+                                      lastDate: DateTime(2100),
+                                    );
+                                    if (picked != null) {
+                                      setState(() {
+                                        _flightReturnDate = picked;
+                                        formFieldState.didChange(picked);
+                                      });
+                                    }
+                                  },
+                                  child: Container(
+                                    height: 47,
+                                    padding: EdgeInsets.symmetric(
+                                        horizontal: 12, vertical: 8),
+                                    decoration: BoxDecoration(
+                                      border: Border.all(
+                                          color: formFieldState.hasError
+                                              ? Colors.red
+                                              : Color(0xffE5E7EB)),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        SvgPicture.asset(
+                                          'assets/icons/calendar.svg',
+                                          width: 20,
+                                          height: 20,
+                                          color: Color(0xff6B7280),
+                                        ),
+                                        SizedBox(width: 8),
+                                        Text(
+                                          _flightReturnDate != null
+                                              ? '${_flightReturnDate!.day}/${_flightReturnDate!.month}/${_flightReturnDate!.year}'
+                                              : 'Return'.tr,
+                                          style: GoogleFonts.spaceGrotesk(
+                                            fontSize: 14,
+                                            color: _flightReturnDate != null
+                                                ? Color(0xff1D2025)
+                                                : Color(0xff6B7280),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                                if (formFieldState.hasError)
+                                  Padding(
+                                    padding:
+                                        const EdgeInsets.only(left: 12, top: 4),
+                                    child: Text(
+                                      formFieldState.errorText ?? '',
+                                      style: TextStyle(
+                                        color: Colors.red,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            );
+                          },
+                        ),
+                      ),
+                  ],
+                ),
+              ],
+            ),
+            SizedBox(height: 12),
+
+            // Passengers field
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Passengers'.tr,
+                  style: GoogleFonts.spaceGrotesk(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w400,
+                    color: Color(0xff1D2025),
+                  ),
+                ),
+                SizedBox(height: 4),
+                GestureDetector(
+                  onTap: _showPassengerSelector,
+                  child: Container(
+                    height: 47,
+                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Color(0xffE5E7EB)),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      children: [
+                        SvgPicture.asset(
+                          'assets/icons/user.svg',
+                          width: 20,
+                          height: 20,
+                          color: Color(0xff6B7280),
+                        ),
+                        SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            passengerText,
+                            style: GoogleFonts.spaceGrotesk(
+                              fontSize: 14,
+                              color: Color(0xff1D2025),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ],
+                ),
+              ],
+            ),
+            SizedBox(height: 24),
+
+            // Search Button
+            Container(
+              width: double.infinity,
+              height: 48,
+              child: ElevatedButton(
+                onPressed: () {
+                  // Trigger validation
+                  setState(() {
+                    _flightValidationAttempted = true;
+                  });
+
+                  // Check if form is valid
+                  if (!_flightFormKey.currentState!.validate()) {
+                    return; // Block search if validation fails
+                  }
+
+                  // You need to get the flight data from somewhere
+                  // For example, from a provider
+
+                  final flightProvider =
+                      Provider.of<FlightProvider>(context, listen: false);
+                  flightProvider.flightlistapi(2, searchParams: {
+                    'from_where': fromWhereLocation,
+                    'to_where': toWhereLocation,
+                    'start': _flightDepartureDate,
+                    'end': _flightReturnDate,
+                    'children': _passengerCount,
+                  }).then((_) {
+                    setState(() {
+                      isLoading = false;
+                    });
+                  });
+                  final flightList =
+                      flightProvider.flightListPerCategory[6] ?? FlightList();
+
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) =>
+                          FlightListItem(flightList: flightList),
+                    ),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Color(0xFF05A8C7),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  elevation: 0,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    SvgPicture.asset(
+                      'assets/icons/search.svg',
+                      width: 20,
+                      height: 20,
+                      color: Colors.white,
+                    ),
+                    SizedBox(width: 8),
+                    Text(
+                      'Search Flights'.tr,
+                      style: GoogleFonts.spaceGrotesk(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildTripTypeButton(String title, bool isSelected, VoidCallback onTap) {
+  Widget _buildTripTypeButton(
+      String title, bool isSelected, VoidCallback onTap) {
     return Expanded(
       child: GestureDetector(
         onTap: onTap,
@@ -1366,7 +1469,6 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
-
 //zeshan
   Widget _buildHotelSearchSection(BuildContext context) {
     // Calculate the text values directly
@@ -1378,327 +1480,424 @@ class _HomeScreenState extends State<HomeScreen>
         ? '${_checkOutDate!.day}/${_checkOutDate!.month}/${_checkOutDate!.year}'
         : 'dd/mm/yyyy'.tr;
 
-    String guestText = _guestCount == 1
-        ? '1 Guest'.tr
-        : '$_guestCount Guests'.tr;
+    String guestText =
+        _guestCount == 1 ? '1 Guest'.tr : '$_guestCount Guests'.tr;
 
     return Padding(
-      padding: const EdgeInsets.only(left: 20,right: 20,bottom: 20,),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Where to?'.tr,
-            style: GoogleFonts.spaceGrotesk(
-              fontSize: 13,
-              fontWeight: FontWeight.w400,
-              color: Color(0xff1D2025),
+      padding: const EdgeInsets.only(
+        left: 20,
+        right: 20,
+        bottom: 20,
+      ),
+      child: Form(
+        key: _hotelFormKey,
+        autovalidateMode: _hotelValidationAttempted
+            ? AutovalidateMode.always
+            : AutovalidateMode.disabled,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Where to?'.tr,
+              style: GoogleFonts.spaceGrotesk(
+                fontSize: 13,
+                fontWeight: FontWeight.w400,
+                color: Color(0xff1D2025),
+              ),
             ),
-          ),
-          SizedBox(height: 12),
+            SizedBox(height: 12),
 
-          // City/Destination Field
-          GestureDetector(
-            onTap: () => _showCitySelection(context),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  height: 47,
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: const Color(0xffE5E7EB)),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Row(
-                    children: [
-                      SvgPicture.asset(
-                        'assets/icons/location.svg',
-                        width: 20,
-                        height: 20,
-                        color: const Color(0xff6B7280),
+            // City/Destination Field
+            GestureDetector(
+              onTap: () => _showCitySelection(context),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  TextFormField(
+                    controller: _cityController,
+                    readOnly: true,
+                    onTap: () => _showCitySelection(context),
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Please select a city'.tr;
+                      }
+                      if (_selectedCity == null || _selectedCity == 0) {
+                        return 'Please select a valid city'.tr;
+                      }
+                      return null;
+                    },
+                    decoration: InputDecoration(
+                      hintText: 'City or destination'.tr,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(color: Color(0xffE5E7EB)),
                       ),
-                      const SizedBox(width: 8),
-
-                      Expanded(
-                        child: AbsorbPointer(
-                          child: TextField(
-                            controller: _cityController,
-                            decoration: InputDecoration(
-                              hintText: 'City or destination'.tr,
-                              border: InputBorder.none,
-                              hintStyle: GoogleFonts.spaceGrotesk(
-                                fontSize: 14,
-                                color: const Color(0xff6B7280),
-                              ),
-                            ),
-                            style: GoogleFonts.spaceGrotesk(
-                              fontSize: 14,
-                              color: const Color(0xff1D2025),
-                            ),
-                          ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(color: Color(0xffE5E7EB)),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(color: Color(0xFF05A8C7)),
+                      ),
+                      errorBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(color: Colors.red),
+                      ),
+                      focusedErrorBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(color: Colors.red),
+                      ),
+                      contentPadding:
+                          EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                      prefixIcon: Padding(
+                        padding: const EdgeInsets.all(12.0),
+                        child: SvgPicture.asset(
+                          'assets/icons/location.svg',
+                          width: 20,
+                          height: 20,
+                          color: const Color(0xff6B7280),
                         ),
                       ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          SizedBox(height: 12),
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Column(
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Check-in'.tr,
-                      style: GoogleFonts.spaceGrotesk(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w400,
-                        color: Color(0xff1D2025),
+                      hintStyle: GoogleFonts.spaceGrotesk(
+                        fontSize: 14,
+                        color: const Color(0xff6B7280),
                       ),
                     ),
-                    Padding(
-                      padding: const EdgeInsets.only(left: 30),
-                      child: Text(
-                        'Check-out'.tr,
+                    style: GoogleFonts.spaceGrotesk(
+                      fontSize: 14,
+                      color: const Color(0xff1D2025),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            SizedBox(height: 12),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Check-in'.tr,
                         style: GoogleFonts.spaceGrotesk(
                           fontSize: 13,
                           fontWeight: FontWeight.w400,
                           color: Color(0xff1D2025),
                         ),
                       ),
-                    ),
-                    SizedBox(height: 4),
-                  ],
-
-                )
-
-
-              ],
-            ),
-          ),
-          // Check-in & Check-out Row
-          Row(
-            children: [
-              Expanded(
-                child: GestureDetector(
-                  onTap: () async {
-                    final DateTime? picked = await showDatePicker(
-                      context: context,
-                      initialDate: DateTime.now(),
-                      firstDate: DateTime.now(),
-                      lastDate: DateTime(2100),
-                    );
-                    if (picked != null) {
-                      setState(() {
-                        _checkInDate = picked;
-                      });
-                    }
-                  },
-
-                  child: Container(
-                    height: 47,
-                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Color(0xffE5E7EB)),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            SvgPicture.asset(
-                              'assets/icons/calendar.svg', // Add your calendar icon
-                              width: 16,
-                              height: 16,
-                              color: Color(0xff6B7280),
-                            ),
-                            SizedBox(width: 10,),
-                            Text(
-                              checkInText,
-                              style: GoogleFonts.spaceGrotesk(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
-                                color: Color(0xff1D2025),
-                              ),
-                            ),
-                          ],),
-
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-              SizedBox(width: 8),
-              Expanded(
-                child: GestureDetector(
-                  onTap: () async {
-                    final DateTime? picked = await showDatePicker(
-                      context: context,
-                      initialDate: _checkInDate ?? DateTime.now(),
-                      firstDate: _checkInDate ?? DateTime.now(),
-                      lastDate: DateTime(2100),
-                    );
-                    if (picked != null) {
-                      setState(() {
-                        _checkOutDate = picked;
-                      });
-                    }
-                  },
-                  child: Container(
-                    height: 47,
-                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Color(0xffE5E7EB)),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            SvgPicture.asset(
-                              'assets/icons/calendar.svg', // Add your calendar icon
-                              width: 16,
-                              height: 16,
-                              color: Color(0xff6B7280),
-                            ),
-                            SizedBox(width: 10,),
-                            Text(
-                              checkOutText,
-                              style: GoogleFonts.spaceGrotesk(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
-                                color: Color(0xff1D2025),
-                              ),
-                            ),
-                          ],),
-
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 12),
-
-          // Guests Field
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Guests label above the container
-              Text(
-                'Guests'.tr,
-                style: GoogleFonts.spaceGrotesk(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w400,
-                  color: Color(0xff1D2025),
-                ),
-              ),
-              SizedBox(height: 4),
-              // Guest selector container
-              GestureDetector(
-                onTap: _showGuestSelector,
-                child: Container(
-                  height: 47,
-                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Color(0xffE5E7EB)),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Row(
-                    children: [
-                      SvgPicture.asset(
-                        'assets/icons/user.svg',
-                        width: 20,
-                        height: 20,
-                        color: Color(0xff6B7280),
-                      ),
-                      SizedBox(width: 8),
-                      Expanded(
+                      Padding(
+                        padding: const EdgeInsets.only(left: 30),
                         child: Text(
-                          guestText,
+                          'Check-out'.tr,
                           style: GoogleFonts.spaceGrotesk(
-                            fontSize: 14,
-                            color: Color(0xff1D2025), // Changed to darker color for better visibility
+                            fontSize: 13,
+                            fontWeight: FontWeight.w400,
+                            color: Color(0xff1D2025),
                           ),
                         ),
                       ),
+                      SizedBox(height: 4),
                     ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 16),
-//zeeshan
-          // Search Button
-          // In the _buildHotelSearchSection method, update the Search Button
-          Container(
-            width: double.infinity,
-            height: 48,
-            child: ElevatedButton(
-
-              onPressed: () {
-                // Navigate to hotel search results screen with search parameters
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => HotelSearchResultsScreen(
-                      city: _selectedCity==null ? 0 : _selectedCity,
-                      checkInDate: _checkInDate,
-                      checkOutDate: _checkOutDate,
-                      guests: _guestCount,
-                    ),
-                  ),
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Color(0xFF05A8C7),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                elevation: 0,
-
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // SVG Search icon
-                  SvgPicture.asset(
-                    'assets/icons/search.svg', // Make sure you have this icon in your assets
-                    width: 20,
-                    height: 20,
-                    color: Colors.white,
-                  ),
-                  SizedBox(width: 8), // Space between icon and text
-                  Text(
-                    'Search Hotels'.tr,
-                    style: GoogleFonts.spaceGrotesk(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                    ),
-                  ),
+                  )
                 ],
               ),
             ),
-          ),
+            // Check-in & Check-out Row
+            Row(
+              children: [
+                Expanded(
+                  child: FormField<DateTime>(
+                    initialValue: _checkInDate,
+                    validator: (value) {
+                      if (_checkInDate == null) {
+                        return 'Required'.tr;
+                      }
+                      return null;
+                    },
+                    builder: (formFieldState) {
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          GestureDetector(
+                            onTap: () async {
+                              final DateTime? picked = await showDatePicker(
+                                context: context,
+                                initialDate: DateTime.now(),
+                                firstDate: DateTime.now(),
+                                lastDate: DateTime(2100),
+                              );
+                              if (picked != null) {
+                                setState(() {
+                                  _checkInDate = picked;
+                                  formFieldState.didChange(picked);
+                                });
+                              }
+                            },
+                            child: Container(
+                              height: 47,
+                              padding: EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 8),
+                              decoration: BoxDecoration(
+                                border: Border.all(
+                                    color: formFieldState.hasError
+                                        ? Colors.red
+                                        : Color(0xffE5E7EB)),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      SvgPicture.asset(
+                                        'assets/icons/calendar.svg',
+                                        width: 16,
+                                        height: 16,
+                                        color: Color(0xff6B7280),
+                                      ),
+                                      SizedBox(width: 10),
+                                      Text(
+                                        checkInText,
+                                        style: GoogleFonts.spaceGrotesk(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w500,
+                                          color: Color(0xff1D2025),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          if (formFieldState.hasError)
+                            Padding(
+                              padding: const EdgeInsets.only(left: 12, top: 4),
+                              child: Text(
+                                formFieldState.errorText ?? '',
+                                style: TextStyle(
+                                  color: Colors.red,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ),
+                        ],
+                      );
+                    },
+                  ),
+                ),
+                SizedBox(width: 8),
+                Expanded(
+                  child: FormField<DateTime>(
+                    initialValue: _checkOutDate,
+                    validator: (value) {
+                      if (_checkOutDate == null) {
+                        return 'Required'.tr;
+                      }
+                      if (_checkInDate != null &&
+                          _checkOutDate != null &&
+                          (_checkOutDate!.isBefore(_checkInDate!) ||
+                              _checkOutDate!.isAtSameMomentAs(_checkInDate!))) {
+                        return 'Must be after check-in'.tr;
+                      }
+                      return null;
+                    },
+                    builder: (formFieldState) {
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          GestureDetector(
+                            onTap: () async {
+                              final DateTime? picked = await showDatePicker(
+                                context: context,
+                                initialDate: _checkInDate ?? DateTime.now(),
+                                firstDate: _checkInDate ?? DateTime.now(),
+                                lastDate: DateTime(2100),
+                              );
+                              if (picked != null) {
+                                setState(() {
+                                  _checkOutDate = picked;
+                                  formFieldState.didChange(picked);
+                                });
+                              }
+                            },
+                            child: Container(
+                              height: 47,
+                              padding: EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 8),
+                              decoration: BoxDecoration(
+                                border: Border.all(
+                                    color: formFieldState.hasError
+                                        ? Colors.red
+                                        : Color(0xffE5E7EB)),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      SvgPicture.asset(
+                                        'assets/icons/calendar.svg',
+                                        width: 16,
+                                        height: 16,
+                                        color: Color(0xff6B7280),
+                                      ),
+                                      SizedBox(width: 10),
+                                      Text(
+                                        checkOutText,
+                                        style: GoogleFonts.spaceGrotesk(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w500,
+                                          color: Color(0xff1D2025),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          if (formFieldState.hasError)
+                            Padding(
+                              padding: const EdgeInsets.only(left: 12, top: 4),
+                              child: Text(
+                                formFieldState.errorText ?? '',
+                                style: TextStyle(
+                                  color: Colors.red,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ),
+                        ],
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 12),
 
-        ],
+            // Guests Field
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Guests label above the container
+                Text(
+                  'Guests'.tr,
+                  style: GoogleFonts.spaceGrotesk(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w400,
+                    color: Color(0xff1D2025),
+                  ),
+                ),
+                SizedBox(height: 4),
+                // Guest selector container
+                GestureDetector(
+                  onTap: _showGuestSelector,
+                  child: Container(
+                    height: 47,
+                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Color(0xffE5E7EB)),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      children: [
+                        SvgPicture.asset(
+                          'assets/icons/user.svg',
+                          width: 20,
+                          height: 20,
+                          color: Color(0xff6B7280),
+                        ),
+                        SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            guestText,
+                            style: GoogleFonts.spaceGrotesk(
+                              fontSize: 14,
+                              color: Color(
+                                  0xff1D2025), // Changed to darker color for better visibility
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 16),
+//zeeshan
+            // Search Button
+            // In the _buildHotelSearchSection method, update the Search Button
+            Container(
+              width: double.infinity,
+              height: 48,
+              child: ElevatedButton(
+                onPressed: () {
+                  // Trigger validation
+                  setState(() {
+                    _hotelValidationAttempted = true;
+                  });
+
+                  // Check if form is valid
+                  if (!_hotelFormKey.currentState!.validate()) {
+                    return; // Block search if validation fails
+                  }
+
+                  // Navigate to hotel search results screen with search parameters
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => HotelSearchResultsScreen(
+                        city: _selectedCity == null ? 0 : _selectedCity,
+                        checkInDate: _checkInDate,
+                        checkOutDate: _checkOutDate,
+                        guests: _guestCount,
+                      ),
+                    ),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Color(0xFF05A8C7),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  elevation: 0,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // SVG Search icon
+                    SvgPicture.asset(
+                      'assets/icons/search.svg', // Make sure you have this icon in your assets
+                      width: 20,
+                      height: 20,
+                      color: Colors.white,
+                    ),
+                    SizedBox(width: 8), // Space between icon and text
+                    Text(
+                      'Search Hotels'.tr,
+                      style: GoogleFonts.spaceGrotesk(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
-
-
-
 
   //zeeshan
   Widget _buildFeaturedDestinations() {
@@ -1744,28 +1943,32 @@ class _HomeScreenState extends State<HomeScreen>
             child: Row(
               children: [
                 _buildFeaturedDestinationCard(
-                  imageUrl: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=400&h=250&fit=crop',
+                  imageUrl:
+                      'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=400&h=250&fit=crop',
                   title: 'Paris, France',
                   subtitle: 'City of Love',
                   isBestSeller: true,
                 ),
                 SizedBox(width: 12),
                 _buildFeaturedDestinationCard(
-                  imageUrl: 'https://images.unsplash.com/photo-1516483638261-f4dbaf036963?w=400&h=250&fit=crop',
+                  imageUrl:
+                      'https://images.unsplash.com/photo-1516483638261-f4dbaf036963?w=400&h=250&fit=crop',
                   title: 'Tokyo, Japan',
                   subtitle: 'Modern Metropolis',
                   isBestSeller: false,
                 ),
                 SizedBox(width: 12),
                 _buildFeaturedDestinationCard(
-                  imageUrl: 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=400&h=250&fit=crop',
+                  imageUrl:
+                      'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=400&h=250&fit=crop',
                   title: 'Bali, Indonesia',
                   subtitle: 'Tropical Paradise',
                   isBestSeller: true,
                 ),
                 SizedBox(width: 12),
                 _buildFeaturedDestinationCard(
-                  imageUrl: 'https://images.unsplash.com/photo-1530122037265-a5f1f91d3b99?w=400&h=250&fit=crop',
+                  imageUrl:
+                      'https://images.unsplash.com/photo-1530122037265-a5f1f91d3b99?w=400&h=250&fit=crop',
                   title: 'New York, USA',
                   subtitle: 'The Big Apple',
                   isBestSeller: false,
@@ -1778,6 +1981,7 @@ class _HomeScreenState extends State<HomeScreen>
       ),
     );
   }
+
 //zeeshan
   Widget _buildFeaturedDestinationCard({
     required String imageUrl,
@@ -1937,7 +2141,8 @@ class _HomeScreenState extends State<HomeScreen>
                                     onTap: () => Navigator.push(
                                       context,
                                       MaterialPageRoute(
-                                        builder: (context) => NotificationsScreen(),
+                                        builder: (context) =>
+                                            NotificationsScreen(),
                                       ),
                                     ),
                                     child: SvgPicture.asset(
@@ -1964,8 +2169,8 @@ class _HomeScreenState extends State<HomeScreen>
                                       child: Center(
                                         child: Text(
                                           provider2.notificationcountmodel
-                                              ?.unreadCount
-                                              .toString() ??
+                                                  ?.unreadCount
+                                                  .toString() ??
                                               "",
                                           style: TextStyle(
                                             color: Colors.white,
@@ -1986,7 +2191,6 @@ class _HomeScreenState extends State<HomeScreen>
                         ),
                       ],
                     ),
-
                     Padding(
                       padding: const EdgeInsets.all(12.0),
                       child: Container(
@@ -1995,16 +2199,20 @@ class _HomeScreenState extends State<HomeScreen>
                           color: Color(0xffF1F5F9),
                         ),
                         height: 60,
-                        padding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                        padding:
+                            EdgeInsets.symmetric(horizontal: 8, vertical: 8),
                         child: ScrollConfiguration(
-                          behavior: ScrollConfiguration.of(context).copyWith(scrollbars: false),
+                          behavior: ScrollConfiguration.of(context)
+                              .copyWith(scrollbars: false),
                           child: SingleChildScrollView(
                             scrollDirection: Axis.horizontal,
                             child: Row(
-                              children: categoryDatas.asMap().entries.map((entry) {
+                              children:
+                                  categoryDatas.asMap().entries.map((entry) {
                                 int idx = entry.value.id;
                                 var category = entry.value;
-                                bool isSelected = homeProvider.selectedHomeTab == idx;
+                                bool isSelected =
+                                    homeProvider.selectedHomeTab == idx;
 
                                 return GestureDetector(
                                   onTap: () async {
@@ -2017,9 +2225,12 @@ class _HomeScreenState extends State<HomeScreen>
                                   },
                                   child: Container(
                                     margin: EdgeInsets.symmetric(horizontal: 4),
-                                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                                    padding: EdgeInsets.symmetric(
+                                        horizontal: 12, vertical: 12),
                                     decoration: BoxDecoration(
-                                      color: isSelected ? Color(0xFF05A8C7) : Colors.transparent,
+                                      color: isSelected
+                                          ? Color(0xFF05A8C7)
+                                          : Colors.transparent,
                                       borderRadius: BorderRadius.circular(10),
                                     ),
                                     child: Row(
@@ -2031,7 +2242,9 @@ class _HomeScreenState extends State<HomeScreen>
                                           child: Center(
                                             child: SvgPicture.asset(
                                               category.kIcon,
-                                              color: isSelected ? Colors.white : Color(0xFF6B7280),
+                                              color: isSelected
+                                                  ? Colors.white
+                                                  : Color(0xFF6B7280),
                                               height: 16,
                                               width: 16,
                                             ),
@@ -2041,7 +2254,9 @@ class _HomeScreenState extends State<HomeScreen>
                                         Text(
                                           category.category.tr,
                                           style: GoogleFonts.spaceGrotesk(
-                                            color: isSelected ? Colors.white : Color(0xFF6B7280),
+                                            color: isSelected
+                                                ? Colors.white
+                                                : Color(0xFF6B7280),
                                             fontSize: 14,
                                             fontWeight: FontWeight.w500,
                                           ),
@@ -2065,114 +2280,154 @@ class _HomeScreenState extends State<HomeScreen>
             body: isLoading
                 ? Center(child: CircularProgressIndicator())
                 : Consumer<HomeProvider>(
-              builder: (
-                  context,
-                  homeProvider,
-                  child,
-                  ) {
-                final homeList = homeProvider.homeListPerCategory[0];
+                    builder: (
+                      context,
+                      homeProvider,
+                      child,
+                    ) {
+                      final homeList = homeProvider.homeListPerCategory[0];
 
-                return TabBarView(
-                  controller: homeProvider.tabController,
-                  children: [
-                    // Home tab (index 0)
-                    SingleChildScrollView(
-                      child: Column(
+                      return TabBarView(
+                        controller: homeProvider.tabController,
                         children: [
-                          homeList == null
-                              ? Center(child: CircularProgressIndicator())
-                              : MixedItemList(homeList: homeList),
+                          // Home tab (index 0)
+                          SingleChildScrollView(
+                            child: Column(
+                              children: [
+                                homeList == null
+                                    ? Center(child: CircularProgressIndicator())
+                                    : MixedItemList(homeList: homeList),
+                              ],
+                            ),
+                          ),
+                          // Hotels tab (index 1)
+                          SingleChildScrollView(
+                            child: Column(
+                              children: [
+                                _buildHotelSearchSection(context),
+                                _buildFeaturedDestinations(),
+                              ],
+                            ),
+                          ),
+                          // Tours tab (index 2)
+                          Column(
+                            children: [
+                              _buildResultsCount(
+                                  2,
+                                  homeProvider,
+                                  boatProvider,
+                                  tourProvider,
+                                  spaceProvider,
+                                  eventProvider,
+                                  flightProvider),
+                              // _buildFilterTabs(2),
+                              Expanded(
+                                child: TourListItem(
+                                    tourList:
+                                        tourProvider.tourListPerCategory[2] ??
+                                            TourList()),
+                              ),
+                            ],
+                          ),
+                          // Spaces tab (index 3)
+                          Column(
+                            children: [
+                              _buildResultsCount(
+                                  3,
+                                  homeProvider,
+                                  boatProvider,
+                                  tourProvider,
+                                  spaceProvider,
+                                  eventProvider,
+                                  flightProvider),
+                              // _buildFilterTabs(3),
+                              Expanded(
+                                child: SpaceListItem(
+                                    spaceList:
+                                        spaceProvider.spaceListPerCategory[3] ??
+                                            SpaceList()),
+                              ),
+                            ],
+                          ),
+                          // Cars tab (index 4)
+                          Column(
+                            children: [
+                              _buildResultsCount(
+                                  4,
+                                  homeProvider,
+                                  boatProvider,
+                                  tourProvider,
+                                  spaceProvider,
+                                  eventProvider,
+                                  flightProvider),
+                              // _buildFilterTabs(4),
+                              Expanded(
+                                child: CarListItem(
+                                    carList:
+                                        homeProvider.carListPerCategory[4] ??
+                                            CarList()),
+                              ),
+                            ],
+                          ),
+                          // Events tab (index 5)
+                          Column(
+                            children: [
+                              _buildResultsCount(
+                                  5,
+                                  homeProvider,
+                                  boatProvider,
+                                  tourProvider,
+                                  spaceProvider,
+                                  eventProvider,
+                                  flightProvider),
+                              // _buildFilterTabs(5),
+                              Expanded(
+                                child: EventListItem(
+                                    eventList:
+                                        eventProvider.eventListPerCategory[5] ??
+                                            EventList()),
+                              ),
+                            ],
+                          ),
+                          // Flights tab (index 6)
+                          SingleChildScrollView(
+                            child: Column(
+                              children: [
+                                _buildFlightSearchSection(context),
+                                _buildFeaturedDestinations(),
+                                // SizedBox(height: 20),
+                                // _buildResultsCount(6, homeProvider, boatProvider,
+                                //     tourProvider, spaceProvider, eventProvider, flightProvider),
+                                // _buildFilterTabs(6),
+                                // FlightListItem(
+                                //     flightList: flightProvider.flightListPerCategory[6] ?? FlightList()),
+                              ],
+                            ),
+                          ),
+                          // Boats tab (index 7)
+                          Column(
+                            children: [
+                              _buildResultsCount(
+                                  7,
+                                  homeProvider,
+                                  boatProvider,
+                                  tourProvider,
+                                  spaceProvider,
+                                  eventProvider,
+                                  flightProvider),
+                              // _buildFilterTabs(7),
+                              Expanded(
+                                child: BoatListItem(
+                                    boatList:
+                                        boatProvider.boatListPerCategory[7] ??
+                                            BoatList()),
+                              ),
+                            ],
+                          ),
                         ],
-                      ),
-                    ),
-                    // Hotels tab (index 1)
-                    SingleChildScrollView(
-                      child: Column(
-                        children: [
-                          _buildHotelSearchSection(context),
-                          _buildFeaturedDestinations(),
-                        ],
-                      ),
-                    ),
-                    // Tours tab (index 2)
-                    Column(
-                      children: [
-                        _buildResultsCount(2, homeProvider, boatProvider,
-                            tourProvider, spaceProvider, eventProvider, flightProvider),
-                        // _buildFilterTabs(2),
-                        Expanded(
-                          child: TourListItem(
-                              tourList: tourProvider.tourListPerCategory[2] ?? TourList()),
-                        ),
-                      ],
-                    ),
-                    // Spaces tab (index 3)
-                    Column(
-                      children: [
-                        _buildResultsCount(3, homeProvider, boatProvider,
-                            tourProvider, spaceProvider, eventProvider, flightProvider),
-                        // _buildFilterTabs(3),
-                        Expanded(
-                          child: SpaceListItem(
-                              spaceList: spaceProvider.spaceListPerCategory[3] ?? SpaceList()),
-                        ),
-                      ],
-                    ),
-                    // Cars tab (index 4)
-                    Column(
-                      children: [
-                        _buildResultsCount(4, homeProvider, boatProvider,
-                            tourProvider, spaceProvider, eventProvider, flightProvider),
-                        // _buildFilterTabs(4),
-                        Expanded(
-                          child: CarListItem(
-                              carList: homeProvider.carListPerCategory[4] ?? CarList()),
-                        ),
-                      ],
-                    ),
-                    // Events tab (index 5)
-                    Column(
-                      children: [
-                        _buildResultsCount(5, homeProvider, boatProvider,
-                            tourProvider, spaceProvider, eventProvider, flightProvider),
-                        // _buildFilterTabs(5),
-                        Expanded(
-                          child: EventListItem(
-                              eventList: eventProvider.eventListPerCategory[5] ?? EventList()),
-                        ),
-                      ],
-                    ),
-                    // Flights tab (index 6)
-                    SingleChildScrollView(
-                      child: Column(
-                        children: [
-                          _buildFlightSearchSection(context),
-                          _buildFeaturedDestinations(),
-                          // SizedBox(height: 20),
-                          // _buildResultsCount(6, homeProvider, boatProvider,
-                          //     tourProvider, spaceProvider, eventProvider, flightProvider),
-                          // _buildFilterTabs(6),
-                          // FlightListItem(
-                          //     flightList: flightProvider.flightListPerCategory[6] ?? FlightList()),
-                        ],
-                      ),
-                    ),
-                    // Boats tab (index 7)
-                    Column(
-                      children: [
-                        _buildResultsCount(7, homeProvider, boatProvider,
-                            tourProvider, spaceProvider, eventProvider, flightProvider),
-                        // _buildFilterTabs(7),
-                        Expanded(
-                          child: BoatListItem(
-                              boatList: boatProvider.boatListPerCategory[7] ?? BoatList()),
-                        ),
-                      ],
-                    ),
-                  ],
-                );
-              },
-            ),
+                      );
+                    },
+                  ),
           ),
         );
       },
@@ -2187,7 +2442,6 @@ class _HomeScreenState extends State<HomeScreen>
       SpaceProvider spaceProvider,
       EventProvider eventProvider,
       FlightProvider flightProvider) {
-
     // Get location based on category
     String location = _getLocationForCategory(index, homeProvider, boatProvider,
         tourProvider, spaceProvider, eventProvider, flightProvider);
@@ -2261,6 +2515,7 @@ class _HomeScreenState extends State<HomeScreen>
       ),
     );
   }
+
 //zeeshan friday 12.12.25
 // Helper method to get location for each category
   String _getLocationForCategory(
@@ -2271,40 +2526,39 @@ class _HomeScreenState extends State<HomeScreen>
       SpaceProvider spaceProvider,
       EventProvider eventProvider,
       FlightProvider flightProvider) {
-
     switch (index) {
       case 1: // Hotels
         final data = homeProvider.hotelListPerCategory[index]?.data;
         if (data != null && data.isNotEmpty) {
-          return  '--';
+          return '--';
         }
         return 'Paris';
 
       case 2: // Tours
         final data = tourProvider.tourListPerCategory[index]?.data;
         if (data != null && data.isNotEmpty) {
-          return  '--';
+          return '--';
         }
         return 'England';
 
       case 3: // Spaces
         final data = spaceProvider.spaceListPerCategory[index]?.data;
         if (data != null && data.isNotEmpty) {
-          return  '--';
+          return '--';
         }
         return 'England';
 
       case 4: // Cars
         final data = homeProvider.carListPerCategory[index]?.data;
         if (data != null && data.isNotEmpty) {
-          return  '--';
+          return '--';
         }
         return 'London';
 
       case 5: // Events
         final data = eventProvider.eventListPerCategory[index]?.data;
         if (data != null && data.isNotEmpty) {
-          return  '--';
+          return '--';
         }
         return 'Paris';
 
@@ -2314,7 +2568,7 @@ class _HomeScreenState extends State<HomeScreen>
       case 7: // Boats
         final data = boatProvider.boatListPerCategory[index]?.data;
         if (data != null && data.isNotEmpty) {
-          return  '--';
+          return '--';
         }
         return 'Marina';
 
@@ -2622,7 +2876,7 @@ class _HomeScreenState extends State<HomeScreen>
       case 6:
         return FlightListItem(
             flightList:
-            flightProvider.flightListPerCategory[6] ?? FlightList());
+                flightProvider.flightListPerCategory[6] ?? FlightList());
       case 7:
         return BoatListItem(
             boatList: boatProvider.boatListPerCategory[7] ?? BoatList());
@@ -2737,76 +2991,131 @@ class MixedItemList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    print("MixedItemList build called with ${homeList.items.length} items");
     print(
-        "Hotel items: ${homeList.items.where((item) => item.type == home_item.ItemType.hotel).map((item) => {
-          'id': item.item.id,
-          'title': item.item.title,
-          'price': item.item.price,
-          'isInWishlist': item.item.isInWishlist,
-        }).toList()}");
+        "BLOCK TYPE => MixedItemList build with ${homeList.items.length} items");
+
+    // Group items by type for display
+    final hotelItems = homeList.items
+        .where((item) => item.type == home_item.ItemType.hotel)
+        .toList();
+    final tourItems = homeList.items
+        .where((item) => item.type == home_item.ItemType.tour)
+        .toList();
+    final spaceItems = homeList.items
+        .where((item) => item.type == home_item.ItemType.space)
+        .toList();
+    final carItems = homeList.items
+        .where((item) => item.type == home_item.ItemType.car)
+        .toList();
+    final boatItems = homeList.items
+        .where((item) => item.type == home_item.ItemType.boat)
+        .toList();
+    final eventItems = homeList.items
+        .where((item) => item.type == home_item.ItemType.event)
+        .toList();
+    final locationItems = homeList.items
+        .where((item) => item.type == home_item.ItemType.location)
+        .toList();
+
+    // Debug print block types and image URLs
+    for (var item in hotelItems) {
+      final hotel = item.item as dynamic;
+      print("BLOCK TYPE => list_hotel");
+      print(
+          "IMAGE URL => ${hotel.gallery?.isNotEmpty == true ? hotel.gallery!.first : 'null'}");
+    }
+    for (var item in tourItems) {
+      final tour = item.item as dynamic;
+      print("BLOCK TYPE => list_tours");
+      print(
+          "IMAGE URL => ${tour.gallery?.isNotEmpty == true ? tour.gallery!.first : 'null'}");
+    }
+    for (var item in carItems) {
+      final car = item.item as dynamic;
+      print("BLOCK TYPE => list_car");
+      print(
+          "IMAGE URL => ${car.gallery?.isNotEmpty == true ? car.gallery!.first : 'null'}");
+    }
+    for (var item in spaceItems) {
+      final space = item.item as dynamic;
+      print("BLOCK TYPE => list_space");
+      print(
+          "IMAGE URL => ${space.gallery?.isNotEmpty == true ? space.gallery!.first : 'null'}");
+    }
+    for (var item in boatItems) {
+      final boat = item.item as dynamic;
+      print("BLOCK TYPE => list_boat");
+      print(
+          "IMAGE URL => ${boat.gallery?.isNotEmpty == true ? boat.gallery!.first : 'null'}");
+    }
+    for (var item in eventItems) {
+      final event = item.item as dynamic;
+      print("BLOCK TYPE => list_event");
+      print(
+          "IMAGE URL => ${event.gallery?.isNotEmpty == true ? event.gallery!.first : 'null'}");
+    }
+    for (var item in locationItems) {
+      final location = item.item as dynamic;
+      print("BLOCK TYPE => list_location");
+      print(
+          "IMAGE URL => ${location.imgUrl ?? location.bannerImgUrl ?? 'null'}");
+    }
+
     return SingleChildScrollView(
       child: Padding(
         padding: const EdgeInsets.all(20.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildCategorySection(
-              "Bestseller Listing".tr,
-              "Hotels highly rated for thoughtful design".tr,
-              homeList.items
-                  .where((item) => item.type == home_item.ItemType.hotel)
-                  .toList(),
-              context,
-            ),
-            _buildCategorySection(
-              "Our Best Promotion Tours".tr,
-              "Most popular destinations".tr,
-              homeList.items
-                  .where((item) => item.type == home_item.ItemType.tour)
-                  .toList(),
-              context,
-            ),
-            _buildCategorySection(
-              "Rental Listing".tr,
-              "Homes highly rated for thoughtful design".tr,
-              homeList.items
-                  .where((item) => item.type == home_item.ItemType.space)
-                  .toList(),
-              context,
-            ),
-            _buildCategorySection(
-              "Car Trending".tr,
-              "Book incredible things to do around the world".tr,
-              homeList.items
-                  .where((item) => item.type == home_item.ItemType.car)
-                  .toList(),
-              context,
-            ),
-            _buildCategorySection(
-              "Boat Listing".tr,
-              "Book incredible things to do around the world".tr,
-              homeList.items
-                  .where((item) => item.type == home_item.ItemType.boat)
-                  .toList(),
-              context,
-            ),
-            _buildCategorySection(
-              "Event Listing".tr,
-              "Explore exciting events near you".tr,
-              homeList.items
-                  .where((item) => item.type == home_item.ItemType.event)
-                  .toList(),
-              context,
-            ),
-            _buildCategorySection(
-              "Top Destinations".tr,
-              "Hotel highly rated for thoughtful design".tr,
-              homeList.items
-                  .where((item) => item.type == home_item.ItemType.location)
-                  .toList(),
-              context,
-            ),
+            if (hotelItems.isNotEmpty)
+              _buildCategorySection(
+                "Bestseller Listing".tr,
+                "Hotels highly rated for thoughtful design".tr,
+                hotelItems,
+                context,
+              ),
+            if (tourItems.isNotEmpty)
+              _buildCategorySection(
+                "Our Best Promotion Tours".tr,
+                "Most popular destinations".tr,
+                tourItems,
+                context,
+              ),
+            if (spaceItems.isNotEmpty)
+              _buildCategorySection(
+                "Rental Listing".tr,
+                "Homes highly rated for thoughtful design".tr,
+                spaceItems,
+                context,
+              ),
+            if (carItems.isNotEmpty)
+              _buildCategorySection(
+                "Car Trending".tr,
+                "Book incredible things to do around the world".tr,
+                carItems,
+                context,
+              ),
+            if (boatItems.isNotEmpty)
+              _buildCategorySection(
+                "Boat Listing".tr,
+                "Book incredible things to do around the world".tr,
+                boatItems,
+                context,
+              ),
+            if (eventItems.isNotEmpty)
+              _buildCategorySection(
+                "Event Listing".tr,
+                "Explore exciting events near you".tr,
+                eventItems,
+                context,
+              ),
+            if (locationItems.isNotEmpty)
+              _buildCategorySection(
+                "Top Destinations".tr,
+                "Hotel highly rated for thoughtful design".tr,
+                locationItems,
+                context,
+              ),
           ],
         ),
       ),
@@ -2815,9 +3124,9 @@ class MixedItemList extends StatelessWidget {
 
   Widget _buildCategorySection(String title, String subtitle,
       List<home_item.HomeItem> items, BuildContext context) {
-    print("Building category section: $title with ${items.length} items");
+    print("BLOCK TYPE => ${title} | TOTAL ITEMS => ${items.length}");
 
-    if (items.isEmpty) return Text("Debug: No items for $title");
+    if (items.isEmpty) return SizedBox.shrink();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -2839,12 +3148,20 @@ class MixedItemList extends StatelessWidget {
           ),
         ),
         SizedBox(height: 16),
-        ...items
-            .map((item) => Padding(
-          padding: const EdgeInsets.only(bottom: 32.0),
-          child: _buildItemWidget(item, context),
-        ))
-            .toList(),
+        ListView.builder(
+          padding: const EdgeInsets.only(left: 0, right: 0),
+          scrollDirection: Axis.vertical,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: items.length,
+          itemBuilder: (context, index) {
+            final item = items[index];
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 32.0),
+              child: _buildItemWidget(item, context),
+            );
+          },
+        ),
         SizedBox(height: 24),
       ],
     );
@@ -2860,8 +3177,8 @@ class MixedItemList extends StatelessWidget {
             context,
             MaterialPageRoute(
                 builder: (context) => RoomDetailScreen(
-                  hotelId: item.item.id,
-                )),
+                      hotelId: item.item.id,
+                    )),
           ),
         );
       case home_item.ItemType.car:
@@ -2871,8 +3188,8 @@ class MixedItemList extends StatelessWidget {
             context,
             MaterialPageRoute(
                 builder: (context) => CarRentalDetailsScreen(
-                  carId: CarData.fromCar(item.item).id ?? 0,
-                )),
+                      carId: CarData.fromCar(item.item).id ?? 0,
+                    )),
           ),
         );
       case home_item.ItemType.event:
@@ -2882,8 +3199,8 @@ class MixedItemList extends StatelessWidget {
             context,
             MaterialPageRoute(
                 builder: (context) => EventsDetailsScreen(
-                  eventId: EvenData.fromEvent(item.item).id ?? 0,
-                )),
+                      eventId: EvenData.fromEvent(item.item).id ?? 0,
+                    )),
           ),
         );
       case home_item.ItemType.tour:
@@ -2902,8 +3219,8 @@ class MixedItemList extends StatelessWidget {
             context,
             MaterialPageRoute(
                 builder: (context) => SpacePage(
-                  spaceId: item.item.id,
-                )),
+                      spaceId: item.item.id,
+                    )),
           ),
         );
       case home_item.ItemType.boat:
@@ -2913,8 +3230,8 @@ class MixedItemList extends StatelessWidget {
             context,
             MaterialPageRoute(
                 builder: (context) => BoatDetailsScreen(
-                  boatId: item.item.id,
-                )),
+                      boatId: item.item.id,
+                    )),
           ),
         );
       case home_item.ItemType.flight:
@@ -2924,8 +3241,8 @@ class MixedItemList extends StatelessWidget {
             context,
             MaterialPageRoute(
                 builder: (context) => FlightDetailsScreen(
-                  flightId: item.item.id,
-                )),
+                      flightId: item.item.id,
+                    )),
           ),
         );
       case home_item.ItemType.offer:
@@ -3087,8 +3404,6 @@ class EventListItem extends StatelessWidget {
   }
 }
 
-
-
 //new
 // ================ HOTEL PROPERTY CARD ================
 class PropertyItem extends StatefulWidget {
@@ -3171,6 +3486,7 @@ class _PropertyItemState extends State<PropertyItem> {
     );
   }
 }
+
 class TourListItem extends StatelessWidget {
   final TourList tourList;
 
@@ -3294,8 +3610,8 @@ class BoatListItem extends StatelessWidget {
                     context,
                     MaterialPageRoute(
                         builder: (context) => BoatDetailsScreen(
-                          boatId: boatList.data![index].id ?? 1,
-                        )),
+                              boatId: boatList.data![index].id ?? 1,
+                            )),
                   ),
                 ),
               );
@@ -3306,10 +3622,6 @@ class BoatListItem extends StatelessWidget {
     );
   }
 }
-
-
-
-
 
 class FlightListItem extends StatelessWidget {
   final FlightList flightList;
@@ -3346,118 +3658,119 @@ class FlightListItem extends StatelessWidget {
           icon: Icon(Icons.arrow_back, color: Colors.black),
           onPressed: () => Navigator.pop(context),
         ),
-
       ),
       body: flights.isEmpty
           ? _buildEmptyState()
           : Column(
-        children: [
-          // Header with search summary
-        Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Padding(
-                padding: const EdgeInsets.only(left: 20),
-                child: Text(
-                  '${flights.length} flights available'.tr,
-                  style: GoogleFonts.spaceGrotesk(
-                    fontSize: 14,
-                    color: Colors.grey[600],
+              children: [
+                // Header with search summary
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.only(left: 20),
+                          child: Text(
+                            '${flights.length} flights available'.tr,
+                            style: GoogleFonts.spaceGrotesk(
+                              fontSize: 14,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ),
+
+                        const Spacer(), // ✅ replaces SizedBox(width: 190)
+
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) => FilterFlightScreen(),
+                              ),
+                            );
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.only(right: 15),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                SvgPicture.asset(
+                                  'assets/icons/filters.svg',
+                                  color: Color(0xff05A8C7),
+                                  width: 16,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  'Filters'.tr,
+                                  style: GoogleFonts.spaceGrotesk(
+                                    fontSize: 14,
+                                    color: Color(0xff05A8C7),
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+
+                SizedBox(
+                  height: 10,
+                ),
+                // Flight list
+                Expanded(
+                  child: ListView.builder(
+                    itemCount: flights.length,
+                    itemBuilder: (context, index) {
+                      final flight = flights[index];
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
+                        child: buildPropertyCard(
+                          context: context,
+                          images: flight.airlineImageUrl != null
+                              ? [flight.airlineImageUrl!]
+                              : [],
+                          title: flight.title ?? 'Flight ${flight.code ?? ''}',
+                          subtitle: flight.airline?.name ?? 'Airline',
+                          rating: flight.reviewScore != null
+                              ? double.tryParse(flight.reviewScore!) ?? 0.0
+                              : 0.0,
+                          reviewCount: 0,
+                          reviewText: '',
+                          price: flight.minPrice != null
+                              ? double.tryParse(flight.minPrice!) ?? 0.0
+                              : 0.0,
+                          isWishlist: false,
+                          isFeatured: false,
+                          discount: 0,
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => FlightDetailsScreen(
+                                flightId: flight.id ?? 0,
+                              ),
+                            ),
+                          ),
+                          onWishlistTap: null,
+                          type: 'flight',
+                          id: flight.id?.toString() ?? '0',
+                          badgeText: 'FLIGHT',
+                          badgeColor: Colors.blueAccent,
+                          priceSuffix: '',
+                        ),
+                      );
+                    },
                   ),
                 ),
-              ),
-
-              const Spacer(), // ✅ replaces SizedBox(width: 190)
-
-              GestureDetector(
-                onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) => FilterFlightScreen(),
-                    ),
-                  );
-                },
-                child: Padding(
-                  padding: const EdgeInsets.only(right: 15),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      SvgPicture.asset(
-                        'assets/icons/filters.svg',
-                        color: Color(0xff05A8C7),
-                        width: 16,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        'Filters'.tr,
-                        style: GoogleFonts.spaceGrotesk(
-                          fontSize: 14,
-                          color: Color(0xff05A8C7),
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-
-      SizedBox(height: 10,),
-          // Flight list
-          Expanded(
-            child: ListView.builder(
-              itemCount: flights.length,
-              itemBuilder: (context, index) {
-                final flight = flights[index];
-                return Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 8,
-                  ),
-                  child: buildPropertyCard(
-                    context: context,
-                    images: flight.airlineImageUrl != null
-                        ? [flight.airlineImageUrl!]
-                        : [],
-                    title: flight.title ?? 'Flight ${flight.code ?? ''}',
-                    subtitle: flight.airline?.name ?? 'Airline',
-                    rating: flight.reviewScore != null
-                        ? double.tryParse(flight.reviewScore!) ?? 0.0
-                        : 0.0,
-                    reviewCount: 0,
-                    reviewText: '',
-                    price: flight.minPrice != null
-                        ? double.tryParse(flight.minPrice!) ?? 0.0
-                        : 0.0,
-                    isWishlist: false,
-                    isFeatured: false,
-                    discount: 0,
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => FlightDetailsScreen(
-                          flightId: flight.id ?? 0,
-                        ),
-                      ),
-                    ),
-                    onWishlistTap: null,
-                    type: 'flight',
-                    id: flight.id?.toString() ?? '0',
-                    badgeText: 'FLIGHT',
-                    badgeColor: Colors.blueAccent,
-                    priceSuffix: '',
-                  ),
-                );
-              },
+              ],
             ),
-          ),
-        ],
-      ),
     );
   }
 
@@ -3505,9 +3818,7 @@ class FlightListItem extends StatelessWidget {
               onPressed: () {
                 if (onBackPressed != null) {
                   onBackPressed!();
-                } else {
-
-                }
+                } else {}
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Color(0xff05A8C7),
@@ -3531,10 +3842,6 @@ class FlightListItem extends StatelessWidget {
     );
   }
 }
-
-
-
-
 
 //new code**********************
 // ================ OFFER ITEM CARD ================
@@ -3593,10 +3900,9 @@ class OfferItem extends StatelessWidget {
                   children: [
                     Text(
                       offer.title,
-                      style:  GoogleFonts.spaceGrotesk(
+                      style: GoogleFonts.spaceGrotesk(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
-
                         color: Colors.black87,
                       ),
                     ),
@@ -3605,7 +3911,6 @@ class OfferItem extends StatelessWidget {
                       offer.desc,
                       style: GoogleFonts.spaceGrotesk(
                         fontSize: 14,
-
                         color: Colors.grey.shade600,
                       ),
                       maxLines: 2,
@@ -3626,7 +3931,6 @@ class OfferItem extends StatelessWidget {
     );
   }
 }
-
 
 //new code*******************************
 // ================ DESTINATION ITEM CARD ================
@@ -3674,8 +3978,6 @@ class DestinationItem extends StatelessWidget {
       ),
     );
 
-
-
     return buildPropertyCard(
       context: context,
       images: [], // Empty since we use custom image
@@ -3695,8 +3997,6 @@ class DestinationItem extends StatelessWidget {
       badgeText: 'DESTINATION'.tr,
       badgeColor: Colors.deepOrange,
       priceSuffix: '',
-
-
     );
   }
 
@@ -3738,5 +4038,3 @@ class DestinationItem extends StatelessWidget {
     );
   }
 }
-
-

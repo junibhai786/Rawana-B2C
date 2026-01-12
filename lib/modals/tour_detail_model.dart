@@ -114,8 +114,9 @@ class Data {
     id = json['id'];
     objectModel = json['object_model'];
     title = json['title'];
-    price = json['price'];
-    salePrice = json['sale_price'];
+    price = json['price'] != null ? json['price'].toString() : null;
+    salePrice =
+        json['sale_price'] != null ? json['sale_price'].toString() : null;
     discountPercent = json['discount_percent'];
     image = json['image'];
     content = json['content'];
@@ -123,8 +124,8 @@ class Data {
         json['location'] != null ? Location.fromJson(json['location']) : null;
     isFeatured = json['is_featured'];
     address = json['address'];
-    mapLat = json['map_lat'];
-    mapLng = json['map_lng'];
+    mapLat = json['map_lat'] != null ? json['map_lat'].toString() : null;
+    mapLng = json['map_lng'] != null ? json['map_lng'].toString() : null;
     mapZoom = json['map_zoom'];
     bannerImage = json['banner_image'];
     gallery = json['gallery'].cast<String>();
@@ -136,7 +137,7 @@ class Data {
         extraPrice!.add(ExtraPrice.fromJson(v));
       });
     }
-    duration = json['duration'];
+    duration = json['duration'] != null ? json['duration'].toString() : null;
     vendor = json['vendor'] != null ? Vendor.fromJson(json['vendor']) : null;
     shareUrl = json['share_url'];
     isWishlist = json['is_in_wishlist'];

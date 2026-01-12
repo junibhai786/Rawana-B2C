@@ -157,11 +157,27 @@ class Event {
     bannerImageId = json['banner_image_id'];
     locationId = json['location_id'];
     address = json['address'];
-    mapLat = json['map_lat'];
-    mapLng = json['map_lng'];
+    mapLat = json['map_lat'] != null ? json['map_lat'].toString() : null;
+    mapLng = json['map_lng'] != null ? json['map_lng'].toString() : null;
     mapZoom = json['map_zoom'];
     isFeatured = json['is_featured'];
-    gallery = json['gallery'] != null ? json['gallery'].cast<String>() : [];
+
+    // ✅ Handle both gallery array and single image URL
+    if (json['gallery'] != null) {
+      gallery = json['gallery'].cast<String>();
+    } else if (json['image'] != null && json['image'].toString().isNotEmpty) {
+      // ✅ If no gallery but image exists, use it
+      gallery = [json['image'].toString()];
+      print("IMAGE URL => ${json['image']}");
+    } else if (json['banner_img_url'] != null &&
+        json['banner_img_url'].toString().isNotEmpty) {
+      // ✅ Fallback to banner_img_url
+      gallery = [json['banner_img_url'].toString()];
+      print("IMAGE URL => ${json['banner_img_url']}");
+    } else {
+      gallery = [];
+    }
+
     video = json['video'];
     if (json['faqs'] != null) {
       faqs = <Faqs>[];
@@ -175,7 +191,7 @@ class Event {
         ticketTypes!.add(new TicketTypes.fromJson(v));
       });
     }
-    duration = json['duration'];
+    duration = json['duration'] != null ? json['duration'].toString() : null;
     startTime = json['start_time'];
     price = json['price'];
     salePrice = json['sale_price'];
@@ -187,7 +203,7 @@ class Event {
         extraPrice!.add(new ExtraPrice.fromJson(v));
       });
     }
-    reviewScore = json['review_score'];
+    reviewScore = json['review_score'] ?? 0;
     icalImportUrl = json['ical_import_url'];
     status = json['status'];
     defaultState = json['default_state'];
@@ -200,7 +216,8 @@ class Event {
     serviceFee = json['service_fee'];
     surrounding = json['surrounding'];
     endTime = json['end_time'];
-    durationUnit = json['duration_unit'];
+    durationUnit =
+        json['duration_unit'] != null ? json['duration_unit'].toString() : null;
     authorId = json['author_id'];
     reviewText = json['review_text'];
     reviewCount = json['review_count'];

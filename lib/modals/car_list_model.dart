@@ -166,7 +166,23 @@ class Car {
     mapZoom = json['map_zoom'];
     availability_url = json['availability_url'];
     isFeatured = json['is_featured'];
-    gallery = json['gallery'] != null ? json['gallery'].cast<String>() : [];
+
+    // ✅ Handle both gallery array and single image URL
+    if (json['gallery'] != null) {
+      gallery = json['gallery'].cast<String>();
+    } else if (json['image'] != null && json['image'].toString().isNotEmpty) {
+      // ✅ If no gallery but image exists, use it
+      gallery = [json['image'].toString()];
+      print("IMAGE URL => ${json['image']}");
+    } else if (json['banner_img_url'] != null &&
+        json['banner_img_url'].toString().isNotEmpty) {
+      // ✅ Fallback to banner_img_url
+      gallery = [json['banner_img_url'].toString()];
+      print("IMAGE URL => ${json['banner_img_url']}");
+    } else {
+      gallery = [];
+    }
+
     video = json['video'];
     if (json['faqs'] != null) {
       faqs = <Faqs>[];
@@ -197,7 +213,7 @@ class Car {
     deletedAt = json['deleted_at'];
     createdAt = json['created_at'];
     updatedAt = json['updated_at'];
-    reviewScore = json['review_score'];
+    reviewScore = json['review_score'] ?? 0;
     enableServiceFee = json['enable_service_fee'];
     serviceFee = json['service_fee'];
     authorId = json['author_id'];

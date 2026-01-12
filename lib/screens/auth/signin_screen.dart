@@ -74,7 +74,6 @@ class _SignInScreenState extends State<SignInScreen> {
         backgroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
-
         actions: <Widget>[
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 6),
@@ -110,487 +109,479 @@ class _SignInScreenState extends State<SignInScreen> {
       body: loading
           ? Center(child: CircularProgressIndicator(color: kSecondaryColor))
           : SafeArea(
-        child: Form(
-          key: _formKey,
-          child: SingleChildScrollView(
-            physics: BouncingScrollPhysics(),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: Image.asset(
-                      'assets/images/logo.png',
-                      height: 60, // Adjust height as needed
-                      fit: BoxFit.contain,
-                    ),
-                  ),
-                  SizedBox(height: 20,),
-
-                  // Welcome Back Title
-                  Text(
-                    "Welcome Back".tr,
-                    style: GoogleFonts.spaceGrotesk(
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
-                      height: 1.2,
-                    ),
-                  ),
-                  SizedBox(height: 8),
-
-                  // Subtitle
-                  Text(
-                    "Sign in to continue your journey".tr,
-                    style: GoogleFonts.spaceGrotesk(
-                      fontSize: 16,
-                      fontWeight: FontWeight.normal,
-                      color: Colors.grey.shade600,
-                      height: 1.4,
-                    ),
-                  ),
-                  SizedBox(height: 40),
-
-                  // Email Label
-                  Text(
-                    "Enter your email".tr,
-                    style: GoogleFonts.spaceGrotesk(
-
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.grey.shade700,
-                    ),
-                  ),
-                  SizedBox(height: 8),
-
-                  // Email Field
-                  Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.grey.shade300),
-                    ),
-                    child: TextFormField(
-                      controller: emailController,
-                      keyboardType: TextInputType.emailAddress,
-                      style: GoogleFonts.spaceGrotesk(
-
-                        fontSize: 16,
-                      ),
-                      decoration: InputDecoration(
-                        hintText: 'Enter your email'.tr,
-                        hintStyle: GoogleFonts.spaceGrotesk(
-                          color: Colors.grey.shade400,
-
-                        ),
-                        border: InputBorder.none,
-                        contentPadding: EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 16,
-
-                        ),
-                        prefixIcon: Icon(
-                          Icons.email_outlined,
-                          color: Colors.grey.shade500,
-                          size: 22,
-                        ),
-                      ),
-
-                      validator: (value) {
-                        if (value!.isEmpty) {
-                          return "Email can't be empty".tr;
-                        } else if (!value.contains('@')) {
-                          return "Please enter a valid email".tr;
-                        }
-                        return null;
-                      },
-                    ),
-                  ),
-                  SizedBox(height: 24),
-
-                  // Password Label
-                  Text(
-                    "Password".tr,
-                    style: GoogleFonts.spaceGrotesk(
-
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.grey.shade700,
-                    ),
-                  ),
-                  SizedBox(height: 8),
-
-                  // Password Field
-                  Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.grey.shade300),
-                    ),
-                    child: TextFormField(
-                      controller: passwordController,
-                      obscureText: showPassword,
-                      style: GoogleFonts.spaceGrotesk(
-
-                        fontSize: 16,
-                      ),
-                      decoration: InputDecoration(
-                        hintText: 'Enter your password'.tr,
-                        hintStyle: GoogleFonts.spaceGrotesk(
-                          color: Colors.grey.shade400,
-
-
-                        ),
-                        border: InputBorder.none,
-                        contentPadding: EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 16,
-                        ),
-                        prefixIcon: Icon(
-                          Icons.lock_outline,
-                          color: Colors.grey.shade500,
-                          size: 22,
-                        ),
-                        suffixIcon: IconButton(
-                          onPressed: () {
-                            setState(() {
-                              showPassword = !showPassword;
-                            });
-                          },
-                          icon: Icon(
-                            showPassword
-                                ? Icons.visibility_off
-                                : Icons.visibility,
-                            color: Colors.grey.shade500,
+              child: Form(
+                key: _formKey,
+                child: SingleChildScrollView(
+                  physics: BouncingScrollPhysics(),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: Image.asset(
+                            'assets/images/logo.png',
+                            height: 60, // Adjust height as needed
+                            fit: BoxFit.contain,
                           ),
                         ),
-                      ),
-                      validator: (value) {
-                        if (value!.isEmpty) {
-                          return "Password can't be empty".tr;
-                        } else if (value.length < 6) {
-                          return "Password must be at least 6 characters".tr;
-                        }
-                        return null;
-                      },
-                    ),
-                  ),
-                  SizedBox(height: 10),
-
-                  // Remember me & Forgot Password Row
-                  Row(
-                    children: [
-                      // Remember Me Checkbox
-                      Row(
-                        children: [
-                          Checkbox(
-                            side: BorderSide(color: Colors.grey),
-                            value: rememberMe,
-                            onChanged: (value) {
-                              setState(() {
-                                rememberMe = value ?? false;
-                              });
-                            },
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            activeColor: Color(0xFF009CB8),
-                          ),
-                          Text(
-                            "Remember me".tr,
-                            style: GoogleFonts.spaceGrotesk(
-
-                              fontSize: 14,
-                              color: Color(0xff65758B),
-                            ),
-                          ),
-                        ],
-                      ),
-                      Spacer(),
-                      // Forgot Password
-                      TextButton(
-                        onPressed: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const ForgotPasswordScreen(),
-                          ),
+                        SizedBox(
+                          height: 20,
                         ),
-                        child: Text(
-                          "Forgot Password?".tr,
+
+                        // Welcome Back Title
+                        Text(
+                          "Welcome Back".tr,
                           style: GoogleFonts.spaceGrotesk(
-
-                            fontSize: 14,
-                            color: Color(0xFF05A8C7),
-                            fontWeight: FontWeight.w500,
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black,
+                            height: 1.2,
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 32),
+                        SizedBox(height: 8),
 
-                  // Sign In Button
-                  SizedBox(
-                    width: double.infinity,
-                    height: 56,
-                    child: ElevatedButton(
-                      onPressed: () async {
-                        if (_formKey.currentState?.validate() == true) {
-                          _formKey.currentState!.save();
-                          setState(() => loading = true);
-
-                          bool check = await provider.login(
-                            emailController.value.text,
-                            passwordController.value.text,
-                            rememberMe,
-                          );
-
-                          setState(() => loading = false);
-
-                          if (check) {
-                            await _saveUserCredentials();
-                            Navigator.of(context).pushAndRemoveUntil(
-                              MaterialPageRoute(
-                                builder: (context) => BottomNav(),
-                              ),
-                                  (route) => false,
-                            );
-                          }
-                        }
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Color(0xFF05A8C7),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        elevation: 0,
-                        shadowColor: Colors.transparent,
-                      ),
-                      child: Text(
-                        "Sign In".tr,
-                        style: GoogleFonts.spaceGrotesk(
-
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                  ),
-              SizedBox(
-                        height: 20,
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.only(left: 20, right: 20),
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            minimumSize: const Size.fromHeight(48),
-                            backgroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                                side: BorderSide(
-                                    width: 1, color: Colors.black12)),
-                          ),
-                          onPressed: () {
-                            Navigator.of(context).pushAndRemoveUntil(
-                              MaterialPageRoute(
-                                builder: (context) {
-                                  return BottomNav();
-                                },
-                              ),
-                              (route) => false,
-                            );
-                          },
-                          child: Text(
-                            "Continue as Guest".tr,
-                            style: GoogleFonts.spaceGrotesk(
-
-                              color: Colors.black,
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      ),
-
-                  SizedBox(height: 24),
-
-                  // Divider with "or continue with"
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Divider(
-                          color: Colors.grey.shade300,
-                          thickness: 1,
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: Text(
-                          'or continue with'.tr,
+                        // Subtitle
+                        Text(
+                          "Sign in to continue your journey".tr,
                           style: GoogleFonts.spaceGrotesk(
-
-                            fontSize: 14,
+                            fontSize: 16,
+                            fontWeight: FontWeight.normal,
                             color: Colors.grey.shade600,
+                            height: 1.4,
                           ),
                         ),
-                      ),
-                      Expanded(
-                        child: Divider(
-                          color: Colors.grey.shade300,
-                          thickness: 1,
-                        ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 24),
+                        SizedBox(height: 40),
 
-                  // Social Login Buttons
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      // Google Button
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: () {},
-                          style: OutlinedButton.styleFrom(
-                            side: BorderSide(color: Colors.grey.shade300),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            padding: EdgeInsets.symmetric(vertical: 14),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Image.asset(
-                                'assets/images/google.png',
-                                width: 24,
-                                height: 24,
-                                errorBuilder: (context, error, stackTrace) =>
-                                    Icon(Icons.g_mobiledata, size: 24),
-                              ),
-                              SizedBox(width: 8),
-                              Text(
-                                'Google'.tr,
-                                style: GoogleFonts.spaceGrotesk(
-
-                                  color: Colors.grey.shade800,
-                                ),
-                              ),
-                            ],
+                        // Email Label
+                        Text(
+                          "Enter your email".tr,
+                          style: GoogleFonts.spaceGrotesk(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.grey.shade700,
                           ),
                         ),
-                      ),
-                      SizedBox(width: 16),
+                        SizedBox(height: 8),
 
-                      // Facebook Button
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: () {},
-                          style: OutlinedButton.styleFrom(
-                            side: BorderSide(color: Colors.grey.shade300),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            padding: EdgeInsets.symmetric(vertical: 14),
+                        // Email Field
+                        Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.grey.shade300),
                           ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Image.asset(
-                                'assets/images/facebook.png',
-                                width: 24,
-                                height: 24,
-                                errorBuilder: (context, error, stackTrace) =>
-                                    Icon(Icons.facebook, size: 30),
-                              ),
-                              SizedBox(width: 8),
-                              Text(
-                                'Facebook'.tr,
-                                style: GoogleFonts.spaceGrotesk(
-
-                                  color: Colors.grey.shade800,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 32),
-
-                  // Don't have an account?
-                  Center(
-                    child: RichText(
-                      text: TextSpan(
-                        style: GoogleFonts.spaceGrotesk(
-
-                          fontSize: 14,
-                          color: Colors.grey.shade700,
-                        ),
-                        children: [
-                          TextSpan(text: "Don't have an account? ".tr),
-                          TextSpan(
-                            text: "Sign Up".tr,
+                          child: TextFormField(
+                            controller: emailController,
+                            keyboardType: TextInputType.emailAddress,
                             style: GoogleFonts.spaceGrotesk(
-                              color: Color(0xFF05A8C7),
-                              fontWeight: FontWeight.w600,
+                              fontSize: 16,
                             ),
-                            recognizer: TapGestureRecognizer()
-                              ..onTap = () => Navigator.push(
+                            decoration: InputDecoration(
+                              hintText: 'Enter your email'.tr,
+                              hintStyle: GoogleFonts.spaceGrotesk(
+                                color: Colors.grey.shade400,
+                              ),
+                              border: InputBorder.none,
+                              contentPadding: EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 16,
+                              ),
+                              prefixIcon: Icon(
+                                Icons.email_outlined,
+                                color: Colors.grey.shade500,
+                                size: 22,
+                              ),
+                            ),
+                            validator: (value) {
+                              if (value!.isEmpty) {
+                                return "Email can't be empty".tr;
+                              } else if (!value.contains('@')) {
+                                return "Please enter a valid email".tr;
+                              }
+                              return null;
+                            },
+                          ),
+                        ),
+                        SizedBox(height: 24),
+
+                        // Password Label
+                        Text(
+                          "Password".tr,
+                          style: GoogleFonts.spaceGrotesk(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.grey.shade700,
+                          ),
+                        ),
+                        SizedBox(height: 8),
+
+                        // Password Field
+                        Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.grey.shade300),
+                          ),
+                          child: TextFormField(
+                            controller: passwordController,
+                            obscureText: showPassword,
+                            style: GoogleFonts.spaceGrotesk(
+                              fontSize: 16,
+                            ),
+                            decoration: InputDecoration(
+                              hintText: 'Enter your password'.tr,
+                              hintStyle: GoogleFonts.spaceGrotesk(
+                                color: Colors.grey.shade400,
+                              ),
+                              border: InputBorder.none,
+                              contentPadding: EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 16,
+                              ),
+                              prefixIcon: Icon(
+                                Icons.lock_outline,
+                                color: Colors.grey.shade500,
+                                size: 22,
+                              ),
+                              suffixIcon: IconButton(
+                                onPressed: () {
+                                  setState(() {
+                                    showPassword = !showPassword;
+                                  });
+                                },
+                                icon: Icon(
+                                  showPassword
+                                      ? Icons.visibility_off
+                                      : Icons.visibility,
+                                  color: Colors.grey.shade500,
+                                ),
+                              ),
+                            ),
+                            validator: (value) {
+                              if (value!.isEmpty) {
+                                return "Password can't be empty".tr;
+                              } else if (value.length < 6) {
+                                return "Password must be at least 6 characters"
+                                    .tr;
+                              }
+                              return null;
+                            },
+                          ),
+                        ),
+                        SizedBox(height: 10),
+
+                        // Remember me & Forgot Password Row
+                        Row(
+                          children: [
+                            // Remember Me Checkbox
+                            Row(
+                              children: [
+                                Checkbox(
+                                  side: BorderSide(color: Colors.grey),
+                                  value: rememberMe,
+                                  onChanged: (value) {
+                                    setState(() {
+                                      rememberMe = value ?? false;
+                                    });
+                                  },
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  activeColor: Color(0xFF009CB8),
+                                ),
+                                Text(
+                                  "Remember me".tr,
+                                  style: GoogleFonts.spaceGrotesk(
+                                    fontSize: 14,
+                                    color: Color(0xff65758B),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            Spacer(),
+                            // Forgot Password
+                            TextButton(
+                              onPressed: () => Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => const SignUpScreen(),
+                                  builder: (context) =>
+                                      const ForgotPasswordScreen(),
                                 ),
                               ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  SizedBox(height: 40),
-
-                  // Terms and Privacy
-                  Center(
-                    child: Text.rich(
-                      TextSpan(
-                        style: GoogleFonts.spaceGrotesk(
-
-                          fontSize: 12,
-                          color: Colors.grey.shade600,
-                          height: 1.4,
+                              child: Text(
+                                "Forgot Password?".tr,
+                                style: GoogleFonts.spaceGrotesk(
+                                  fontSize: 14,
+                                  color: Color(0xFF05A8C7),
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                        children: [
-                          TextSpan(text: "By continuing, you agree to our ".tr),
-                          TextSpan(
-                            text: "Terms of Service".tr,
-                            style: GoogleFonts.spaceGrotesk(
-                              color: Color(0xFF05A8C7),
-                              decoration: TextDecoration.underline,
+                        SizedBox(height: 32),
+
+                        // Sign In Button
+                        SizedBox(
+                          width: double.infinity,
+                          height: 56,
+                          child: ElevatedButton(
+                            onPressed: () async {
+                              if (_formKey.currentState?.validate() == true) {
+                                _formKey.currentState!.save();
+                                setState(() => loading = true);
+
+                                bool check = await provider.login(
+                                  emailController.value.text,
+                                  passwordController.value.text,
+                                  rememberMe,
+                                );
+
+                                setState(() => loading = false);
+
+                                if (check) {
+                                  await _saveUserCredentials();
+                                  Navigator.of(context).pushAndRemoveUntil(
+                                    MaterialPageRoute(
+                                      builder: (context) => BottomNav(),
+                                    ),
+                                    (route) => false,
+                                  );
+                                }
+                              }
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Color(0xFF05A8C7),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              elevation: 0,
+                              shadowColor: Colors.transparent,
+                            ),
+                            child: Text(
+                              "Sign In".tr,
+                              style: GoogleFonts.spaceGrotesk(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                              ),
                             ),
                           ),
-                          TextSpan(text: " and ".tr),
-                          TextSpan(
-                            text: "Privacy Policy".tr,
-                            style: GoogleFonts.spaceGrotesk(
-                              color: Color(0xFF05A8C7),
-                              decoration: TextDecoration.underline,
+                        ),
+                        SizedBox(
+                          height: 20,
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.only(left: 20, right: 20),
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              minimumSize: const Size.fromHeight(48),
+                              backgroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                  side: BorderSide(
+                                      width: 1, color: Colors.black12)),
+                            ),
+                            onPressed: () {
+                              Navigator.of(context).pushAndRemoveUntil(
+                                MaterialPageRoute(
+                                  builder: (context) {
+                                    return BottomNav();
+                                  },
+                                ),
+                                (route) => false,
+                              );
+                            },
+                            child: Text(
+                              "Continue as Guest".tr,
+                              style: GoogleFonts.spaceGrotesk(
+                                color: Colors.black,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                           ),
-                        ],
-                      ),
-                      textAlign: TextAlign.center,
+                        ),
+
+                        SizedBox(height: 24),
+
+                        // Divider with "or continue with"
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Divider(
+                                color: Colors.grey.shade300,
+                                thickness: 1,
+                              ),
+                            ),
+                            Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 16),
+                              child: Text(
+                                'or continue with'.tr,
+                                style: GoogleFonts.spaceGrotesk(
+                                  fontSize: 14,
+                                  color: Colors.grey.shade600,
+                                ),
+                              ),
+                            ),
+                            Expanded(
+                              child: Divider(
+                                color: Colors.grey.shade300,
+                                thickness: 1,
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 24),
+
+                        // Social Login Buttons
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            // Google Button
+                            Expanded(
+                              child: OutlinedButton(
+                                onPressed: () {},
+                                style: OutlinedButton.styleFrom(
+                                  side: BorderSide(color: Colors.grey.shade300),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  padding: EdgeInsets.symmetric(vertical: 14),
+                                ),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Image.asset(
+                                      'assets/images/google.png',
+                                      width: 24,
+                                      height: 24,
+                                      errorBuilder: (context, error,
+                                              stackTrace) =>
+                                          Icon(Icons.g_mobiledata, size: 24),
+                                    ),
+                                    SizedBox(width: 8),
+                                    Text(
+                                      'Google'.tr,
+                                      style: GoogleFonts.spaceGrotesk(
+                                        color: Colors.grey.shade800,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            SizedBox(width: 16),
+
+                            // Facebook Button
+                            Expanded(
+                              child: OutlinedButton(
+                                onPressed: () {},
+                                style: OutlinedButton.styleFrom(
+                                  side: BorderSide(color: Colors.grey.shade300),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  padding: EdgeInsets.symmetric(vertical: 14),
+                                ),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Image.asset(
+                                      'assets/images/facebook.png',
+                                      width: 24,
+                                      height: 24,
+                                      errorBuilder:
+                                          (context, error, stackTrace) =>
+                                              Icon(Icons.facebook, size: 30),
+                                    ),
+                                    SizedBox(width: 8),
+                                    Text(
+                                      'Facebook'.tr,
+                                      style: GoogleFonts.spaceGrotesk(
+                                        color: Colors.grey.shade800,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 32),
+
+                        // Don't have an account?
+                        Center(
+                          child: RichText(
+                            text: TextSpan(
+                              style: GoogleFonts.spaceGrotesk(
+                                fontSize: 14,
+                                color: Colors.grey.shade700,
+                              ),
+                              children: [
+                                TextSpan(text: "Don't have an account? ".tr),
+                                TextSpan(
+                                  text: "Sign Up".tr,
+                                  style: GoogleFonts.spaceGrotesk(
+                                    color: Color(0xFF05A8C7),
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                  recognizer: TapGestureRecognizer()
+                                    ..onTap = () => Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                const SignUpScreen(),
+                                          ),
+                                        ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        SizedBox(height: 40),
+
+                        // Terms and Privacy
+                        Center(
+                          child: Text.rich(
+                            TextSpan(
+                              style: GoogleFonts.spaceGrotesk(
+                                fontSize: 12,
+                                color: Colors.grey.shade600,
+                                height: 1.4,
+                              ),
+                              children: [
+                                TextSpan(
+                                    text:
+                                        "By continuing, you agree to our ".tr),
+                                TextSpan(
+                                  text: "Terms of Service".tr,
+                                  style: GoogleFonts.spaceGrotesk(
+                                    color: Color(0xFF05A8C7),
+                                    decoration: TextDecoration.underline,
+                                  ),
+                                ),
+                                TextSpan(text: " and ".tr),
+                                TextSpan(
+                                  text: "Privacy Policy".tr,
+                                  style: GoogleFonts.spaceGrotesk(
+                                    color: Color(0xFF05A8C7),
+                                    decoration: TextDecoration.underline,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                        SizedBox(height: 32),
+                      ],
                     ),
                   ),
-                  SizedBox(height: 32),
-                ],
+                ),
               ),
             ),
-          ),
-        ),
-      ),
     );
   }
 
@@ -613,7 +604,6 @@ class _SignInScreenState extends State<SignInScreen> {
                   style: GoogleFonts.spaceGrotesk(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-
                   ),
                 ),
               ),
@@ -623,9 +613,9 @@ class _SignInScreenState extends State<SignInScreen> {
                   title: Text('English'.tr, style: GoogleFonts.spaceGrotesk()),
                   trailing: currentLanguage == 'English'
                       ? Text(
-                    'Default'.tr,
-                    style: TextStyle(color: Colors.blue),
-                  )
+                          'Default'.tr,
+                          style: TextStyle(color: Colors.blue),
+                        )
                       : null,
                   shape: RoundedRectangleBorder(
                     side: BorderSide(
@@ -675,16 +665,6 @@ class _SignInScreenState extends State<SignInScreen> {
     );
   }
 }
-
-
-
-
-
-
-
-
-
-
 
 // // ignore_for_file: prefer_const_constructors
 //

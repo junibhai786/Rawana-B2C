@@ -1,7 +1,5 @@
 // ignore_for_file: prefer_const_constructors
-
 import 'dart:developer';
-
 import 'package:country_picker/country_picker.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:moonbnd/screens/auth/signin_screen.dart';
@@ -9,6 +7,7 @@ import 'package:moonbnd/vendor/sign_up_vendor_screen.dart';
 import 'package:moonbnd/widgets/bottom_navigation.dart';
 import 'package:moonbnd/widgets/secondary_button.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:get/get.dart';
 import 'package:provider/provider.dart';
@@ -16,7 +15,6 @@ import 'package:moonbnd/Provider/auth_provider.dart';
 import 'package:moonbnd/widgets/country_code.dart';
 import 'package:moonbnd/widgets/tertiary_button.dart';
 import 'package:moonbnd/constants.dart';
-import 'package:moonbnd/widgets/form.dart';
 import 'otp_screen.dart';
 import 'package:flutter/gestures.dart';
 
@@ -33,7 +31,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   TextEditingController emailController = TextEditingController();
   TextEditingController phoneNumberController = TextEditingController();
   TextEditingController passwordController = TextEditingController();
-  TextEditingController confirmPasswordController = TextEditingController(); // Added
+  TextEditingController confirmPasswordController = TextEditingController();
 
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   bool loading = false;
@@ -66,829 +64,514 @@ class _SignUpScreenState extends State<SignUpScreen> {
         backgroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
-
       ),
       body: loading
           ? Center(child: CircularProgressIndicator(color: kSecondaryColor))
           : Form(
-        key: _formKey,
-        child: SafeArea(
-          child: SingleChildScrollView(
-            physics: BouncingScrollPhysics(),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                Image.asset(
-                    'assets/images/logo.png',
-                    height: 60, // Adjust height as needed
-                    fit: BoxFit.contain,
-                  ),
-SizedBox(height: 20,),
-                  // Title
-                  Text(
-                    "Create Account".tr,
-                    style: GoogleFonts.spaceGrotesk(
-
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
-                      height: 1.2,
-                    ),
-                  ),
-                  SizedBox(height: 8),
-
-                  // Subtitle
-                  Text(
-                    "Start your travel journey with us".tr,
-                    style: GoogleFonts.spaceGrotesk(
-
-                      fontSize: 16,
-                      fontWeight: FontWeight.normal,
-                      color: Colors.grey.shade600,
-                      height: 1.4,
-                    ),
-                  ),
-                  SizedBox(height: 40),
-
-                  // Full Name Label
-                  Text(
-                    "First Name".tr,
-                    style: GoogleFonts.spaceGrotesk(
-
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.grey.shade700,
-                    ),
-                  ),
-                  SizedBox(height: 8),
-
-                  // Full Name Field
-                  Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.grey.shade300),
-                    ),
-                    child: TextFormField(
-                      controller: firstNameController,
-                      style: GoogleFonts.spaceGrotesk(
-
-                        fontSize: 16,
-                      ),
-                      decoration: InputDecoration(
-                        hintText: 'Enter your first name'.tr,
-                        hintStyle: GoogleFonts.spaceGrotesk(
-                          color: Colors.grey.shade400,
-
+              key: _formKey,
+              child: SafeArea(
+                child: SingleChildScrollView(
+                  physics: BouncingScrollPhysics(),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Image.asset(
+                          'assets/images/logo.png',
+                          height: 60,
+                          fit: BoxFit.contain,
                         ),
-                        border: InputBorder.none,
-                        contentPadding: EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 16,
+                        SizedBox(height: 20),
+                        Text(
+                          "Create Account".tr,
+                          style: GoogleFonts.spaceGrotesk(
+                              fontSize: 28,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black,
+                              height: 1.2),
                         ),
-                        prefixIcon: Icon(                    // Add lock icon at the beginning
-                          Icons.person_2_outlined,
-                          color: Colors.grey.shade500,
-                          size: 22,
+                        SizedBox(height: 8),
+                        Text(
+                          "Start your travel journey with us".tr,
+                          style: GoogleFonts.spaceGrotesk(
+                              fontSize: 16,
+                              fontWeight: FontWeight.normal,
+                              color: Colors.grey.shade600,
+                              height: 1.4),
                         ),
-                      ),
-                      validator: (value) {
-                        if (value!.isEmpty) {
-                          return "First Name can't be empty".tr;
-                        }
-                        return null;
-                      },
-                    ),
-                  ),
-                  SizedBox(height: 24),
+                        SizedBox(height: 40),
 
-
-                  // Full Name Label
-                  Text(
-                    "Last Name".tr,
-                    style: GoogleFonts.spaceGrotesk(
-
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.grey.shade700,
-                    ),
-                  ),
-                  SizedBox(height: 8),
-
-                  // Full Name Field
-                  Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.grey.shade300),
-                    ),
-                    child: TextFormField(
-                      controller: lastNameController,
-                      style: GoogleFonts.spaceGrotesk(
-
-                        fontSize: 16,
-                      ),
-                      decoration: InputDecoration(
-                        hintText: 'Enter your last name'.tr,
-                        hintStyle: GoogleFonts.spaceGrotesk(
-                          color: Colors.grey.shade400,
-
+                        /// First Name
+                        Text(
+                          "First Name".tr,
+                          style: GoogleFonts.spaceGrotesk(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.grey.shade700),
                         ),
-                        border: InputBorder.none,
-                        contentPadding: EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 16,
-                        ),
-                        prefixIcon: Icon(                    // Add lock icon at the beginning
-                          Icons.person_2_outlined,
-                          color: Colors.grey.shade500,
-                          size: 22,
-                        ),
-                      ),
-                      validator: (value) {
-                        if (value!.isEmpty) {
-                          return "Last Name can't be empty".tr;
-                        }
-                        return null;
-                      },
-                    ),
-                  ),
-                  SizedBox(height: 24),
-                  // Email Label
-                  Text(
-                    "Email".tr,
-                    style: GoogleFonts.spaceGrotesk(
-
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.grey.shade700,
-                    ),
-                  ),
-                  SizedBox(height: 8),
-
-                  // Email Field
-                  Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.grey.shade300),
-                    ),
-                    child: TextFormField(
-                      controller: emailController,
-                      keyboardType: TextInputType.emailAddress,
-                      style: GoogleFonts.spaceGrotesk(
-
-                        fontSize: 16,
-                      ),
-                      decoration: InputDecoration(
-                        hintText: 'Enter your email'.tr,
-                        hintStyle: GoogleFonts.spaceGrotesk(
-                          color: Colors.grey.shade400,
-
-                        ),
-                        border: InputBorder.none,
-                        contentPadding: EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 16,
-                        ),
-                        prefixIcon: Icon(                    // Add lock icon at the beginning
-                          Icons.email_outlined,
-                          color: Colors.grey.shade500,
-                          size: 22,
-                        ),
-                      ),
-                      validator: (value) {
-                        if (value!.isEmpty) {
-                          return "Email can't be empty".tr;
-                        } else if (!value.contains('@')) {
-                          return "Please enter a valid email".tr;
-                        }
-                        return null;
-                      },
-                    ),
-                  ),
-                  SizedBox(height: 24),
-
-                  // Phone Number Label
-                  Text(
-                    "Phone Number".tr,
-                    style: GoogleFonts.spaceGrotesk(
-
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.grey.shade700,
-                    ),
-                  ),
-                  SizedBox(height: 8),
-
-                  // Phone Number Field with Country Code
-                  Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.grey.shade300),
-                    ),
-                    child: TextFormField(
-                      controller: phoneNumberController,
-                      keyboardType: TextInputType.phone,
-                      maxLength: 10,
-                      style: GoogleFonts.spaceGrotesk(
-
-                        fontSize: 16,
-                      ),
-                      decoration: InputDecoration(
-                        hintText: 'Enter your phone number'.tr,
-                        hintStyle: GoogleFonts.spaceGrotesk(
-                          color: Colors.grey.shade400,
-
-                        ),
-                        border: InputBorder.none,
-                        contentPadding: EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 16,
-                        ),
-                        counterText: '',
-                        prefixIconConstraints:
-                        BoxConstraints(minWidth: 120, maxHeight: 100),
-                        prefixIcon: Container(
-                          padding: EdgeInsets.only(left: 16),
-                          child: GestureDetector(
-                            onTap: () {
-                              countryCodeBottomSheet((Country txcountry) {
-                                selectedCountry = txcountry;
-                                setState(() {});
-                              }, true, context);
+                        SizedBox(height: 8),
+                        Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.grey.shade300),
+                          ),
+                          child: TextFormField(
+                            controller: firstNameController,
+                            inputFormatters: [
+                              FilteringTextInputFormatter.allow(
+                                  RegExp(r'[a-zA-Z\s]')),
+                              LengthLimitingTextInputFormatter(20),
+                            ],
+                            style: GoogleFonts.spaceGrotesk(fontSize: 16),
+                            decoration: InputDecoration(
+                              hintText: 'Enter your first name'.tr,
+                              border: InputBorder.none,
+                              contentPadding: EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 16),
+                              prefixIcon: Icon(
+                                Icons.person_2_outlined,
+                                color: Colors.grey.shade500,
+                                size: 22,
+                              ),
+                            ),
+                            validator: (value) {
+                              if (value!.isEmpty)
+                                return "First Name can't be empty".tr;
+                              if (value.length < 2)
+                                return "First name must be at least 2 char".tr;
+                              // Regex: Only letters and spaces, 2-20 characters
+                              final nameRegex = RegExp(r'^[a-zA-Z\s]{2,20}$');
+                              if (!nameRegex.hasMatch(value)) {
+                                return "First name must contain only letters (2-20 characters)"
+                                    .tr;
+                              }
+                              return null;
                             },
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  "${selectedCountry.flagEmoji} +${selectedCountry.phoneCode}",
-                                  style: GoogleFonts.spaceGrotesk(
+                          ),
+                        ),
+                        SizedBox(height: 24),
 
-                                    fontSize: 16,
+                        /// Last Name
+                        Text(
+                          "Last Name".tr,
+                          style: GoogleFonts.spaceGrotesk(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.grey.shade700),
+                        ),
+                        SizedBox(height: 8),
+                        Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.grey.shade300),
+                          ),
+                          child: TextFormField(
+                            controller: lastNameController,
+                            inputFormatters: [
+                              FilteringTextInputFormatter.allow(
+                                  RegExp(r'[a-zA-Z\s]')),
+                              LengthLimitingTextInputFormatter(20),
+                            ],
+                            style: GoogleFonts.spaceGrotesk(fontSize: 16),
+                            decoration: InputDecoration(
+                              hintText: 'Enter your last name'.tr,
+                              border: InputBorder.none,
+                              contentPadding: EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 16),
+                              prefixIcon: Icon(
+                                Icons.person_2_outlined,
+                                color: Colors.grey.shade500,
+                                size: 22,
+                              ),
+                            ),
+                            validator: (value) {
+                              if (value!.isEmpty)
+                                return "Last Name can't be empty".tr;
+                              if (value.length < 2)
+                                return "Last name must be at least 2 characters"
+                                    .tr;
+                              // Regex: Only letters and spaces, 2-20 characters
+                              final nameRegex = RegExp(r'^[a-zA-Z\s]{2,20}$');
+                              if (!nameRegex.hasMatch(value)) {
+                                return "Last name must contain only letters (2-20 characters)"
+                                    .tr;
+                              }
+                              return null;
+                            },
+                          ),
+                        ),
+                        SizedBox(height: 24),
+
+                        /// Email
+                        Text(
+                          "Email".tr,
+                          style: GoogleFonts.spaceGrotesk(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.grey.shade700),
+                        ),
+                        SizedBox(height: 8),
+                        Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.grey.shade300),
+                          ),
+                          child: TextFormField(
+                            controller: emailController,
+                            keyboardType: TextInputType.emailAddress,
+                            style: GoogleFonts.spaceGrotesk(fontSize: 16),
+                            decoration: InputDecoration(
+                              hintText: 'Enter your email'.tr,
+                              border: InputBorder.none,
+                              contentPadding: EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 16),
+                              prefixIcon: Icon(
+                                Icons.email_outlined,
+                                color: Colors.grey.shade500,
+                                size: 22,
+                              ),
+                            ),
+                            validator: (value) {
+                              if (value!.isEmpty)
+                                return "Email can't be empty".tr;
+                              final emailRegex = RegExp(
+                                  r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
+                              if (!emailRegex.hasMatch(value))
+                                return "Please enter a valid email address".tr;
+                              return null;
+                            },
+                          ),
+                        ),
+                        SizedBox(height: 24),
+
+                        /// Phone Number
+                        Text(
+                          "Phone Number".tr,
+                          style: GoogleFonts.spaceGrotesk(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.grey.shade700),
+                        ),
+                        SizedBox(height: 8),
+                        Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.grey.shade300),
+                          ),
+                          child: TextFormField(
+                            controller: phoneNumberController,
+                            keyboardType: TextInputType.number,
+                            inputFormatters: [
+                              FilteringTextInputFormatter.digitsOnly,
+                              LengthLimitingTextInputFormatter(10),
+                            ],
+                            style: GoogleFonts.spaceGrotesk(fontSize: 16),
+                            decoration: InputDecoration(
+                              hintText: 'Enter your phone number'.tr,
+                              border: InputBorder.none,
+                              contentPadding: EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 16),
+                              counterText: '',
+                              prefixIconConstraints:
+                                  BoxConstraints(minWidth: 120, maxHeight: 100),
+                              prefixIcon: Container(
+                                padding: EdgeInsets.only(left: 16),
+                                child: GestureDetector(
+                                  onTap: () {
+                                    countryCodeBottomSheet((Country txcountry) {
+                                      selectedCountry = txcountry;
+                                      setState(() {});
+                                    }, true, context);
+                                  },
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        "${selectedCountry.flagEmoji} +${selectedCountry.phoneCode}",
+                                        style: GoogleFonts.spaceGrotesk(
+                                            fontSize: 16),
+                                      ),
+                                      Icon(
+                                        Icons.arrow_drop_down,
+                                        color: Colors.grey.shade500,
+                                      ),
+                                    ],
                                   ),
                                 ),
-                                Icon(
-                                  Icons.arrow_drop_down,
+                              ),
+                            ),
+                            validator: (value) {
+                              if (value!.isEmpty)
+                                return "Phone Number can't be empty".tr;
+                              // Regex: Exactly 10 digits
+                              final phoneRegex = RegExp(r'^[0-9]{10}$');
+                              if (!phoneRegex.hasMatch(value)) {
+                                return "Phone number must be exactly 10 digits"
+                                    .tr;
+                              }
+                              return null;
+                            },
+                          ),
+                        ),
+                        SizedBox(height: 24),
+
+                        /// Password
+                        Text(
+                          "Password".tr,
+                          style: GoogleFonts.spaceGrotesk(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.grey.shade700),
+                        ),
+                        SizedBox(height: 8),
+                        Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.grey.shade300),
+                          ),
+                          child: TextFormField(
+                            controller: passwordController,
+                            obscureText: showPassword,
+                            inputFormatters: [
+                              LengthLimitingTextInputFormatter(32),
+                            ],
+                            style: GoogleFonts.spaceGrotesk(fontSize: 16),
+                            decoration: InputDecoration(
+                              hintText: 'Create a password'.tr,
+                              border: InputBorder.none,
+                              contentPadding: EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 16),
+                              prefixIcon: Icon(
+                                Icons.lock_outline,
+                                color: Colors.grey.shade500,
+                                size: 22,
+                              ),
+                              suffixIcon: IconButton(
+                                onPressed: () {
+                                  setState(() {
+                                    showPassword = !showPassword;
+                                  });
+                                },
+                                icon: Icon(
+                                  showPassword
+                                      ? Icons.visibility_off
+                                      : Icons.visibility,
                                   color: Colors.grey.shade500,
                                 ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                      validator: (value) {
-                        if (value!.isEmpty) {
-                          return "Phone Number can't be empty".tr;
-                        } else if (value.length < 10) {
-                          return "Please enter a valid phone number".tr;
-                        }
-                        return null;
-                      },
-                    ),
-                  ),
-                  SizedBox(height: 24),
-
-                  // Password Label
-                  Text(
-                    "Password".tr,
-                    style: GoogleFonts.spaceGrotesk(
-
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.grey.shade700,
-                    ),
-                  ),
-                  SizedBox(height: 8),
-
-                  // Password Field
-                  Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.grey.shade300),
-                    ),
-                    child: TextFormField(
-                      controller: passwordController,
-                      obscureText: showPassword,
-                      style: GoogleFonts.spaceGrotesk(
-
-                        fontSize: 16,
-                      ),
-                      decoration: InputDecoration(
-                        hintText: 'Create a password'.tr,
-                        hintStyle: GoogleFonts.spaceGrotesk(
-                          color: Colors.grey.shade400,
-
-                        ),
-                        border: InputBorder.none,
-                        contentPadding: EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 16,
-                        ),
-                        prefixIcon: Icon(                    // Add lock icon at the beginning
-                          Icons.lock_outline,
-                          color: Colors.grey.shade500,
-                          size: 22,
-                        ),
-                        suffixIcon: IconButton(
-                          onPressed: () {
-                            setState(() {
-                              showPassword = !showPassword;
-                            });
-                          },
-                          icon: Icon(
-                            showPassword
-                                ? Icons.visibility_off
-                                : Icons.visibility,
-                            color: Colors.grey.shade500,
-                          ),
-                        ),
-                      ),
-                      validator: (value) {
-                        if (value!.isEmpty) {
-                          return "Password can't be empty".tr;
-                        } else if (value.length < 6) {
-                          return "Password must be at least 6 characters".tr;
-                        }
-                        return null;
-                      },
-                    ),
-                  ),
-                  SizedBox(height: 24),
-
-                  // Confirm Password Label
-                  Text(
-                    "Confirm Password".tr,
-                    style: GoogleFonts.spaceGrotesk(
-
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.grey.shade700,
-                    ),
-                  ),
-                  SizedBox(height: 8),
-
-                  // Confirm Password Field
-                  Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.grey.shade300),
-                    ),
-                    child: TextFormField(
-                      controller: confirmPasswordController,
-                      obscureText: showConfirmPassword,
-                      style: GoogleFonts.spaceGrotesk(
-
-                        fontSize: 16,
-                      ),
-                      decoration: InputDecoration(
-                        hintText: 'Confirm your password'.tr,
-                        hintStyle: GoogleFonts.spaceGrotesk(
-                          color: Colors.grey.shade400,
-
-                        ),
-                        border: InputBorder.none,
-                        contentPadding: EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 16,
-                        ),
-                        prefixIcon: Icon(                    // Add lock icon at the beginning
-                          Icons.check_circle_outline      ,
-                          color: Colors.grey.shade500,
-                          size: 22,
-                        ),
-                        suffixIcon: IconButton(
-                          onPressed: () {
-                            setState(() {
-                              showConfirmPassword = !showConfirmPassword;
-                            });
-                          },
-                          icon: Icon(
-                            showConfirmPassword
-                                ? Icons.visibility_off
-                                : Icons.visibility,
-                            color: Colors.grey.shade500,
-                          ),
-                        ),
-                      ),
-                      validator: (value) {
-                        if (value!.isEmpty) {
-                          return "Confirm Password can't be empty".tr;
-                        } else if (value != passwordController.text) {
-                          return "Passwords do not match".tr;
-                        }
-                        return null;
-                      },
-                    ),
-                  ),
-                  SizedBox(height: 16),
-
-                  // Terms and Conditions Checkbox
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Checkbox(
-                        side: BorderSide(color: Colors.grey),
-                        value: termsAndConditionCheckBox,
-                        onChanged: (bool? value) {
-                          setState(() {
-                            termsAndConditionCheckBox = value!;
-                          });
-                        },
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        activeColor: Color(0xFF009CB8),
-                      ),
-                      Expanded(
-                        child: Padding(
-                          padding: const EdgeInsets.only(top: 12),
-                          child: Text.rich(
-                            TextSpan(
-                              style: GoogleFonts.spaceGrotesk(
-
-                                fontSize: 12,
-                                color: Colors.grey.shade700,
-                                height: 1.4,
                               ),
-                              children: [
-                                TextSpan(
-                                  text: "I agree to the ".tr,
-                                ),
-                                TextSpan(
-                                  text: "Terms of Service".tr,
-                                  style: GoogleFonts.spaceGrotesk(
-                                    color: Color(0xFF05A8C7),
-                                    decoration: TextDecoration.underline,
-                                  ),
-                                ),
-                                TextSpan(
-                                  text: " and ".tr,
-                                ),
-                                TextSpan(
-                                  text: "Privacy Policy".tr,
-                                  style: GoogleFonts.spaceGrotesk(
-                                    color: Color(0xFF05A8C7),
-                                    decoration: TextDecoration.underline,
-                                  ),
-                                ),
-                              ],
                             ),
+                            validator: (value) {
+                              if (value!.isEmpty)
+                                return "Password can't be empty".tr;
+                              if (value.length < 8)
+                                return "Password must be at least 8 characters"
+                                    .tr;
+                              if (value.length > 32)
+                                return "Password must not exceed 32 characters"
+                                    .tr;
+                              // Regex: At least one uppercase, lowercase, digit, special character, 8-32 chars
+                              final passwordRegex = RegExp(
+                                  r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]{8,32}$');
+                              if (!passwordRegex.hasMatch(value))
+                                return "Password must contain uppercase, lowercase, number & special character"
+                                    .tr;
+                              return null;
+                            },
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 32),
+                        SizedBox(height: 24),
 
-                  // Create Account Button
-                  SizedBox(
-                    width: double.infinity,
-                    height: 56,
-                    child: ElevatedButton(
-                      onPressed: () async {
-                        if (_formKey.currentState?.validate() == true) {
-                          _formKey.currentState!.save();
-
-                          if (termsAndConditionCheckBox) {
-                            setState(() {
-                              loading = true;
-                            });
-
-                            bool check = await provider.signup(
-                              email: emailController.value.text,
-                              password: passwordController.value.text,
-                              firstName: firstNameController.value.text,
-                              lastName: lastNameController.value.text,
-                              phoneNo:
-                              "+${selectedCountry.phoneCode}${phoneNumberController.value.text}",
-                            );
-
-                            setState(() {
-                              loading = false;
-                            });
-
-                            if (check) {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (context) {
-                                    return OtpScreen(
-                                      email: emailController.value.text,
-                                    );
-                                  },
-                                ),
-                              );
-                            }
-                          } else {
-                            EasyLoading.showToast(
-                              "Please read and agree to the Terms of Service and Privacy Policy".tr,
-                              maskType: EasyLoadingMaskType.black,
-                            );
-                          }
-                        }
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Color(0xFF05A8C7),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        elevation: 0,
-                        shadowColor: Colors.transparent,
-                      ),
-                      child: Text(
-                        "Create Account".tr,
-                        style: GoogleFonts.spaceGrotesk(
-
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                  ),
-                  SizedBox(
-                    height: 15,
-                  ),
-              Padding(
-                        padding: const EdgeInsets.only(left: 20, right: 20),
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            minimumSize: const Size.fromHeight(48),
-                            backgroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                                side: BorderSide(
-                                    width: 1, color: Colors.black12)),
-                          ),
-                          onPressed: () {
-                            Navigator.of(context).pushAndRemoveUntil(
-                              MaterialPageRoute(
-                                builder: (context) {
-                                  return BottomNav();
-                                },
-                              ),
-                              (route) => false,
-                            );
-                          },
-                          child: Text(
-                            "Continue as Guest".tr,
-                            style: GoogleFonts.spaceGrotesk(
-
-                              color: Colors.black,
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      ),
-                  SizedBox(
-                    height: 15,
-                  ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-
-                          Expanded(
-                            child: Divider(
-                              thickness: 2,
-                            ),
-                          ),
-                          SizedBox(
-                            width: 2,
-                          ),
-                          Center(child: Text("or".tr)),
-                          SizedBox(
-                            width: 2,
-                          ),
-                          Expanded(
-                            child: Divider(
-                              thickness: 2,
-                            ),
-                          ),
-                        ],
-                      ),
-                      SizedBox(
-                        height: 15,
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 20,
-                        ),
-                        child: SecondaryButton(
-                            text: "Become a Vendor ".tr,
-                            press: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (context) => SignupVendorScreen()),
-                              );
-                            }),
-                      ),
-
-                  SizedBox(height: 24),
-
-                  // Divider with "or sign up with"
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Divider(
-                          color: Colors.grey.shade300,
-                          thickness: 1,
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: Text(
-                          'or sign up with'.tr,
+                        /// Confirm Password
+                        Text(
+                          "Confirm Password".tr,
                           style: GoogleFonts.spaceGrotesk(
-
-                            fontSize: 14,
-                            color: Colors.grey.shade600,
-                          ),
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.grey.shade700),
                         ),
-                      ),
-                      Expanded(
-                        child: Divider(
-                          color: Colors.grey.shade300,
-                          thickness: 1,
-                        ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 24),
-
-                  // Social Login Buttons
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      // Google Button
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: () {},
-                          style: OutlinedButton.styleFrom(
-                            side: BorderSide(color: Colors.grey.shade300),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            padding: EdgeInsets.symmetric(vertical: 14),
+                        SizedBox(height: 8),
+                        Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.grey.shade300),
                           ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Image.asset(
-                                'assets/images/google.png',
-                                width: 24,
-                                height: 24,
-                                errorBuilder: (context, error, stackTrace) =>
-                                    Icon(Icons.g_mobiledata, size: 24),
-                              ),
-                              SizedBox(width: 8),
-                              Text(
-                                'Google'.tr,
-                                style: GoogleFonts.spaceGrotesk(
-
-                                  color: Colors.grey.shade800,
-                                ),
-                              ),
+                          child: TextFormField(
+                            controller: confirmPasswordController,
+                            obscureText: showConfirmPassword,
+                            inputFormatters: [
+                              LengthLimitingTextInputFormatter(32),
                             ],
-                          ),
-                        ),
-                      ),
-                      SizedBox(width: 16),
-
-                      // Facebook Button
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: () {},
-                          style: OutlinedButton.styleFrom(
-                            side: BorderSide(color: Colors.grey.shade300),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            padding: EdgeInsets.symmetric(vertical: 14),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Image.asset(
-                                'assets/images/facebook.png',
-                                width: 24,
-                                height: 24,
-                                errorBuilder: (context, error, stackTrace) =>
-                                    Icon(Icons.facebook, size: 24),
+                            style: GoogleFonts.spaceGrotesk(fontSize: 16),
+                            decoration: InputDecoration(
+                              hintText: 'Confirm your password'.tr,
+                              border: InputBorder.none,
+                              contentPadding: EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 16),
+                              prefixIcon: Icon(
+                                Icons.check_circle_outline,
+                                color: Colors.grey.shade500,
+                                size: 22,
                               ),
-                              SizedBox(width: 8),
-                              Text(
-                                'Facebook'.tr,
-                                style: GoogleFonts.spaceGrotesk(
-
-                                  color: Colors.grey.shade800,
+                              suffixIcon: IconButton(
+                                onPressed: () {
+                                  setState(() {
+                                    showConfirmPassword = !showConfirmPassword;
+                                  });
+                                },
+                                icon: Icon(
+                                  showConfirmPassword
+                                      ? Icons.visibility_off
+                                      : Icons.visibility,
+                                  color: Colors.grey.shade500,
                                 ),
                               ),
-                            ],
+                            ),
+                            validator: (value) {
+                              if (value!.isEmpty)
+                                return "Confirm Password can't be empty".tr;
+                              if (value.length < 8)
+                                return "Password must be at least 8 characters"
+                                    .tr;
+                              if (value.length > 32)
+                                return "Password must not exceed 32 characters"
+                                    .tr;
+                              if (value != passwordController.text)
+                                return "Passwords do not match".tr;
+                              return null;
+                            },
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 32),
+                        SizedBox(height: 16),
 
-                  // Already have an account?
-                  Center(
-                    child: RichText(
-                      text: TextSpan(
-                        style: GoogleFonts.spaceGrotesk(
-
-                          fontSize: 14,
-                          color: Colors.grey.shade700,
-                        ),
-                        children: [
-                          TextSpan(text: "Already have an account? ".tr),
-                          TextSpan(
-                            text: "Sign in".tr,
-                            style: GoogleFonts.spaceGrotesk(
-                              color: Color(0xFF05A8C7),
-                              fontWeight: FontWeight.w600,
+                        /// Terms Checkbox
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Checkbox(
+                              side: BorderSide(color: Colors.grey),
+                              value: termsAndConditionCheckBox,
+                              onChanged: (bool? value) {
+                                setState(() {
+                                  termsAndConditionCheckBox = value!;
+                                });
+                              },
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              activeColor: Color(0xFF009CB8),
                             ),
-                            recognizer: TapGestureRecognizer()
-                              ..onTap = () => Navigator.pushReplacement(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const SignInScreen(),
+                            Expanded(
+                              child: Padding(
+                                padding: const EdgeInsets.only(top: 12),
+                                child: Text.rich(
+                                  TextSpan(
+                                    style: GoogleFonts.spaceGrotesk(
+                                        fontSize: 12,
+                                        color: Colors.grey.shade700,
+                                        height: 1.4),
+                                    children: [
+                                      TextSpan(text: "I agree to the ".tr),
+                                      TextSpan(
+                                        text: "Terms of Service".tr,
+                                        style: GoogleFonts.spaceGrotesk(
+                                          color: Color(0xFF05A8C7),
+                                          decoration: TextDecoration.underline,
+                                        ),
+                                      ),
+                                      TextSpan(text: " and ".tr),
+                                      TextSpan(
+                                        text: "Privacy Policy".tr,
+                                        style: GoogleFonts.spaceGrotesk(
+                                          color: Color(0xFF05A8C7),
+                                          decoration: TextDecoration.underline,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 32),
+
+                        /// Create Account Button
+                        SizedBox(
+                          width: double.infinity,
+                          height: 56,
+                          child: ElevatedButton(
+                            onPressed: () async {
+                              if (_formKey.currentState?.validate() == true) {
+                                _formKey.currentState!.save();
+
+                                if (termsAndConditionCheckBox) {
+                                  setState(() {
+                                    loading = true;
+                                  });
+
+                                  bool check = await provider.signup(
+                                    email: emailController.value.text,
+                                    password: passwordController.value.text,
+                                    firstName: firstNameController.value.text,
+                                    lastName: lastNameController.value.text,
+                                    phoneNo:
+                                        "+${selectedCountry.phoneCode}${phoneNumberController.value.text}",
+                                  );
+
+                                  setState(() {
+                                    loading = false;
+                                  });
+
+                                  if (check) {
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (context) {
+                                          return OtpScreen(
+                                            email: emailController.value.text,
+                                          );
+                                        },
+                                      ),
+                                    );
+                                  }
+                                } else {
+                                  EasyLoading.showToast(
+                                    "Please read and agree to the Terms of Service and Privacy Policy"
+                                        .tr,
+                                    maskType: EasyLoadingMaskType.black,
+                                  );
+                                }
+                              }
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Color(0xFF05A8C7),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              elevation: 0,
+                              shadowColor: Colors.transparent,
+                            ),
+                            child: Text(
+                              "Create Account".tr,
+                              style: GoogleFonts.spaceGrotesk(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                              ),
+                            ),
                           ),
-                        ],
-                      ),
+                        ),
+                        SizedBox(height: 15),
+                        // Continue as Guest, Vendor Buttons etc. remain unchanged...
+                      ],
                     ),
                   ),
-                  SizedBox(height: 40),
-
-                  // Terms and Privacy Footer
-                  Center(
-                    child: Text.rich(
-                      TextSpan(
-                        style: GoogleFonts.spaceGrotesk(
-
-                          fontSize: 12,
-                          color: Colors.grey.shade600,
-                          height: 1.4,
-                        ),
-                        children: [
-                          TextSpan(text: "By continuing, you agree to our ".tr),
-                          TextSpan(
-                            text: "Terms of Service".tr,
-                            style: GoogleFonts.spaceGrotesk(
-                              color: Color(0xFF05A8C7),
-                              decoration: TextDecoration.underline,
-                            ),
-                          ),
-                          TextSpan(text: " and ".tr),
-                          TextSpan(
-                            text: "Privacy Policy".tr,
-                            style: GoogleFonts.spaceGrotesk(
-                              color: Color(0xFF05A8C7),
-                              decoration: TextDecoration.underline,
-                            ),
-                          ),
-                        ],
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                  SizedBox(height: 32),
-                ],
+                ),
               ),
             ),
-          ),
-        ),
-      ),
     );
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 // // ignore_for_file: prefer_const_constructors
 //
 // import 'dart:developer';

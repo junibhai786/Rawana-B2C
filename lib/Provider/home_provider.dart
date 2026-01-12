@@ -98,15 +98,15 @@ class HomeProvider with ChangeNotifier {
     tabController?.animateTo(index);
     notifyListeners();
   }
+
   String selectedCity = '';
-  String departureCity='';
-  String destinationCity='';
+  String departureCity = '';
+  String destinationCity = '';
 
   void selectCity(String city) {
     selectedCity = city;
     notifyListeners();
   }
-
 
   void selectDepartureCity(String city) {
     departureCity = city;
@@ -145,7 +145,7 @@ class HomeProvider with ChangeNotifier {
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> json =
-        jsonDecode(response.body) as Map<String, dynamic>;
+            jsonDecode(response.body) as Map<String, dynamic>;
 
         final parsed = LocationResponse.fromJson(json);
 
@@ -167,13 +167,6 @@ class HomeProvider with ChangeNotifier {
       notifyListeners();
     }
   }
-
-
-
-
-
-
-
 
 //   Future<void> fetchLocations() async {
 //     log('******************************Check A *******************************************');
@@ -214,20 +207,17 @@ class HomeProvider with ChangeNotifier {
 //     }
 //   }
 
-
   void filterLocations(String query) {
     if (query.isEmpty) {
       filteredLocations = locations;
     } else {
       filteredLocations = locations
           .where((e) =>
-      e.title?.toLowerCase().contains(query.toLowerCase()) ?? false)
+              e.title?.toLowerCase().contains(query.toLowerCase()) ?? false)
           .toList();
     }
     notifyListeners();
   }
-
-
 
   Future<bool> deletevendorcar({
     required String id,
@@ -492,7 +482,6 @@ class HomeProvider with ChangeNotifier {
         blocks = rawData['data'];
       } else {
         log("❌ Unexpected data format: ${rawData.runtimeType}");
-
       }
       for (final block in blocks) {
         if (block is! Map<String, dynamic>) continue;
@@ -503,13 +492,16 @@ class HomeProvider with ChangeNotifier {
           if (model is Map && model['data'] is List) {
             final List hotelList = model['data'];
 
-            final offers = hotelList
-                .map((e) => Hotel.fromJson(e))
-                .toList();
+            final offers = hotelList.map((e) {
+              print("BLOCK TYPE => list_hotel");
+              print(
+                  "IMAGE URL => ${e['image'] ?? e['gallery'] ?? e['banner_img_url'] ?? 'null'}");
+              return Hotel.fromJson(e);
+            }).toList();
 
             homeItems.addAll(
               offers.map(
-                    (offer) => home_item.HomeItem(
+                (offer) => home_item.HomeItem(
                   type: home_item.ItemType.hotel,
                   item: offer,
                 ),
@@ -521,10 +513,6 @@ class HomeProvider with ChangeNotifier {
         }
       }
 
-
-
-
-
       // if (result['data']['data']['Tour'] != null) {
       //   List<Tour> offers = (result['data']['data']['Tour'] as List)
       //       .map((item) => Tour.fromJson(item))
@@ -533,7 +521,6 @@ class HomeProvider with ChangeNotifier {
       //       home_item.HomeItem(type: home_item.ItemType.tour, item: offer)));
       //   log("Processed ${offers.length} offers");
       // }
-
 
       for (final block in blocks) {
         if (block is! Map<String, dynamic>) continue;
@@ -544,13 +531,16 @@ class HomeProvider with ChangeNotifier {
           if (model is Map && model['data'] is List) {
             final List tourList = model['data'];
 
-            final List<Tour> offers = tourList
-                .map((item) => Tour.fromJson(item))
-                .toList();
+            final List<Tour> offers = tourList.map((item) {
+              print("BLOCK TYPE => list_tours");
+              print(
+                  "IMAGE URL => ${item['image'] ?? item['gallery'] ?? item['banner_img_url'] ?? 'null'}");
+              return Tour.fromJson(item);
+            }).toList();
 
             homeItems.addAll(
               offers.map(
-                    (offer) => home_item.HomeItem(
+                (offer) => home_item.HomeItem(
                   type: home_item.ItemType.tour,
                   item: offer,
                 ),
@@ -563,7 +553,6 @@ class HomeProvider with ChangeNotifier {
           }
         }
       }
-
 
       for (final block in blocks) {
         if (block is! Map<String, dynamic>) continue;
@@ -579,75 +568,85 @@ class HomeProvider with ChangeNotifier {
         final List dataList = model['data'];
 
         switch (type) {
-
           case 'list_car':
-            final cars = dataList
-                .map((e) => Car.fromJson(e))
-                .toList();
+            final cars = dataList.map((e) {
+              print("BLOCK TYPE => list_car");
+              print("IMAGE URL => ${e['image'] ?? e['gallery'] ?? 'null'}");
+              return Car.fromJson(e);
+            }).toList();
 
             homeItems.addAll(
               cars.map((e) => home_item.HomeItem(
-                type: home_item.ItemType.car,
-                item: e,
-              )),
+                    type: home_item.ItemType.car,
+                    item: e,
+                  )),
             );
 
             log("✅ Processed ${cars.length} cars");
             break;
 
           case 'list_event':
-            final events = dataList
-                .map((e) => Event.fromJson(e))
-                .toList();
+            final events = dataList.map((e) {
+              print("BLOCK TYPE => list_event");
+              print("IMAGE URL => ${e['image'] ?? e['gallery'] ?? 'null'}");
+              return Event.fromJson(e);
+            }).toList();
 
             homeItems.addAll(
               events.map((e) => home_item.HomeItem(
-                type: home_item.ItemType.event,
-                item: e,
-              )),
+                    type: home_item.ItemType.event,
+                    item: e,
+                  )),
             );
 
             log("✅ Processed ${events.length} events");
             break;
 
           case 'list_boat':
-            final boats = dataList
-                .map((e) => Boat.fromJson(e))
-                .toList();
+            final boats = dataList.map((e) {
+              print("BLOCK TYPE => list_boat");
+              print("IMAGE URL => ${e['image'] ?? e['gallery'] ?? 'null'}");
+              return Boat.fromJson(e);
+            }).toList();
 
             homeItems.addAll(
               boats.map((e) => home_item.HomeItem(
-                type: home_item.ItemType.boat,
-                item: e,
-              )),
+                    type: home_item.ItemType.boat,
+                    item: e,
+                  )),
             );
 
             log("✅ Processed ${boats.length} boats");
             break;
 
           case 'list_space':
-            final spaces = dataList
-                .map((e) => Space.fromJson(e))
-                .toList();
+            final spaces = dataList.map((e) {
+              print("BLOCK TYPE => list_space");
+              print("IMAGE URL => ${e['image'] ?? e['gallery'] ?? 'null'}");
+              return Space.fromJson(e);
+            }).toList();
 
             homeItems.addAll(
               spaces.map((e) => home_item.HomeItem(
-                type: home_item.ItemType.space,
-                item: e,
-              )),
+                    type: home_item.ItemType.space,
+                    item: e,
+                  )),
             );
 
             log("✅ Processed ${spaces.length} spaces");
             break;
 
           case 'list_location':
-            final locations = dataList
-                .map((e) => home_item.Location.fromJson(e))
-                .toList();
+            final locations = dataList.map((e) {
+              print("BLOCK TYPE => list_location");
+              print(
+                  "IMAGE URL => ${e['img_url'] ?? e['banner_img_url'] ?? 'null'}");
+              return home_item.Location.fromJson(e);
+            }).toList();
 
             homeItems.addAll(
               locations.map(
-                    (location) => home_item.HomeItem(
+                (location) => home_item.HomeItem(
                   type: home_item.ItemType.location,
                   item: location,
                 ),
@@ -656,10 +655,8 @@ class HomeProvider with ChangeNotifier {
 
             log("✅ Processed ${locations.length} locations");
             break;
-
         }
       }
-
 
       // if (result['data']['data']['Car'] != null) {
       //   List<Car> offers = (result['data']['data']['Car'] as List)
@@ -740,22 +737,20 @@ class HomeProvider with ChangeNotifier {
       return null;
     }
   }
+
   String formatDate(dynamic value) {
     if (value == null) return '';
     if (value is DateTime) {
       return DateFormat('yyyy-MM-dd').format(value);
     }
     if (value is String) {
-      return DateFormat('yyyy-MM-dd')
-          .format(DateTime.parse(value));
+      return DateFormat('yyyy-MM-dd').format(DateTime.parse(value));
     }
     throw Exception('Invalid date type');
   }
 
-
   Future<bool> hotellistapi(int index,
-      {
-        String? sortBy,
+      {String? sortBy,
       String? searchQuery,
       required Map<String, Object?> searchParams}) async {
     log("check here");
@@ -767,33 +762,22 @@ class HomeProvider with ChangeNotifier {
       final queryParams = <String, String>{
         if (searchParams['city'] != null)
           'location_id': searchParams['city'].toString(),
-
         if (searchParams['check_in'] != null)
           'start_date': formatDate(searchParams['check_in']),
-
         if (searchParams['check_out'] != null)
           'end_date': formatDate(searchParams['check_out']),
-
         if (searchParams['guests'] != null)
           'adults': searchParams['guests'].toString(),
-
         if (searchParams['children'] != null)
           'children': searchParams['children'].toString(),
-
         if (searchParams['rooms'] != null)
           'rooms': searchParams['rooms'].toString(),
-
         if (searchParams['page'] != null)
           'page': searchParams['page'].toString(),
-
         if (searchParams['per_page'] != null)
           'per_page': searchParams['per_page'].toString(),
-
-        if (sortBy != null)
-          'orderby': sortBy,
+        if (sortBy != null) 'orderby': sortBy,
       };
-
-
 
       final queryString = Uri(queryParameters: queryParams).query;
       final uri = Uri.parse(
@@ -803,9 +787,8 @@ class HomeProvider with ChangeNotifier {
       final url = uri.toString();
       log('API URL: $url');
 
-
       log("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%API URL: $url");
-     // return true;
+      // return true;
       final result =
           await makeRequest(url, 'GET', {}, _token ?? '', requiresAuth: true);
 
