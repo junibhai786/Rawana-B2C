@@ -46,6 +46,93 @@ class HomeProvider with ChangeNotifier {
   Bookinghistory? bookingHistoryResponse;
   Map<int, HotelList?> hotelListPerCategory = {};
   Map<int, CarList?> carListPerCategory = {};
+
+  // Car Pagination State
+  final Map<int, Map<String, dynamic>> _lastCarSearchParams = {};
+  final Map<int, bool> _isCarLoadingMore = {};
+  final Map<int, int> _currentCarPage = {};
+
+  bool isCarLoadingMore(int index) => _isCarLoadingMore[index] ?? false;
+
+  Future<void> fetchNextCarPage(int index) async {
+    if (isCarLoadingMore(index)) return;
+
+    final currentList = carListPerCategory[index];
+
+    if (currentList == null ||
+        currentList.currentPage == null ||
+        currentList.lastPage == null ||
+        currentList.currentPage! >= currentList.lastPage!) {
+      return;
+    }
+
+    _isCarLoadingMore[index] = true;
+    notifyListeners();
+
+    try {
+      final nextPage = currentList.currentPage! + 1;
+      final params = _lastCarSearchParams[index] ?? {};
+
+      // Call API with next page
+      await carlistapi(
+        index,
+        searchParams: params,
+        page: nextPage,
+        isLoadMore: true,
+      );
+    } catch (e) {
+      log("Error fetching next car page for index $index: $e");
+    } finally {
+      _isCarLoadingMore[index] = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> resetCarPagination(int index) async {
+    _currentCarPage[index] = 1;
+    _isCarLoadingMore[index] = false;
+    final params = _lastCarSearchParams[index] ?? {};
+    await carlistapi(index, searchParams: params, page: 1, isLoadMore: false);
+  }
+
+  // Home Pagination State
+  final Map<int, bool> _isHomeLoadingMore = {};
+  final Map<int, int> _currentHomePage = {};
+
+  bool isHomeLoadingMore(int index) => _isHomeLoadingMore[index] ?? false;
+
+  Future<void> fetchNextHomePage(int index) async {
+    if (isHomeLoadingMore(index)) return;
+
+    final currentList = homeListPerCategory[index];
+
+    // Note: HomeList might not have lastPage/currentPage in the same way,
+    // but we'll use a local counter for simplicity if it's not provided by API.
+    // However, looking at the pattern, we should try to use API values if they exist.
+
+    // For now, let's assume it has 10 pages or we just try next page.
+    // If the API doesn't return more blocks, the list size will stay the same.
+
+    _isHomeLoadingMore[index] = true;
+    notifyListeners();
+
+    try {
+      final nextPage = (_currentHomePage[index] ?? 1) + 1;
+      await homelistapi(index, page: nextPage, isLoadMore: true);
+    } catch (e) {
+      log("Error fetching next home page for index $index: $e");
+    } finally {
+      _isHomeLoadingMore[index] = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> resetHomePagination(int index) async {
+    _currentHomePage[index] = 1;
+    _isHomeLoadingMore[index] = false;
+    await homelistapi(index, page: 1, isLoadMore: false);
+  }
+
   Map<int, EventList?> eventListPerCategory = {};
 
   Map<int, SpaceList?> spaceListPerCategory = {};
@@ -444,17 +531,16 @@ class HomeProvider with ChangeNotifier {
     log("Token $_token");
   }
 
-  Future<home_item.HomeList?> homelistapi(int index) async {
-    // if (homeListPerCategory.containsKey(index)) {
-    //   return homeListPerCategory[index];
-    // }
-
-    log("Home List API Call for category index $index ===>");
+  Future<home_item.HomeList?> homelistapi(int index,
+      {int page = 1, bool isLoadMore = false}) async {
+    log("Home List API Call for category index $index ===> Page $page");
     await loadToken();
 
-    final result = await makeRequest(
-        '${ApiUrls.baseUrl}${ApiUrls.homeListEnd}', 'GET', {}, _token ?? '',
-        requiresAuth: true);
+    _currentHomePage[index] = page;
+
+    final url = '${ApiUrls.baseUrl}${ApiUrls.homeListEnd}?page=$page';
+    final result =
+        await makeRequest(url, 'GET', {}, _token ?? '', requiresAuth: true);
 
     // Log the entire API response
     log("Home List API Response: ${result.toString()}");
@@ -756,7 +842,6 @@ class HomeProvider with ChangeNotifier {
     log("check here");
     try {
       log("Hotel List API Call for category index $index ===>");
-      await loadToken();
 
       // Convert searchParams to query parameters
       final queryParams = <String, String>{
@@ -772,10 +857,6 @@ class HomeProvider with ChangeNotifier {
           'children': searchParams['children'].toString(),
         if (searchParams['rooms'] != null)
           'rooms': searchParams['rooms'].toString(),
-        if (searchParams['page'] != null)
-          'page': searchParams['page'].toString(),
-        if (searchParams['per_page'] != null)
-          'per_page': searchParams['per_page'].toString(),
         if (sortBy != null) 'orderby': sortBy,
       };
 
@@ -787,19 +868,23 @@ class HomeProvider with ChangeNotifier {
       final url = uri.toString();
       log('API URL: $url');
 
-      log("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%API URL: $url");
-      // return true;
       final result =
           await makeRequest(url, 'GET', {}, _token ?? '', requiresAuth: true);
 
       if (result['success']) {
         log("Hotel List Response for index $index ===> ${result['data']}");
-        HotelList hotelList = HotelList.fromJson(result['data']);
-        hotelListPerCategory[index] = hotelList;
+        HotelList newHotelList = HotelList.fromJson(result['data']);
+
+        // Replace data (No Pagination)
+        hotelListPerCategory[index] = newHotelList;
+
         notifyListeners();
+
+        EasyLoading.dismiss();
         return true;
       } else {
         log("Failed to fetch hotel list. Error: ${result['message']}");
+        EasyLoading.dismiss();
         return false;
       }
     } catch (e) {
@@ -811,12 +896,21 @@ class HomeProvider with ChangeNotifier {
   Future<bool> carlistapi(int index,
       {String? sortBy,
       String? searchQuery,
-      required Map<String, Object?> searchParams}) async {
-    log("Car List API Call for category index $index ===>");
+      required Map<String, Object?> searchParams,
+      int page = 1,
+      bool isLoadMore = false}) async {
+    log("Car List API Call for category index $index ===> Page $page");
     await loadToken();
+
+    // Cache search params for pagination (only if it's a fresh search)
+    if (!isLoadMore) {
+      _lastCarSearchParams[index] = Map.from(searchParams);
+    }
 
     // Convert searchParams to query parameters
     final queryParams = {
+      'page': page.toString(),
+      'per_page': '5',
       if (searchParams['location'] != null)
         'location': searchParams['location'],
       if (searchParams['startDate'] != null)
@@ -836,6 +930,11 @@ class HomeProvider with ChangeNotifier {
           searchParams['car_features'] != '')
         'attrs[10]': searchParams['car_features'],
       if (sortBy != null) 'orderby': sortBy,
+      if (searchParams['star_rate'] != null && searchParams['star_rate'] != '')
+        'star_rate': searchParams['star_rate'],
+      if (searchParams['hotel_types'] != null &&
+          searchParams['hotel_types'] != '')
+        'cat_id': searchParams['hotel_types'],
     };
 
     final queryString = Uri(queryParameters: queryParams).query;
@@ -844,14 +943,45 @@ class HomeProvider with ChangeNotifier {
     log('$url checkurl');
 
     log("API URL: $url");
+
+    // 🧪 VISUAL TEST: Show toast when loading next page
+    // if (page > 1) {
+    //  EasyLoading.showToast("⏳ Loading Page $page...",
+    //     duration: const Duration(seconds: 1),
+    //    toastPosition: EasyLoadingToastPosition.bottom);
+    // }
+
     final result =
         await makeRequest(url, 'GET', {}, _token ?? '', requiresAuth: true);
 
     if (result['success']) {
       log("Car filter Response for index $index ===> ${result['data']}");
-      CarList carList = CarList.fromJson(result['data']);
-      carListPerCategory[index] = carList;
+      CarList newCarList = CarList.fromJson(result['data']);
+
+      if (isLoadMore && carListPerCategory[index] != null) {
+        // Append data
+        final currentData = carListPerCategory[index]!.data ?? [];
+        final newData = newCarList.data ?? [];
+
+        carListPerCategory[index]!.data = [...currentData, ...newData];
+        carListPerCategory[index]!.currentPage = newCarList.currentPage;
+        carListPerCategory[index]!.lastPage = newCarList.lastPage;
+        carListPerCategory[index]!.total = newCarList.total;
+        carListPerCategory[index]!.text = newCarList.text;
+      } else {
+        // Replace data
+        carListPerCategory[index] = newCarList;
+      }
+
       notifyListeners();
+
+      // 🧪 VISUAL TEST: Confirm data loaded
+      // if (page > 1) {
+      //  EasyLoading.showToast(
+      //     "✅ Loaded ${newCarList.data?.length ?? 0} new items!",
+      //    duration: const Duration(seconds: 2),
+      //  toastPosition: EasyLoadingToastPosition.bottom);
+      //}
       return true;
     } else {
       log("Failed to fetch Car list. Error: ${result['message']}");

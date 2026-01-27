@@ -1,9 +1,7 @@
-import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:moonbnd/Provider/home_provider.dart';
+import 'package:moonbnd/Provider/search_hotel_provider.dart'; // ✅ Updated import
 import 'package:moonbnd/modals/hotel_list_model.dart';
 import 'package:moonbnd/screens/hotel/room_detail_screen.dart';
 import 'package:provider/provider.dart';
@@ -31,35 +29,57 @@ class HotelSearchResultsScreen extends StatefulWidget {
 }
 
 class _HotelSearchResultsScreenState extends State<HotelSearchResultsScreen> {
-  bool isLoading = false;
+  late ScrollController _scrollController;
   String selectedSort = 'Recommended'.tr;
 
   @override
   void initState() {
     super.initState();
-    _fetchHotelData();
+    _scrollController = ScrollController()..addListener(_onScroll);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _fetchInitialData();
+    });
   }
 
-  Future<void> _fetchHotelData() async {
-    setState(() {
-      isLoading = true;
-    });
-    log('City ${widget.city}');
-    log('CheckIn ${widget.checkInDate}');
-    log('Checkout ${widget.checkOutDate}');
-    log('Guests ${widget.guests}');
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    super.dispose();
+  }
 
-    await Provider.of<HomeProvider>(context, listen: false)
-        .hotellistapi(1, searchParams: {
-      'city': widget.city,
-      'check_in': widget.checkInDate?.toIso8601String(),
-      'check_out': widget.checkOutDate?.toIso8601String(),
-      'guests': widget.guests,
-    }).then((_) {
-      setState(() {
-        isLoading = false;
-      });
-    });
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
+      _fetchMoreData();
+    }
+  }
+
+  Future<void> _fetchInitialData() async {
+    await Provider.of<SearchHotelProvider>(context, listen: false).searchHotels(
+      searchParams: {
+        'city': widget.city,
+        'check_in': widget.checkInDate,
+        'check_out': widget.checkOutDate,
+        'guests': widget.guests,
+      },
+    );
+  }
+
+  Future<void> _fetchMoreData() async {
+    await Provider.of<SearchHotelProvider>(context, listen: false).searchHotels(
+      searchParams: {
+        'city': widget.city,
+        'check_in': widget.checkInDate,
+        'check_out': widget.checkOutDate,
+        'guests': widget.guests,
+      },
+      isLoadMore: true,
+    );
+  }
+
+  Future<void> _onRefresh() async {
+    await _fetchInitialData();
   }
 
   Widget _buildEmptyState() {
@@ -132,9 +152,8 @@ class _HotelSearchResultsScreenState extends State<HotelSearchResultsScreen> {
     return _HotelCardWidget(hotel: hotel, city: widget.city);
   }
 
-  Widget _buildResultsCount(HomeProvider homeProvider) {
-    final hotelList = homeProvider.hotelListPerCategory[1];
-    final itemCount = hotelList?.total ?? hotelList?.data?.length ?? 5;
+  Widget _buildResultsCount(SearchHotelProvider searchProvider) {
+    final itemCount = searchProvider.total;
     final locationName = widget.city ?? 'Paris, France'.tr;
 
     return Padding(
@@ -228,33 +247,45 @@ class _HotelSearchResultsScreenState extends State<HotelSearchResultsScreen> {
           ),
         ],
       ),
-      body: Consumer<HomeProvider>(
-        builder: (context, homeProvider, child) {
-          if (isLoading) {
+      body: Consumer<SearchHotelProvider>(
+        builder: (context, searchProvider, child) {
+          if (searchProvider.isLoading) {
             return Center(child: CircularProgressIndicator());
           }
 
-          final hotelList = homeProvider.hotelListPerCategory[1] ?? HotelList();
-          final hotels = hotelList.data ?? [];
+          final hotels = searchProvider.hotels;
 
           if (hotels.isEmpty) {
             return _buildEmptyState();
           }
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildResultsCount(homeProvider),
-              SizedBox(height: 8),
-              Expanded(
-                child: ListView.builder(
-                  padding: EdgeInsets.only(bottom: 16),
-                  itemCount: hotels.length,
-                  itemBuilder: (context, index) {
-                    return _buildHotelCard(hotels[index]);
-                  },
+          return RefreshIndicator(
+            onRefresh: _onRefresh,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildResultsCount(searchProvider),
+                SizedBox(height: 8),
+                Expanded(
+                  child: ListView.builder(
+                    controller: _scrollController,
+                    padding: EdgeInsets.only(bottom: 16),
+                    itemCount:
+                        hotels.length + (searchProvider.isLoadingMore ? 1 : 0),
+                    itemBuilder: (context, index) {
+                      if (index == hotels.length) {
+                        return Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: CircularProgressIndicator(),
+                          ),
+                        );
+                      }
+                      return _buildHotelCard(hotels[index]);
+                    },
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           );
         },
       ),

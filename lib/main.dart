@@ -10,6 +10,7 @@ import 'package:moonbnd/Provider/boat_provider.dart';
 import 'package:moonbnd/Provider/event_provider.dart';
 import 'package:moonbnd/Provider/vendor_boat_provider.dart';
 import 'package:moonbnd/Provider/vendor_tour_provider.dart';
+import 'package:moonbnd/Provider/search_hotel_provider.dart';
 import 'package:moonbnd/language/language_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -91,6 +92,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (context) => VendorHotelProvider()),
         ChangeNotifierProvider(create: (context) => FlightProvider()),
         ChangeNotifierProvider(create: (context) => VendorFlightProvider()),
+        ChangeNotifierProvider(create: (context) => SearchHotelProvider()),
         ChangeNotifierProvider(create: (context) => VendorTourProvider()),
         ChangeNotifierProvider(create: (context) => VendorBoatProvider()),
       ],

@@ -19,26 +19,23 @@ class CategoryData {
 }
 
 List<CategoryData> categoryDatas = [
-
   CategoryData(
     kIcon: 'assets/icons/home.svg',
     category: "Home".tr,
     id: 0,
   ),
-
   if (enableHotel)
-  CategoryData(
-    kIcon: 'assets/icons/hotel.svg',
-    category: "Hotels".tr,
-    id: 1,
-  ),
+    CategoryData(
+      kIcon: 'assets/icons/hotel.svg',
+      category: "Hotels".tr,
+      id: 1,
+    ),
   if (enableFlight)
     CategoryData(
       kIcon: 'assets/icons/flights.svg',
       category: "Flight".tr,
       id: 6,
     ),
-
   if (enableEvent)
     CategoryData(
       kIcon: 'assets/icons/event.svg',
@@ -46,31 +43,29 @@ List<CategoryData> categoryDatas = [
       id: 5,
     ),
   if (enableTour)
-  CategoryData(
-    kIcon: 'assets/icons/homestay.svg',
-    category: "Tours".tr,
-    id: 2,
-  ),
+    CategoryData(
+      kIcon: 'assets/icons/homestay.svg',
+      category: "Tours".tr,
+      id: 2,
+    ),
   if (enableSpace)
-  CategoryData(
-    kIcon: 'assets/icons/demand.svg',
-    category: "Space".tr,
-    id: 3,
-  ),
+    CategoryData(
+      kIcon: 'assets/icons/demand.svg',
+      category: "Space".tr,
+      id: 3,
+    ),
   if (enableCar)
-  CategoryData(
-    kIcon: 'assets/icons/carnew.svg',
-    category: "Car".tr,
-    id: 4,
-  ),
-
-
+    CategoryData(
+      kIcon: 'assets/icons/carnew.svg',
+      category: "Car".tr,
+      id: 4,
+    ),
   if (enableBoat)
-  CategoryData(
-    kIcon: 'assets/icons/boat.svg',
-    category: "Boat".tr,
-    id: 7,
-  ),
+    CategoryData(
+      kIcon: 'assets/icons/boat.svg',
+      category: "Boat".tr,
+      id: 7,
+    ),
 ];
 
 //property data model
@@ -104,7 +99,7 @@ class PropertyData {
 
   factory PropertyData.fromHotel(Hotel hotel) {
     final reviewScoreMap =
-    hotel.reviewScore is Map ? hotel.reviewScore as Map : null;
+        hotel.reviewScore is Map ? hotel.reviewScore as Map : null;
 
     return PropertyData(
       propertyName: hotel.title ?? '',
@@ -119,15 +114,11 @@ class PropertyData {
       address: hotel.address ?? '',
 
       // ✅ FIXED REVIEW FIELDS
-      reviewscore:
-      reviewScoreMap?['score_total']?.toString() ?? '0',
-      reviewcount:
-      reviewScoreMap?['total_review'] ?? 0,
-      reviewtext:
-      reviewScoreMap?['review_text'] ?? '',
+      reviewscore: reviewScoreMap?['score_total']?.toString() ?? '0',
+      reviewcount: reviewScoreMap?['total_review'] ?? 0,
+      reviewtext: reviewScoreMap?['review_text'] ?? '',
     );
   }
-
 }
 
 class CarData {
@@ -231,7 +222,8 @@ class EvenData {
   });
 
   factory EvenData.fromEvent(Event event) {
-    final reviewScoreMap = event.reviewScore is Map ? event.reviewScore as Map : null;
+    final reviewScoreMap =
+        event.reviewScore is Map ? event.reviewScore as Map : null;
 
     return EvenData(
       propertyName: event.title ?? '',
@@ -251,7 +243,6 @@ class EvenData {
       isfeatured: event.isFeatured ?? 0,
     );
   }
-
 }
 
 class TourData {
@@ -284,7 +275,7 @@ class TourData {
 
   factory TourData.fromTour(Tour tour) {
     final reviewScoreMap =
-    tour.reviewScore is Map ? tour.reviewScore as Map : null;
+        tour.reviewScore is Map ? tour.reviewScore as Map : null;
 
     return TourData(
       propertyName: tour.title ?? '',
@@ -306,7 +297,6 @@ class TourData {
       discount: tour.discount ?? 0,
     );
   }
-
 }
 
 class SpaceData {
@@ -419,7 +409,7 @@ class FlightData {
   final String reviewcount;
   final String price;
   final String images;
-  final int? id;
+  final String? id;
 
   FlightData({
     required this.propertyName,
@@ -436,18 +426,25 @@ class FlightData {
   });
 
   factory FlightData.fromFlight(Flight flight) {
+    // Get first flight detail for basic info
+    final firstDetail = flight.flightDetails?.isNotEmpty == true
+        ? flight.flightDetails!.first
+        : null;
+
     return FlightData(
-      propertyName: flight.title ?? '',
-      images: flight.airlineImageUrl ?? '',
-      slug: flight.code ?? '',
-      id: flight.id ?? 0,
-      rating: flight.reviewScore?.toString() ?? '0',
-      date: flight.departureTime ?? '',
-      price: flight.minPrice ?? '',
-      address: flight.airportTo?.address ?? '',
-      reviewcount: flight.reviewScore ?? '0',
-      arrival: flight.arrivalTime ?? '',
-      departure: flight.departureTime ?? '',
+      propertyName:
+          '${firstDetail?.depIata ?? ''} to ${firstDetail?.arrIata ?? ''}',
+      images: firstDetail?.airlineLogo ?? '',
+      slug: flight.id ?? '',
+      id: flight.id,
+      rating: '0',
+      date: firstDetail?.depDate ?? '',
+      price: flight.totalPrice ?? '0',
+      address:
+          '${firstDetail?.airlineCode ?? ''} ${firstDetail?.flightNumber ?? ''}',
+      reviewcount: '0',
+      arrival: firstDetail?.arrTime ?? '',
+      departure: firstDetail?.depTime ?? '',
     );
   }
 }

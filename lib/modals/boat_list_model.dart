@@ -7,6 +7,7 @@ class BoatList {
   int? status;
   int? startId; // Add this line
   int? endId; // Add this line
+  String? text;
 
   BoatList({
     this.data,
@@ -17,6 +18,7 @@ class BoatList {
     this.status,
     this.startId, // Add this line
     this.endId, // Add this line
+    this.text,
   });
 
   BoatList.fromJson(Map<String, dynamic> json) {
@@ -33,6 +35,7 @@ class BoatList {
     status = json['status'];
     startId = json['start_id']; // Add this line
     endId = json['end_id']; // Add this line
+    text = json['text'];
   }
 
   Map<String, dynamic> toJson() {
@@ -47,6 +50,7 @@ class BoatList {
     data['status'] = status;
     data['start_id'] = startId; // Add this line
     data['end_id'] = endId; // Add this line
+    data['text'] = text;
     return data;
   }
 }

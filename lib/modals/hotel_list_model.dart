@@ -7,6 +7,7 @@ class HotelList {
   int? startId;
   int? endId;
   int? status;
+  String? text;
 
   HotelList(
       {this.data,
@@ -16,7 +17,8 @@ class HotelList {
       this.perPage,
       this.startId,
       this.endId,
-      this.status});
+      this.status,
+      this.text});
 
   HotelList.fromJson(Map<String, dynamic> json) {
     if (json['data'] != null) {
@@ -32,6 +34,7 @@ class HotelList {
     startId = json['start_id'];
     endId = json['end_id'];
     status = json['status'];
+    text = json['text'];
   }
 
   Map<String, dynamic> toJson() {
@@ -46,6 +49,7 @@ class HotelList {
     data['start_id'] = startId;
     data['end_id'] = endId;
     data['status'] = status;
+    data['text'] = text;
     return data;
   }
 }

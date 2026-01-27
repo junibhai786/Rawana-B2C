@@ -95,6 +95,9 @@ class _HomeScreenState extends State<HomeScreen>
   int _passengerCount = 1;
   String _departureCity = '';
   String _destinationCity = '';
+  // Store ONLY IATA codes - no location IDs
+  String? _departureIataCode;
+  String? _destinationIataCode;
 
   @override
   void dispose() {
@@ -107,8 +110,6 @@ class _HomeScreenState extends State<HomeScreen>
   final TextEditingController _fromCityController = TextEditingController();
   final TextEditingController _toCityController = TextEditingController();
   final ScrollController _cityScrollController = ScrollController();
-  final ScrollController _departureCityScrollController = ScrollController();
-  final ScrollController _destinationCityScrollController = ScrollController();
 
   // Form keys for validation
   final GlobalKey<FormState> _flightFormKey = GlobalKey<FormState>();
@@ -217,12 +218,10 @@ class _HomeScreenState extends State<HomeScreen>
         });
         break;
       case 6:
-        // ignore: use_build_context_synchronously
-        await Provider.of<FlightProvider>(context, listen: false)
-            .flightlistapi(index, searchParams: {}).then((_) {
-          setState(() {
-            isLoading = false;
-          });
+        // Flight search requires mandatory parameters, so skip auto-loading
+        // User must use the search form to initiate a search
+        setState(() {
+          isLoading = false;
         });
         break;
       case 7:
@@ -353,10 +352,11 @@ class _HomeScreenState extends State<HomeScreen>
     }
   }
 
-  void _showGuestSelector() {
-    showModalBottomSheet(
+  void _showGuestSelector() async {
+    final int? result = await showModalBottomSheet<int>(
       context: context,
       builder: (context) {
+        int tempGuestCount = _guestCount;
         return StatefulBuilder(
           builder: (context, setState) {
             return Container(
@@ -398,15 +398,15 @@ class _HomeScreenState extends State<HomeScreen>
                         children: [
                           IconButton(
                             icon: Icon(Icons.remove_circle_outline),
-                            onPressed: _guestCount > 1
+                            onPressed: tempGuestCount > 1
                                 ? () {
                                     setState(() {
-                                      _guestCount--;
+                                      tempGuestCount--;
                                     });
                                   }
                                 : null,
                           ),
-                          Text('$_guestCount',
+                          Text('$tempGuestCount',
                               style: GoogleFonts.spaceGrotesk(
                                 color: Colors.black,
                                 fontWeight: FontWeight.w700,
@@ -416,7 +416,7 @@ class _HomeScreenState extends State<HomeScreen>
                             icon: Icon(Icons.add_circle_outline),
                             onPressed: () {
                               setState(() {
-                                _guestCount++;
+                                tempGuestCount++;
                               });
                             },
                           ),
@@ -429,8 +429,7 @@ class _HomeScreenState extends State<HomeScreen>
                     width: double.infinity,
                     child: ElevatedButton(
                       onPressed: () {
-                        Navigator.pop(context);
-                        setState(() {});
+                        Navigator.pop(context, tempGuestCount);
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Color(0xFF05A8C7),
@@ -445,6 +444,12 @@ class _HomeScreenState extends State<HomeScreen>
         );
       },
     );
+
+    if (result != null) {
+      setState(() {
+        _guestCount = result;
+      });
+    }
   }
 
   void _cityScrollListener() {
@@ -452,34 +457,6 @@ class _HomeScreenState extends State<HomeScreen>
 
     if (_cityScrollController.position.pixels >=
             _cityScrollController.position.maxScrollExtent - 100 &&
-        homeProvider.hasMore &&
-        !homeProvider.isLoadingMore) {
-      homeProvider.fetchLocations(
-        page: homeProvider.currentPage + 1,
-        loadMore: true,
-      );
-    }
-  }
-
-  void _departureCityScrollListener() {
-    final homeProvider = context.read<HomeProvider>();
-
-    if (_departureCityScrollController.position.pixels >=
-            _departureCityScrollController.position.maxScrollExtent - 100 &&
-        homeProvider.hasMore &&
-        !homeProvider.isLoadingMore) {
-      homeProvider.fetchLocations(
-        page: homeProvider.currentPage + 1,
-        loadMore: true,
-      );
-    }
-  }
-
-  void _destinationCityScrollListener() {
-    final homeProvider = context.read<HomeProvider>();
-
-    if (_destinationCityScrollController.position.pixels >=
-            _destinationCityScrollController.position.maxScrollExtent - 100 &&
         homeProvider.hasMore &&
         !homeProvider.isLoadingMore) {
       homeProvider.fetchLocations(
@@ -584,6 +561,7 @@ class _HomeScreenState extends State<HomeScreen>
       },
     );
   }
+
   //Show city selection for hotel....
   // void _showCitySelection(BuildContext context) async {
   //   final homeProvider = context.read<HomeProvider>();
@@ -659,20 +637,11 @@ class _HomeScreenState extends State<HomeScreen>
   //     },
   //   );
   // }
-
-  void _showDepartureLocation(BuildContext context) async {
-    final homeProvider = context.read<HomeProvider>();
-
-    // Fetch first page if empty
-    if (homeProvider.locations.isEmpty) {
-      await homeProvider.fetchLocations(page: 1);
-    }
-
-    // Prevent duplicate listeners
-    _departureCityScrollController.removeListener(_departureCityScrollListener);
-
-    // Add pagination listener
-    _departureCityScrollController.addListener(_departureCityScrollListener);
+  /// Airporttttttttt
+  void _showAirportSelection(BuildContext context,
+      {required bool isDeparture}) {
+    final flightProvider = context.read<FlightProvider>();
+    flightProvider.clearAirportResults();
 
     showModalBottomSheet(
       context: context,
@@ -681,24 +650,30 @@ class _HomeScreenState extends State<HomeScreen>
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       builder: (_) {
-        return Consumer<HomeProvider>(
+        return Consumer<FlightProvider>(
           builder: (context, provider, _) {
             return Container(
               padding: const EdgeInsets.all(16),
-              height: MediaQuery.of(context).size.height * 0.7,
+              height: MediaQuery.of(context).size.height * 0.8,
               child: Column(
                 children: [
-                  const Text(
-                    'Select City or Destination',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  Text(
+                    isDeparture
+                        ? 'Select Departure Airport'.tr
+                        : 'Select Destination Airport'.tr,
+                    style: const TextStyle(
+                        fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 16),
 
                   /// 🔍 Search
                   TextField(
-                    onChanged: provider.filterLocations,
+                    autofocus: true,
+                    onChanged: (value) {
+                      provider.searchAirports(value);
+                    },
                     decoration: InputDecoration(
-                      hintText: 'Search city...',
+                      hintText: 'Search Airport or IATA code...'.tr,
                       prefixIcon: const Icon(Icons.search),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
@@ -708,139 +683,50 @@ class _HomeScreenState extends State<HomeScreen>
 
                   const SizedBox(height: 16),
 
-                  /// 📍 City list + pagination
+                  /// Result List
                   Expanded(
-                    child: provider.isLocationLoading &&
-                            provider.locations.isEmpty
+                    child: provider.isSearchingAirports
                         ? const Center(child: CircularProgressIndicator())
-                        : provider.filteredLocations.isEmpty
-                            ? const Center(child: Text('No locations found'))
+                        : (provider.airportResults.isEmpty &&
+                                provider.lastSearchKeyword.length >= 2)
+                            ? Center(
+                                child: Text("No airport found".tr),
+                              )
                             : ListView.builder(
-                                controller: _departureCityScrollController,
-                                itemCount: provider.filteredLocations.length +
-                                    (provider.isLoadingMore ? 1 : 0),
+                                itemCount: provider.airportResults.length,
                                 itemBuilder: (context, index) {
-                                  // Bottom loader
-                                  if (index ==
-                                      provider.filteredLocations.length) {
-                                    return const Padding(
-                                      padding: EdgeInsets.all(16),
-                                      child: Center(
-                                          child: CircularProgressIndicator()),
-                                    );
-                                  }
-
-                                  final city =
-                                      provider.filteredLocations[index];
+                                  final airport =
+                                      provider.airportResults[index];
+                                  final cityName =
+                                      airport.address?.cityName ?? '';
+                                  final iataCode = airport.iataCode ?? '';
+                                  final name = airport.name ?? '';
 
                                   return ListTile(
-                                    leading: const Icon(Icons.location_on),
-                                    title: Text(city.title ?? ''),
+                                    leading: const Icon(Icons.local_airport),
+                                    title: Text('$cityName ($iataCode)'),
+                                    subtitle: Text(name),
                                     onTap: () {
-                                      provider.selectDepartureCity(
-                                          city.title ?? '');
-                                      _fromCityController.text =
-                                          provider.departureCity;
-                                      fromWhereLocation = city.id;
-                                      Navigator.pop(context);
-                                    },
-                                  );
-                                },
-                              ),
-                  ),
-                ],
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
-
-  void _showDestinationLocation(BuildContext context) async {
-    final homeProvider = context.read<HomeProvider>();
-
-    // Fetch first page if empty
-    if (homeProvider.locations.isEmpty) {
-      await homeProvider.fetchLocations(page: 1);
-    }
-
-    // Prevent duplicate listeners
-    _destinationCityScrollController
-        .removeListener(_destinationCityScrollListener);
-
-    // Add pagination listener
-    _destinationCityScrollController
-        .addListener(_destinationCityScrollListener);
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (_) {
-        return Consumer<HomeProvider>(
-          builder: (context, provider, _) {
-            return Container(
-              padding: const EdgeInsets.all(16),
-              height: MediaQuery.of(context).size.height * 0.7,
-              child: Column(
-                children: [
-                  const Text(
-                    'Select City or Destination',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 16),
-
-                  /// 🔍 Search
-                  TextField(
-                    onChanged: provider.filterLocations,
-                    decoration: InputDecoration(
-                      hintText: 'Search city...',
-                      prefixIcon: const Icon(Icons.search),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  /// 📍 City list + pagination
-                  Expanded(
-                    child: provider.isLocationLoading &&
-                            provider.locations.isEmpty
-                        ? const Center(child: CircularProgressIndicator())
-                        : provider.filteredLocations.isEmpty
-                            ? const Center(child: Text('No locations found'))
-                            : ListView.builder(
-                                controller: _destinationCityScrollController,
-                                itemCount: provider.filteredLocations.length +
-                                    (provider.isLoadingMore ? 1 : 0),
-                                itemBuilder: (context, index) {
-                                  // Bottom loader
-                                  if (index ==
-                                      provider.filteredLocations.length) {
-                                    return const Padding(
-                                      padding: EdgeInsets.all(16),
-                                      child: Center(
-                                          child: CircularProgressIndicator()),
-                                    );
-                                  }
-
-                                  final city =
-                                      provider.filteredLocations[index];
-
-                                  return ListTile(
-                                    leading: const Icon(Icons.location_on),
-                                    title: Text(city.title ?? ''),
-                                    onTap: () {
-                                      provider.selectDestinationCity(
-                                          city.title ?? '');
-                                      _toCityController.text =
-                                          provider.destinationCity;
-                                      toWhereLocation = city.id;
+                                      setState(() {
+                                        if (isDeparture) {
+                                          _departureCity =
+                                              '$cityName ($iataCode)';
+                                          _departureIataCode = iataCode;
+                                          _fromCityController.text =
+                                              _departureCity;
+                                          // Debug log for FROM airport selection
+                                          print(
+                                              'FROM selected IATA: $iataCode');
+                                        } else {
+                                          _destinationCity =
+                                              '$cityName ($iataCode)';
+                                          _destinationIataCode = iataCode;
+                                          _toCityController.text =
+                                              _destinationCity;
+                                          // Debug log for TO airport selection
+                                          print('TO selected IATA: $iataCode');
+                                        }
+                                      });
                                       Navigator.pop(context);
                                     },
                                   );
@@ -920,7 +806,7 @@ class _HomeScreenState extends State<HomeScreen>
                 SizedBox(height: 4),
                 GestureDetector(
                   onTap: () {
-                    _showDepartureLocation(context);
+                    _showAirportSelection(context, isDeparture: true);
                   },
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.start,
@@ -929,15 +815,14 @@ class _HomeScreenState extends State<HomeScreen>
                         controller: _fromCityController,
                         readOnly: true,
                         onTap: () {
-                          _showDepartureLocation(context);
+                          _showAirportSelection(context, isDeparture: true);
                         },
                         validator: (value) {
                           if (value == null || value.trim().isEmpty) {
                             return 'Please select departure city'.tr;
                           }
-                          if (fromWhereLocation == null ||
-                              fromWhereLocation == 0) {
-                            return 'Please select a valid city'.tr;
+                          if (_departureIataCode == null) {
+                            return 'Please select a valid airport'.tr;
                           }
                           return null;
                         },
@@ -1006,7 +891,7 @@ class _HomeScreenState extends State<HomeScreen>
                 SizedBox(height: 4),
                 GestureDetector(
                   onTap: () {
-                    _showDestinationLocation(context);
+                    _showAirportSelection(context, isDeparture: false);
                   },
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.start,
@@ -1015,18 +900,18 @@ class _HomeScreenState extends State<HomeScreen>
                         controller: _toCityController,
                         readOnly: true,
                         onTap: () {
-                          _showDestinationLocation(context);
+                          _showAirportSelection(context, isDeparture: false);
                         },
                         validator: (value) {
                           if (value == null || value.trim().isEmpty) {
                             return 'Please select destination city'.tr;
                           }
-                          if (toWhereLocation == null || toWhereLocation == 0) {
-                            return 'Please select a valid city'.tr;
+                          if (_destinationIataCode == null) {
+                            return 'Please select a valid airport'.tr;
                           }
-                          if (fromWhereLocation != null &&
-                              toWhereLocation != null &&
-                              fromWhereLocation == toWhereLocation) {
+                          if (_departureIataCode != null &&
+                              _destinationIataCode != null &&
+                              _departureIataCode == _destinationIataCode) {
                             return 'Departure and destination must be different'
                                 .tr;
                           }
@@ -1374,32 +1259,91 @@ class _HomeScreenState extends State<HomeScreen>
                     return; // Block search if validation fails
                   }
 
-                  // You need to get the flight data from somewhere
-                  // For example, from a provider
+                  // Validate IATA codes
+                  if (_departureIataCode == null ||
+                      _destinationIataCode == null) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Please select valid airports'.tr),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                    return;
+                  }
+
+                  if (_departureIataCode == _destinationIataCode) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                            'Departure and destination must be different'.tr),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                    return;
+                  }
 
                   final flightProvider =
                       Provider.of<FlightProvider>(context, listen: false);
-                  flightProvider.flightlistapi(2, searchParams: {
-                    'from_where': fromWhereLocation,
-                    'to_where': toWhereLocation,
+
+                  // Build search parameters with IATA codes
+                  final searchParams = {
+                    'from_where': _departureIataCode,
+                    'to_where': _destinationIataCode,
                     'start': _flightDepartureDate,
-                    'end': _flightReturnDate,
-                    'children': _passengerCount,
-                  }).then((_) {
+                    if (_isRoundTrip && _flightReturnDate != null)
+                      'return_date': _flightReturnDate,
+                    'trip_search_type': _isRoundTrip ? 'round_trip' : 'one_way',
+                    'seat_type': {'adults': _passengerCount},
+                  };
+
+                  // Debug log before API call
+                  print('Flight Search Params: $searchParams');
+
+                  // Call flight search API
+                  flightProvider
+                      .flightlistapi(2, searchParams: searchParams)
+                      .then((result) {
+                    log('✈️ API Response Received');
+                    log('   Flight results: ${result?.data?.length ?? 0} flights');
+                    if (result == null ||
+                        result.data == null ||
+                        result.data!.isEmpty) {
+                      log('⚠️ WARNING: No flights found in response');
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content:
+                              Text('No flights found for selected route'.tr),
+                          backgroundColor: Colors.orange,
+                        ),
+                      );
+                    }
+                    setState(() {
+                      isLoading = false;
+                    });
+
+                    // Navigate after API response
+                    final flightList =
+                        flightProvider.flightListPerCategory[2] ?? FlightList();
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            FlightListItem(flightList: flightList),
+                      ),
+                    );
+                  }).catchError((error) {
+                    log('❌ Flight Search API Error: $error');
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content:
+                            Text('Flight search failed. Please try again.'.tr),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
                     setState(() {
                       isLoading = false;
                     });
                   });
-                  final flightList =
-                      flightProvider.flightListPerCategory[6] ?? FlightList();
-
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) =>
-                          FlightListItem(flightList: flightList),
-                    ),
-                  );
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Color(0xFF05A8C7),
@@ -1874,6 +1818,7 @@ class _HomeScreenState extends State<HomeScreen>
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     // SVG Search icon
+
                     SvgPicture.asset(
                       'assets/icons/search.svg', // Make sure you have this icon in your assets
                       width: 20,
@@ -2291,15 +2236,9 @@ class _HomeScreenState extends State<HomeScreen>
                         controller: homeProvider.tabController,
                         children: [
                           // Home tab (index 0)
-                          SingleChildScrollView(
-                            child: Column(
-                              children: [
-                                homeList == null
-                                    ? Center(child: CircularProgressIndicator())
-                                    : MixedItemList(homeList: homeList),
-                              ],
-                            ),
-                          ),
+                          homeList == null
+                              ? const Center(child: CircularProgressIndicator())
+                              : MixedItemList(homeList: homeList),
                           // Hotels tab (index 1)
                           SingleChildScrollView(
                             child: Column(
@@ -2450,6 +2389,10 @@ class _HomeScreenState extends State<HomeScreen>
     int itemCount = _getItemCount(index, homeProvider, boatProvider,
         tourProvider, spaceProvider, eventProvider, flightProvider);
 
+    // Get results text (Showing X-Y of Z)
+    String resultsText = _getResultsText(index, homeProvider, boatProvider,
+        tourProvider, spaceProvider, eventProvider, flightProvider);
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 8.0),
       child: Row(
@@ -2477,15 +2420,17 @@ class _HomeScreenState extends State<HomeScreen>
                       color: kPrimaryColor,
                     ),
                   ),
-                // SizedBox(height: 4),
-                // Text(
-                //   '${'Showing'.tr} ${_getStartId(index, homeProvider, boatProvider, tourProvider, spaceProvider, eventProvider, flightProvider)} - ${_getEndId(index, homeProvider, boatProvider, tourProvider, spaceProvider, eventProvider, flightProvider)} ${'of'.tr} $itemCount ${'items'.tr}',
-                //   style: GoogleFonts.spaceGrotesk(
-                //     color: grey,
-                //     fontSize: 12,
-                //     fontWeight: FontWeight.w400,
-                //   ),
-                // ),
+                if (resultsText.isNotEmpty) ...[
+                  SizedBox(height: 2),
+                  Text(
+                    resultsText,
+                    style: GoogleFonts.spaceGrotesk(
+                      color: Colors.grey,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w400,
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
@@ -2746,21 +2691,49 @@ class _HomeScreenState extends State<HomeScreen>
       FlightProvider flightProvider) {
     switch (index) {
       case 1:
-        return homeProvider.hotelListPerCategory[index]?.data?.length ?? 0;
+        return homeProvider.hotelListPerCategory[index]?.total ?? 0;
       case 2:
-        return tourProvider.tourListPerCategory[index]?.data?.length ?? 0;
+        return tourProvider.tourListPerCategory[index]?.total ?? 0;
       case 3:
-        return spaceProvider.spaceListPerCategory[index]?.data?.length ?? 0;
+        return spaceProvider.spaceListPerCategory[index]?.total ?? 0;
       case 4:
-        return homeProvider.carListPerCategory[index]?.data?.length ?? 0;
+        return homeProvider.carListPerCategory[index]?.total ?? 0;
       case 5:
-        return eventProvider.eventListPerCategory[index]?.data?.length ?? 0;
+        return eventProvider.eventListPerCategory[index]?.total ?? 0;
       case 6:
         return flightProvider.flightListPerCategory[index]?.data?.length ?? 0;
       case 7:
-        return boatProvider.boatListPerCategory[index]?.data?.length ?? 0;
+        return boatProvider.boatListPerCategory[index]?.total ?? 0;
       default:
         return 0;
+    }
+  }
+
+  String _getResultsText(
+      int index,
+      HomeProvider homeProvider,
+      BoatProvider boatProvider,
+      TourProvider tourProvider,
+      SpaceProvider spaceProvider,
+      EventProvider eventProvider,
+      FlightProvider flightProvider) {
+    switch (index) {
+      case 1:
+        return homeProvider.hotelListPerCategory[index]?.text ?? '';
+      case 2:
+        return tourProvider.tourListPerCategory[index]?.text ?? '';
+      case 3:
+        return spaceProvider.spaceListPerCategory[index]?.text ?? '';
+      case 4:
+        return homeProvider.carListPerCategory[index]?.text ?? '';
+      case 5:
+        return eventProvider.eventListPerCategory[index]?.text ?? '';
+      case 6:
+        return '';
+      case 7:
+        return boatProvider.boatListPerCategory[index]?.text ?? '';
+      default:
+        return '';
     }
   }
 
@@ -2784,7 +2757,7 @@ class _HomeScreenState extends State<HomeScreen>
       case 5:
         return eventProvider.eventListPerCategory[index]?.startId ?? 1;
       case 6:
-        return flightProvider.flightListPerCategory[index]?.startId ?? 1;
+        return 1;
       case 7:
         return boatProvider.boatListPerCategory[index]?.startId ?? 1;
       default:
@@ -2812,7 +2785,7 @@ class _HomeScreenState extends State<HomeScreen>
       case 5:
         return eventProvider.eventListPerCategory[index]?.endId ?? 1;
       case 6:
-        return flightProvider.flightListPerCategory[index]?.endId ?? 1;
+        return flightProvider.flightListPerCategory[index]?.data?.length ?? 0;
       case 7:
         return boatProvider.boatListPerCategory[index]?.endId ?? 1;
       default:
@@ -2984,13 +2957,58 @@ class OfferCarousel extends StatelessWidget {
   }
 }
 
-class MixedItemList extends StatelessWidget {
+class MixedItemList extends StatefulWidget {
   final home_item.HomeList homeList;
 
-  const MixedItemList({Key? key, required this.homeList}) : super(key: key);
+  const MixedItemList({super.key, required this.homeList});
+
+  @override
+  State<MixedItemList> createState() => _MixedItemListState();
+}
+
+class _MixedItemListState extends State<MixedItemList> {
+  late ScrollController _scrollController;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController = ScrollController();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (_scrollController.hasClients) {
+      final maxScroll = _scrollController.position.maxScrollExtent;
+      final currentScroll = _scrollController.position.pixels;
+
+      if (currentScroll >= maxScroll - 200) {
+        final provider = context.read<HomeProvider>();
+        // Index 0 for Home
+        if (!provider.isHomeLoadingMore(0)) {
+          print("⚡ SCROLL LISTENER FIRED: Loading more home blocks...");
+          provider.fetchNextHomePage(0);
+        }
+      }
+    }
+  }
+
+  Future<void> _onRefresh() async {
+    await context.read<HomeProvider>().resetHomePagination(0);
+  }
 
   @override
   Widget build(BuildContext context) {
+    final homeList = widget.homeList;
+    final isLoadingMore =
+        context.select<HomeProvider, bool>((p) => p.isHomeLoadingMore(0));
+
     print(
         "BLOCK TYPE => MixedItemList build with ${homeList.items.length} items");
 
@@ -3060,63 +3078,87 @@ class MixedItemList extends StatelessWidget {
       print(
           "IMAGE URL => ${location.imgUrl ?? location.bannerImgUrl ?? 'null'}");
     }
-
-    return SingleChildScrollView(
-      child: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (hotelItems.isNotEmpty)
-              _buildCategorySection(
-                "Bestseller Listing".tr,
-                "Hotels highly rated for thoughtful design".tr,
-                hotelItems,
-                context,
-              ),
-            if (tourItems.isNotEmpty)
-              _buildCategorySection(
-                "Our Best Promotion Tours".tr,
-                "Most popular destinations".tr,
-                tourItems,
-                context,
-              ),
-            if (spaceItems.isNotEmpty)
-              _buildCategorySection(
-                "Rental Listing".tr,
-                "Homes highly rated for thoughtful design".tr,
-                spaceItems,
-                context,
-              ),
-            if (carItems.isNotEmpty)
-              _buildCategorySection(
-                "Car Trending".tr,
-                "Book incredible things to do around the world".tr,
-                carItems,
-                context,
-              ),
-            if (boatItems.isNotEmpty)
-              _buildCategorySection(
-                "Boat Listing".tr,
-                "Book incredible things to do around the world".tr,
-                boatItems,
-                context,
-              ),
-            if (eventItems.isNotEmpty)
-              _buildCategorySection(
-                "Event Listing".tr,
-                "Explore exciting events near you".tr,
-                eventItems,
-                context,
-              ),
-            if (locationItems.isNotEmpty)
-              _buildCategorySection(
-                "Top Destinations".tr,
-                "Hotel highly rated for thoughtful design".tr,
-                locationItems,
-                context,
-              ),
-          ],
+    return RefreshIndicator(
+      onRefresh: _onRefresh,
+      child: SingleChildScrollView(
+        controller: _scrollController,
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (hotelItems.isNotEmpty)
+                _buildCategorySection(
+                  "Bestseller Listing".tr,
+                  "Hotels highly rated for thoughtful design".tr,
+                  hotelItems,
+                  context,
+                ),
+              if (tourItems.isNotEmpty)
+                _buildCategorySection(
+                  "Our Best Promotion Tours".tr,
+                  "Most popular destinations".tr,
+                  tourItems,
+                  context,
+                ),
+              if (spaceItems.isNotEmpty)
+                _buildCategorySection(
+                  "Rental Listing".tr,
+                  "Homes highly rated for thoughtful design".tr,
+                  spaceItems,
+                  context,
+                ),
+              if (carItems.isNotEmpty)
+                _buildCategorySection(
+                  "Car Trending".tr,
+                  "Book incredible things to do around the world".tr,
+                  carItems,
+                  context,
+                ),
+              if (boatItems.isNotEmpty)
+                _buildCategorySection(
+                  "Boat Listing".tr,
+                  "Book incredible things to do around the world".tr,
+                  boatItems,
+                  context,
+                ),
+              if (eventItems.isNotEmpty)
+                _buildCategorySection(
+                  "Event Listing".tr,
+                  "Explore exciting events near you".tr,
+                  eventItems,
+                  context,
+                ),
+              if (locationItems.isNotEmpty)
+                _buildCategorySection(
+                  "Top Destinations".tr,
+                  "Hotel highly rated for thoughtful design".tr,
+                  locationItems,
+                  context,
+                ),
+              if (isLoadingMore)
+                const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(24.0),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        CircularProgressIndicator(
+                          color: Colors.red,
+                          strokeWidth: 4,
+                        ),
+                        SizedBox(height: 8),
+                        Text("Loading more content...",
+                            style: TextStyle(
+                                color: Colors.red,
+                                fontWeight: FontWeight.bold)),
+                      ],
+                    ),
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
     );
@@ -3241,7 +3283,7 @@ class MixedItemList extends StatelessWidget {
             context,
             MaterialPageRoute(
                 builder: (context) => FlightDetailsScreen(
-                      flightId: item.item.id,
+                      flightId: int.tryParse(item.item.id ?? '0') ?? 0,
                     )),
           ),
         );
@@ -3268,41 +3310,54 @@ class MixedItemList extends StatelessWidget {
 
 // property list
 
-class PropertyList extends StatelessWidget {
+class HotelListItem extends StatelessWidget {
   final HotelList hotelList;
 
-  const PropertyList({super.key, required this.hotelList});
+  const HotelListItem({super.key, required this.hotelList});
+
+  Future<void> _onRefresh(BuildContext context) async {
+    await context.read<HomeProvider>().hotellistapi(1, searchParams: {});
+  }
 
   @override
   Widget build(BuildContext context) {
+    final hotelDataList = hotelList.data ?? [];
+
     return Column(
       children: [
         Expanded(
-          child: ListView.builder(
-            padding: const EdgeInsets.only(
-              left: 20,
-              right: 20,
-              top: 20,
-            ),
-            scrollDirection: Axis.vertical,
-            shrinkWrap: true,
-            itemCount: hotelList.data?.length,
-            itemBuilder: (context, index) {
-              var propertyData = PropertyData.fromHotel(hotelList.data![index]);
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 32.0),
-                child: PropertyItem(
-                  dataSrc: propertyData,
-                  press: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) =>
-                          RoomDetailScreen(hotelId: propertyData.id),
-                    ),
+          child: RefreshIndicator(
+            onRefresh: () => _onRefresh(context),
+            child: ListView.builder(
+              padding: const EdgeInsets.only(
+                left: 20,
+                right: 20,
+                top: 20,
+                bottom: 20,
+              ),
+              physics: const AlwaysScrollableScrollPhysics(),
+              itemCount: hotelDataList.length,
+              itemBuilder: (context, index) {
+                final hotel = hotelDataList[index];
+                final propertyData = PropertyData.fromHotel(hotel);
+
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 32.0),
+                  child: PropertyItem(
+                    dataSrc: propertyData,
+                    press: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              RoomDetailScreen(hotelId: propertyData.id),
+                        ),
+                      );
+                    },
                   ),
-                ),
-              );
-            },
+                );
+              },
+            ),
           ),
         ),
       ],
@@ -3310,42 +3365,116 @@ class PropertyList extends StatelessWidget {
   }
 }
 
-class CarListItem extends StatelessWidget {
+class CarListItem extends StatefulWidget {
   final CarList carList;
 
   const CarListItem({super.key, required this.carList});
 
   @override
+  State<CarListItem> createState() => _CarListItemState();
+}
+
+class _CarListItemState extends State<CarListItem> {
+  late ScrollController _scrollController;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController = ScrollController();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (_scrollController.hasClients) {
+      final maxScroll = _scrollController.position.maxScrollExtent;
+      final currentScroll = _scrollController.position.pixels;
+
+      if (currentScroll >= maxScroll - 200) {
+        final provider = context.read<HomeProvider>();
+        // Index 4 for Cars in HomeScreen
+        if (!provider.isCarLoadingMore(4)) {
+          print("⚡ SCROLL LISTENER FIRED: Loading more cars...");
+          provider.fetchNextCarPage(4);
+        }
+      }
+    }
+  }
+
+  Future<void> _onRefresh() async {
+    await context.read<HomeProvider>().resetCarPagination(4);
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final carDataList = widget.carList.data ?? [];
+    final isLoadingMore =
+        context.select<HomeProvider, bool>((p) => p.isCarLoadingMore(4));
+
     return Column(
       children: [
         Expanded(
-          child: ListView.builder(
-            padding: const EdgeInsets.only(
-              left: 20,
-              right: 20,
-              top: 20,
-            ),
-            scrollDirection: Axis.vertical,
-            shrinkWrap: true,
-            itemCount: carList.data?.length,
-            itemBuilder: (context, index) {
-              var carData = CarData.fromCar(carList.data![index]);
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 32.0),
-                child: CarDataItem(
+          child: RefreshIndicator(
+            onRefresh: _onRefresh,
+            child: ListView.builder(
+              controller: _scrollController,
+              padding: const EdgeInsets.only(
+                left: 20,
+                right: 20,
+                top: 20,
+                bottom: 20,
+              ),
+              physics: const AlwaysScrollableScrollPhysics(),
+              itemCount: carDataList.length + (isLoadingMore ? 1 : 0),
+              itemBuilder: (context, index) {
+                if (index >= carDataList.length) {
+                  return const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(24.0),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          CircularProgressIndicator(
+                            color: Colors.red,
+                            strokeWidth: 4,
+                          ),
+                          SizedBox(height: 8),
+                          Text("Loading more cars...",
+                              style: TextStyle(
+                                  color: Colors.red,
+                                  fontWeight: FontWeight.bold)),
+                        ],
+                      ),
+                    ),
+                  );
+                }
+
+                final rawCar = carDataList[index];
+                final carData = CarData.fromCar(rawCar);
+
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 32.0),
+                  child: CarDataItem(
                     dataSrc: carData,
                     press: () {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => CarRentalDetailsScreen(
-                              carId: carList.data?[index].id ?? 0),
+                          builder: (context) =>
+                              CarRentalDetailsScreen(carId: rawCar.id ?? 0),
                         ),
                       );
-                    }),
-              );
-            },
+                    },
+                  ),
+                );
+              },
+            ),
           ),
         ),
       ],
@@ -3353,50 +3482,116 @@ class CarListItem extends StatelessWidget {
   }
 }
 
-class EventListItem extends StatelessWidget {
+class EventListItem extends StatefulWidget {
   final EventList eventList;
 
   const EventListItem({super.key, required this.eventList});
 
   @override
+  State<EventListItem> createState() => _EventListItemState();
+}
+
+class _EventListItemState extends State<EventListItem> {
+  late ScrollController _scrollController;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController = ScrollController();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (_scrollController.hasClients) {
+      final maxScroll = _scrollController.position.maxScrollExtent;
+      final currentScroll = _scrollController.position.pixels;
+
+      if (currentScroll >= maxScroll - 200) {
+        final provider = context.read<EventProvider>();
+        // Index 5 for Events
+        if (!provider.isLoadingMore(5)) {
+          print("⚡ SCROLL LISTENER FIRED: Loading more events...");
+          provider.fetchNextPage(5);
+        }
+      }
+    }
+  }
+
+  Future<void> _onRefresh() async {
+    await context.read<EventProvider>().resetPagination(5);
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final eventDataList = widget.eventList.data ?? [];
+    final isLoadingMore =
+        context.select<EventProvider, bool>((p) => p.isLoadingMore(5));
+
     return Column(
       children: [
         Expanded(
-          child: ListView.builder(
-            padding: const EdgeInsets.only(
-              left: 20,
-              right: 20,
-              top: 20,
-            ),
-            itemCount: eventList.data?.length ?? 0,
-            itemBuilder: (context, index) {
-              final rawEvent = eventList.data?[index];
-
-              // ✅ Extra safety
-              if (rawEvent == null) {
-                return const SizedBox.shrink();
-              }
-
-              final eventData = EvenData.fromEvent(rawEvent);
-
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 32.0),
-                child: EventItem(
-                  dataSrc: eventData,
-                  press: () {
-                    log("go to event".tr);
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => EventsDetailsScreen(
-                          eventId: rawEvent.id ?? 0,
-                        ),
+          child: RefreshIndicator(
+            onRefresh: _onRefresh,
+            child: ListView.builder(
+              controller: _scrollController,
+              padding: const EdgeInsets.only(
+                left: 20,
+                right: 20,
+                top: 20,
+                bottom: 20,
+              ),
+              physics: const AlwaysScrollableScrollPhysics(),
+              itemCount: eventDataList.length + (isLoadingMore ? 1 : 0),
+              itemBuilder: (context, index) {
+                if (index >= eventDataList.length) {
+                  return const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(24.0),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          CircularProgressIndicator(
+                            color: Colors.red,
+                            strokeWidth: 4,
+                          ),
+                          SizedBox(height: 8),
+                          Text("Loading more events...",
+                              style: TextStyle(
+                                  color: Colors.red,
+                                  fontWeight: FontWeight.bold)),
+                        ],
                       ),
-                    );
-                  },
-                ),
-              );
-            },
+                    ),
+                  );
+                }
+
+                final rawEvent = eventDataList[index];
+                final eventData = EvenData.fromEvent(rawEvent);
+
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 32.0),
+                  child: EventItem(
+                    dataSrc: eventData,
+                    press: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => EventsDetailsScreen(
+                            eventId: rawEvent.id ?? 0,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                );
+              },
+            ),
           ),
         )
       ],
@@ -3487,44 +3682,116 @@ class _PropertyItemState extends State<PropertyItem> {
   }
 }
 
-class TourListItem extends StatelessWidget {
+class TourListItem extends StatefulWidget {
   final TourList tourList;
 
   const TourListItem({super.key, required this.tourList});
 
   @override
+  State<TourListItem> createState() => _TourListItemState();
+}
+
+class _TourListItemState extends State<TourListItem> {
+  late ScrollController _scrollController;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController = ScrollController();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (_scrollController.hasClients) {
+      final maxScroll = _scrollController.position.maxScrollExtent;
+      final currentScroll = _scrollController.position.pixels;
+
+      if (currentScroll >= maxScroll - 200) {
+        final provider = context.read<TourProvider>();
+        // 2 is the index for Tours in HomeScreen
+        if (!provider.isLoadingMore(2)) {
+          print("⚡ SCROLL LISTENER FIRED: Loading more tours...");
+          provider.fetchNextPage(2);
+        }
+      }
+    }
+  }
+
+  Future<void> _onRefresh() async {
+    await context.read<TourProvider>().resetPagination(2);
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final tourDataList = widget.tourList.data;
+    final isLoadingMore =
+        context.select<TourProvider, bool>((p) => p.isLoadingMore(2));
+
+    if (tourDataList == null || tourDataList.isEmpty) {
+      return Center(child: Text("No tours found".tr));
+    }
+
     return Column(
       children: [
         Expanded(
-          child: ListView.builder(
-            padding: const EdgeInsets.only(
-              left: 20,
-              right: 20,
-              top: 20,
-            ),
-            scrollDirection: Axis.vertical,
-            shrinkWrap: true,
-            itemCount: tourList.data?.length,
-            itemBuilder: (context, index) {
-              if (tourList.data == null || tourList.data!.isEmpty) {
-                return const SizedBox.shrink();
-              }
+          //........
+          child: RefreshIndicator(
+            onRefresh: _onRefresh,
+            child: ListView.builder(
+              controller: _scrollController,
+              padding: const EdgeInsets.only(
+                left: 20,
+                right: 20,
+                top: 20,
+                bottom: 20, // Add bottom padding
+              ),
+              physics: const AlwaysScrollableScrollPhysics(),
+              itemCount: tourDataList.length + (isLoadingMore ? 1 : 0),
+              itemBuilder: (context, index) {
+                if (index >= tourDataList.length) {
+                  return const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(24.0),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          CircularProgressIndicator(
+                            color: Colors.red, // Bright color for debugging
+                            strokeWidth: 4,
+                          ),
+                          SizedBox(height: 8),
+                          Text("Loading more items...",
+                              style: TextStyle(
+                                  color: Colors.red,
+                                  fontWeight: FontWeight.bold)),
+                        ],
+                      ),
+                    ),
+                  );
+                }
 
-              var tourData = TourData.fromTour(tourList.data![index]);
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 32.0),
-                child: TourItem(
-                  dataSrc: tourData,
-                  press: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => TourPage(tourId: tourData.id!),
+                var tourData = TourData.fromTour(tourDataList[index]);
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 32.0),
+                  child: TourItem(
+                    dataSrc: tourData,
+                    press: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => TourPage(tourId: tourData.id!),
+                      ),
                     ),
                   ),
-                ),
-              );
-            },
+                );
+              },
+            ),
           ),
         ),
       ],
@@ -3532,42 +3799,117 @@ class TourListItem extends StatelessWidget {
   }
 }
 
-class SpaceListItem extends StatelessWidget {
+class SpaceListItem extends StatefulWidget {
   final SpaceList spaceList;
 
   const SpaceListItem({super.key, required this.spaceList});
 
   @override
+  State<SpaceListItem> createState() => _SpaceListItemState();
+}
+
+class _SpaceListItemState extends State<SpaceListItem> {
+  late ScrollController _scrollController;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController = ScrollController();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (_scrollController.hasClients) {
+      final maxScroll = _scrollController.position.maxScrollExtent;
+      final currentScroll = _scrollController.position.pixels;
+
+      if (currentScroll >= maxScroll - 200) {
+        final provider = context.read<SpaceProvider>();
+        // Index 3 for Spaces
+        if (!provider.isLoadingMore(3)) {
+          print("⚡ SCROLL LISTENER FIRED: Loading more spaces...");
+          provider.fetchNextPage(3);
+        }
+      }
+    }
+  }
+
+  Future<void> _onRefresh() async {
+    await context.read<SpaceProvider>().resetPagination(3);
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final spaceDataList = widget.spaceList.data;
+    final isLoadingMore =
+        context.select<SpaceProvider, bool>((p) => p.isLoadingMore(3));
+
     return Column(
       children: [
         Expanded(
-          child: ListView.builder(
-            padding: const EdgeInsets.only(
-              left: 20,
-              right: 20,
-              top: 20,
-            ),
-            scrollDirection: Axis.vertical,
-            shrinkWrap: true,
-            itemCount: spaceList.data?.length,
-            itemBuilder: (context, index) {
-              var spaceData = SpaceData.fromSpace(spaceList.data![index]);
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 32.0),
-                child: SpaceItem(
-                  dataSrc: spaceData,
-                  press: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => SpacePage(
-                        spaceId: spaceData.id!,
+          child: RefreshIndicator(
+            onRefresh: _onRefresh,
+            child: ListView.builder(
+              controller: _scrollController,
+              padding: const EdgeInsets.only(
+                left: 20,
+                right: 20,
+                top: 20,
+                bottom: 20,
+              ),
+              physics: const AlwaysScrollableScrollPhysics(),
+              itemCount: (spaceDataList?.length ?? 0) + (isLoadingMore ? 1 : 0),
+              itemBuilder: (context, index) {
+                if (spaceDataList == null || spaceDataList.isEmpty) {
+                  return const SizedBox.shrink();
+                }
+
+                if (index >= spaceDataList.length) {
+                  return const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(24.0),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          CircularProgressIndicator(
+                            color: Colors.red,
+                            strokeWidth: 4,
+                          ),
+                          SizedBox(height: 8),
+                          Text("Loading more spaces...",
+                              style: TextStyle(
+                                  color: Colors.red,
+                                  fontWeight: FontWeight.bold)),
+                        ],
+                      ),
+                    ),
+                  );
+                }
+
+                var spaceData = SpaceData.fromSpace(spaceDataList[index]);
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 32.0),
+                  child: SpaceItem(
+                    dataSrc: spaceData,
+                    press: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => SpacePage(
+                          spaceId: spaceData.id!,
+                        ),
                       ),
                     ),
                   ),
-                ),
-              );
-            },
+                );
+              },
+            ),
           ),
         ),
       ],
@@ -3575,47 +3917,118 @@ class SpaceListItem extends StatelessWidget {
   }
 }
 
-class BoatListItem extends StatelessWidget {
+class BoatListItem extends StatefulWidget {
   final BoatList boatList;
 
   const BoatListItem({super.key, required this.boatList});
 
   @override
+  State<BoatListItem> createState() => _BoatListItemState();
+}
+
+class _BoatListItemState extends State<BoatListItem> {
+  late ScrollController _scrollController;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController = ScrollController();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (_scrollController.hasClients) {
+      final maxScroll = _scrollController.position.maxScrollExtent;
+      final currentScroll = _scrollController.position.pixels;
+
+      if (currentScroll >= maxScroll - 200) {
+        final provider = context.read<BoatProvider>();
+        // Index 7 for Boats in HomeScreen
+        if (!provider.isLoadingMore(7)) {
+          print("⚡ SCROLL LISTENER FIRED: Loading more boats...");
+          provider.fetchNextPage(7);
+        }
+      }
+    }
+  }
+
+  Future<void> _onRefresh() async {
+    await context.read<BoatProvider>().resetPagination(7);
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final boatDataList = widget.boatList.data;
+    final isLoadingMore =
+        context.select<BoatProvider, bool>((p) => p.isLoadingMore(7));
+
     return Column(
       children: [
         Expanded(
-          child: ListView.builder(
-            padding: const EdgeInsets.only(
-              left: 20,
-              right: 20,
-              top: 20,
-            ),
-            scrollDirection: Axis.vertical,
-            shrinkWrap: true,
-            itemCount: boatList.data?.length,
-            itemBuilder: (context, index) {
-              final list = boatList.data;
-              if (list == null || list.isEmpty || index >= list.length) {
-                return const SizedBox.shrink();
-              }
+          child: RefreshIndicator(
+            onRefresh: _onRefresh,
+            child: ListView.builder(
+              controller: _scrollController,
+              padding: const EdgeInsets.only(
+                left: 20,
+                right: 20,
+                top: 20,
+                bottom: 20,
+              ),
+              physics: const AlwaysScrollableScrollPhysics(),
+              itemCount: (boatDataList?.length ?? 0) + (isLoadingMore ? 1 : 0),
+              itemBuilder: (context, index) {
+                final list = boatDataList;
+                if (list == null || list.isEmpty) {
+                  return const SizedBox.shrink();
+                }
 
-              final boatData = BoatData.fromBoat(list[index]);
+                if (index >= list.length) {
+                  return const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(24.0),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          CircularProgressIndicator(
+                            color: Colors.red,
+                            strokeWidth: 4,
+                          ),
+                          SizedBox(height: 8),
+                          Text("Loading more boats...",
+                              style: TextStyle(
+                                  color: Colors.red,
+                                  fontWeight: FontWeight.bold)),
+                        ],
+                      ),
+                    ),
+                  );
+                }
 
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 32.0),
-                child: BoatItem(
-                  dataSrc: boatData,
-                  press: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => BoatDetailsScreen(
-                              boatId: boatList.data![index].id ?? 1,
-                            )),
+                final boatData = BoatData.fromBoat(list[index]);
+
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 32.0),
+                  child: BoatItem(
+                    dataSrc: boatData,
+                    press: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => BoatDetailsScreen(
+                                boatId: widget.boatList.data![index].id ?? 1,
+                              )),
+                    ),
                   ),
-                ),
-              );
-            },
+                );
+              },
+            ),
           ),
         ),
       ],
@@ -3640,7 +4053,7 @@ class FlightListItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final flights = flightList.data ?? [];
-    final totalFlights = flightList.total ?? flights.length;
+    final totalFlights = flights.length;
 
     return Scaffold(
       appBar: AppBar(
@@ -3727,6 +4140,12 @@ class FlightListItem extends StatelessWidget {
                     itemCount: flights.length,
                     itemBuilder: (context, index) {
                       final flight = flights[index];
+                      // Get first flight detail for display
+                      final firstDetail =
+                          flight.flightDetails?.isNotEmpty == true
+                              ? flight.flightDetails!.first
+                              : null;
+
                       return Padding(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 16,
@@ -3734,18 +4153,18 @@ class FlightListItem extends StatelessWidget {
                         ),
                         child: buildPropertyCard(
                           context: context,
-                          images: flight.airlineImageUrl != null
-                              ? [flight.airlineImageUrl!]
+                          images: firstDetail?.airlineLogo != null
+                              ? [firstDetail!.airlineLogo!]
                               : [],
-                          title: flight.title ?? 'Flight ${flight.code ?? ''}',
-                          subtitle: flight.airline?.name ?? 'Airline',
-                          rating: flight.reviewScore != null
-                              ? double.tryParse(flight.reviewScore!) ?? 0.0
-                              : 0.0,
+                          title:
+                              '${firstDetail?.depIata ?? ''} to ${firstDetail?.arrIata ?? ''}',
+                          subtitle:
+                              '${firstDetail?.airlineCode ?? ''} ${firstDetail?.flightNumber ?? ''}',
+                          rating: 0.0,
                           reviewCount: 0,
                           reviewText: '',
-                          price: flight.minPrice != null
-                              ? double.tryParse(flight.minPrice!) ?? 0.0
+                          price: flight.totalPrice != null
+                              ? double.tryParse(flight.totalPrice!) ?? 0.0
                               : 0.0,
                           isWishlist: false,
                           isFeatured: false,
@@ -3754,13 +4173,13 @@ class FlightListItem extends StatelessWidget {
                             context,
                             MaterialPageRoute(
                               builder: (context) => FlightDetailsScreen(
-                                flightId: flight.id ?? 0,
+                                flightId: int.tryParse(flight.id ?? '0') ?? 0,
                               ),
                             ),
                           ),
                           onWishlistTap: null,
                           type: 'flight',
-                          id: flight.id?.toString() ?? '0',
+                          id: flight.id ?? '0',
                           badgeText: 'FLIGHT',
                           badgeColor: Colors.blueAccent,
                           priceSuffix: '',

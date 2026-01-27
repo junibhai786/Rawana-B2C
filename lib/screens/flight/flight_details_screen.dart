@@ -1,4 +1,3 @@
-
 import 'package:flutter_svg/svg.dart';
 import 'package:moonbnd/Provider/flight_provider.dart';
 import 'package:moonbnd/screens/auth/signin_screen.dart';
@@ -36,6 +35,17 @@ class _FlightDetailsState extends State<FlightDetailsScreen> {
     Provider.of<FlightProvider>(context, listen: false)
         .fetchFlightDetails(widget.flightId)
         .then((_) {
+      // Initialize GlobalKeys after fetching flight details
+      final flightData = Provider.of<FlightProvider>(context, listen: false)
+          .flightDetail
+          ?.data;
+      flightData?.flightSeat?.forEach((seat) {
+        // Use seat ID to ensure unique keys
+        final seatKey = 'seat_${seat.id}';
+        if (!_ticketKeys.containsKey(seatKey)) {
+          _ticketKeys[seatKey] = GlobalKey<_AirlineTicketBookingState>();
+        }
+      });
       setState(() {
         loading = false;
       });
@@ -53,8 +63,7 @@ class _FlightDetailsState extends State<FlightDetailsScreen> {
         flightData?.flightSeat?.forEach((seat) {
           double seatPrice = double.tryParse(seat.price ?? '0.0') ?? 0.0;
           int passengerCount =
-              _ticketKeys[seat.seatType?.name ?? '']?.currentState?._number ??
-                  0;
+              _ticketKeys['seat_${seat.id}']?.currentState?._number ?? 0;
           totalPrice += seatPrice * passengerCount;
         });
       });
@@ -97,7 +106,7 @@ class _FlightDetailsState extends State<FlightDetailsScreen> {
     List<Map<String, dynamic>> flightSeats = [];
 
     flightData.flightSeat?.forEach((seat) {
-      final seatKey = _ticketKeys[seat.seatType?.name ?? ''];
+      final seatKey = _ticketKeys['seat_${seat.id}'];
       final number = seatKey?.currentState?._number ?? 0;
 
       if (number > 0) {
@@ -155,14 +164,6 @@ class _FlightDetailsState extends State<FlightDetailsScreen> {
     final item = Provider.of<FlightProvider>(context, listen: true);
     final flightData = item.flightDetail?.data;
 
-    // Initialize keys for each seat type
-    flightData?.flightSeat?.forEach((seat) {
-      final seatName = seat.seatType?.name ?? '';
-      if (!_ticketKeys.containsKey(seatName)) {
-        _ticketKeys[seatName] = GlobalKey<_AirlineTicketBookingState>();
-      }
-    });
-
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.transparent,
@@ -175,9 +176,7 @@ class _FlightDetailsState extends State<FlightDetailsScreen> {
               height: 32,
               width: 32,
               decoration: BoxDecoration(
-                color: Colors.grey.shade200,
-                shape: BoxShape.circle
-              ),
+                  color: Colors.grey.shade200, shape: BoxShape.circle),
               child: Icon(
                 Icons.arrow_back_ios_new,
                 color: Colors.black,
@@ -190,193 +189,198 @@ class _FlightDetailsState extends State<FlightDetailsScreen> {
       body: loading
           ? Center(child: CircularProgressIndicator(color: kSecondaryColor))
           : SafeArea(
-        child: Column(
-          children: [
-            Expanded(
-              child: SingleChildScrollView(
-                padding: EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-
-                    Padding(
-                      padding: const EdgeInsets.only(left: 16),
-                      child: Align(
-                        alignment: Alignment.centerLeft,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start, // Make sure text aligns left
-                          children: [
-                            Text(
-                              item.flightDetail?.data?.title ?? "",
-                              style: GoogleFonts.spaceGrotesk(fontSize: 24, fontWeight: FontWeight.bold),
-                            ),
-                            Text(
-                              item.flightDetail?.data?.code ?? "",
-                              style: GoogleFonts.spaceGrotesk(fontSize: 24, fontWeight: FontWeight.bold),
-                            ),
-                            SizedBox(height: 10),
-                            Row(
-                              children: [
-                                SvgPicture.asset(
-                                  'assets/icons/location.svg',
-                                  width: 16,
-                                  height: 16,
-                                  color: Color(0xff65758B),
-                                ),
-                                SizedBox(width: 8),
-                                Expanded(
-                                  child:  Text(item.flightDetail?.data?.airline?.name ?? "",
-                                      style: GoogleFonts.spaceGrotesk(color: Colors.grey)),
-                                ),
-                              ],
-                            ),
-                            SizedBox(height: 10),
-                            Text(
-                              '${item.flightDetail?.data?.reviewScore ?? 0} Reviews',
-                              style: GoogleFonts.spaceGrotesk(
-                                fontWeight: FontWeight.w400,
-                                fontSize: 13,
-                                color: const Color(0xFF65758B),
+              child: Column(
+                children: [
+                  Expanded(
+                    child: SingleChildScrollView(
+                      padding: EdgeInsets.all(20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.only(left: 16),
+                            child: Align(
+                              alignment: Alignment.centerLeft,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment
+                                    .start, // Make sure text aligns left
+                                children: [
+                                  Text(
+                                    item.flightDetail?.data?.title ?? "",
+                                    style: GoogleFonts.spaceGrotesk(
+                                        fontSize: 24,
+                                        fontWeight: FontWeight.bold),
+                                  ),
+                                  Text(
+                                    item.flightDetail?.data?.code ?? "",
+                                    style: GoogleFonts.spaceGrotesk(
+                                        fontSize: 24,
+                                        fontWeight: FontWeight.bold),
+                                  ),
+                                  SizedBox(height: 10),
+                                  Row(
+                                    children: [
+                                      SvgPicture.asset(
+                                        'assets/icons/location.svg',
+                                        width: 16,
+                                        height: 16,
+                                        color: Color(0xff65758B),
+                                      ),
+                                      SizedBox(width: 8),
+                                      Expanded(
+                                        child: Text(
+                                            item.flightDetail?.data?.airline
+                                                    ?.name ??
+                                                "",
+                                            style: GoogleFonts.spaceGrotesk(
+                                                color: Colors.grey)),
+                                      ),
+                                    ],
+                                  ),
+                                  SizedBox(height: 10),
+                                  Text(
+                                    '${item.flightDetail?.data?.reviewScore ?? 0} Reviews',
+                                    style: GoogleFonts.spaceGrotesk(
+                                      fontWeight: FontWeight.w400,
+                                      fontSize: 13,
+                                      color: const Color(0xFF65758B),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    SizedBox(height: 10),
-                    SizedBox(
-                      height: 330,
-                      child: PageView.builder(
-                        onPageChanged: (value) {
-                          setState(() {
-
-                          });
-                        },
-                        itemBuilder: (context, index) => Image.network(
-                          item.flightDetail?.data?.airline?.imageUrl ?? '',
-                          fit: BoxFit.cover,
-                          width: double.infinity,
-                          height: double.infinity,
-                          errorBuilder: (context, error, stackTrace) {
-                            return Image.asset(
-                              'assets/haven/tour_descripation.png',
-                              fit: BoxFit.cover,
-                            );
-                          },
-                        ),
-                      ),
-                    ),
-                    SizedBox(height: 24),
-                    // Flight Info Card
-                    buildFlightInfoCard(item),
-
-                    SizedBox(height: 24),
-                    // Flight Route
-                    _buildFlightRoute(item),
-                    SizedBox(height: 32),
-
-                    // Seat Selection Title
-                    Padding(
-                      padding: const EdgeInsets.only(left: 8),
-                      child: Text(
-                        'Select Your Seat'.tr,
-                        style: GoogleFonts.spaceGrotesk(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xff1D2025),
-                        ),
-                      ),
-                    ),
-                    SizedBox(height: 16),
-
-                    // Seat Options
-                    ...flightData?.flightSeat
-                        ?.map((seat) => Column(
-                      children: [
-                        AirlineTicketBooking(
-                          key: _ticketKeys[
-                          seat.seatType?.name ?? ''],
-                          baggage: seat.person ?? '1 person',
-                          checkIn:
-                          '${seat.baggageCheckIn ?? 6} kgs',
-                          cabin:
-                          '${seat.baggageCabin ?? 6} kgs',
-                          price: double.tryParse(
-                              seat.price ?? '22.0') ??
-                              22.0,
-                          name: seat.seatType?.name ??
-                              'Premium',
-                          onNumberChanged: (value) {
-                            calculateTotalPrice();
-                          },
-                        ),
-                        SizedBox(height: 16),
-                      ],
-                    ))
-                        .toList() ??
-                        [],
-
-                    // Total Price
-                    Container(
-                      margin: EdgeInsets.symmetric(vertical: 20),
-                      padding: EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Color(0xffF8FAFC),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: Color(0xffE2E8F0),
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            'Total'.tr,
-                            style: GoogleFonts.spaceGrotesk(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w600,
-                              color: Color(0xff1D2025),
+                          ),
+                          SizedBox(height: 10),
+                          SizedBox(
+                            height: 330,
+                            child: PageView.builder(
+                              onPageChanged: (value) {
+                                setState(() {});
+                              },
+                              itemBuilder: (context, index) => Image.network(
+                                item.flightDetail?.data?.airline?.imageUrl ??
+                                    '',
+                                fit: BoxFit.cover,
+                                width: double.infinity,
+                                height: double.infinity,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return Image.asset(
+                                    'assets/haven/tour_descripation.png',
+                                    fit: BoxFit.cover,
+                                  );
+                                },
+                              ),
                             ),
                           ),
-                          Text(
-                            '\$${totalPrice.toStringAsFixed(2)}',
-                            style: GoogleFonts.spaceGrotesk(
-                              fontSize: 20,
-                              fontWeight: FontWeight.w700,
-                              color: kSecondaryColor,
+                          SizedBox(height: 24),
+                          // Flight Info Card
+                          buildFlightInfoCard(item),
+
+                          SizedBox(height: 24),
+                          // Flight Route
+                          _buildFlightRoute(item),
+                          SizedBox(height: 32),
+
+                          // Seat Selection Title
+                          Padding(
+                            padding: const EdgeInsets.only(left: 8),
+                            child: Text(
+                              'Select Your Seat'.tr,
+                              style: GoogleFonts.spaceGrotesk(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xff1D2025),
+                              ),
+                            ),
+                          ),
+                          SizedBox(height: 16),
+
+                          // Seat Options
+                          ...flightData?.flightSeat
+                                  ?.map((seat) => Column(
+                                        children: [
+                                          AirlineTicketBooking(
+                                            key: _ticketKeys['seat_${seat.id}'],
+                                            baggage: seat.person ?? '1 person',
+                                            checkIn:
+                                                '${seat.baggageCheckIn ?? 6} kgs',
+                                            cabin:
+                                                '${seat.baggageCabin ?? 6} kgs',
+                                            price: double.tryParse(
+                                                    seat.price ?? '22.0') ??
+                                                22.0,
+                                            name: seat.seatType?.name ??
+                                                'Premium',
+                                            onNumberChanged: (value) {
+                                              calculateTotalPrice();
+                                            },
+                                          ),
+                                          SizedBox(height: 16),
+                                        ],
+                                      ))
+                                  .toList() ??
+                              [],
+
+                          // Total Price
+                          Container(
+                            margin: EdgeInsets.symmetric(vertical: 20),
+                            padding: EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: Color(0xffF8FAFC),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: Color(0xffE2E8F0),
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  'Total'.tr,
+                                  style: GoogleFonts.spaceGrotesk(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w600,
+                                    color: Color(0xff1D2025),
+                                  ),
+                                ),
+                                Text(
+                                  '\$${totalPrice.toStringAsFixed(2)}',
+                                  style: GoogleFonts.spaceGrotesk(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.w700,
+                                    color: kSecondaryColor,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ],
                       ),
                     ),
-                  ],
-                ),
-              ),
-            ),
-
-            // Book Now Button
-            Container(
-              padding: EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                border: Border(
-                  top: BorderSide(
-                    color: Color(0xffE2E8F0),
-                    width: 1,
                   ),
-                ),
-              ),
-              child: TertiaryButton(
-                text: "Book Now".tr,
-                press: _handleBookNow,
+
+                  // Book Now Button
+                  Container(
+                    padding: EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      border: Border(
+                        top: BorderSide(
+                          color: Color(0xffE2E8F0),
+                          width: 1,
+                        ),
+                      ),
+                    ),
+                    child: TertiaryButton(
+                      text: "Book Now bbb".tr,
+                      press: _handleBookNow,
+                    ),
+                  ),
+                ],
               ),
             ),
-          ],
-        ),
-      ),
     );
   }
-
 
   Widget buildFlightInfoCard(FlightProvider item) {
     return Container(
@@ -420,6 +424,7 @@ class _FlightDetailsState extends State<FlightDetailsScreen> {
       ),
     );
   }
+
   Widget _buildInfoItem(IconData icon, String title, String value) {
     return Expanded(
       child: Column(
@@ -451,7 +456,6 @@ class _FlightDetailsState extends State<FlightDetailsScreen> {
       ),
     );
   }
-
 
   Widget _buildFlightRoute(FlightProvider item) {
     DateTime? departureTime;
@@ -700,107 +704,105 @@ class _FlightDetailsState extends State<FlightDetailsScreen> {
   }
 }
 
-  Widget _buildFlightInfoCard(
-      String title, String? time, String? location, Color color) {
-    DateTime? dateTime;
-    if (time != null) {
-      try {
-        dateTime = DateFormat('yyyy-MM-ddTHH:mm:ss.SSSZ').parse(time);
-      } catch (e) {
-        dateTime = null;
-      }
+Widget _buildFlightInfoCard(
+    String title, String? time, String? location, Color color) {
+  DateTime? dateTime;
+  if (time != null) {
+    try {
+      dateTime = DateFormat('yyyy-MM-ddTHH:mm:ss.SSSZ').parse(time);
+    } catch (e) {
+      dateTime = null;
     }
-
-    return Expanded(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 8,
-                height: 8,
-                decoration: BoxDecoration(
-                  color: color,
-                  shape: BoxShape.circle,
-                ),
-              ),
-              SizedBox(width: 8),
-              Text(
-                title,
-                style: GoogleFonts.spaceGrotesk(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                  color: Color(0xff65758B),
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 8),
-          Text(
-            dateTime != null ? DateFormat('HH:mm').format(dateTime!) : '--:--',
-            style: GoogleFonts.spaceGrotesk(
-              fontSize: 24,
-              fontWeight: FontWeight.w700,
-              color: Color(0xff1D2025),
-            ),
-          ),
-          SizedBox(height: 4),
-          Text(
-            dateTime != null
-                ? DateFormat('dd MMM, yyyy').format(dateTime!)
-                : '-- ---, ----',
-            style: GoogleFonts.spaceGrotesk(
-              fontSize: 12,
-              fontWeight: FontWeight.w400,
-              color: Color(0xff65758B),
-            ),
-          ),
-          SizedBox(height: 4),
-          Text(
-            location ?? '---',
-            style: GoogleFonts.spaceGrotesk(
-              fontSize: 12,
-              fontWeight: FontWeight.w400,
-              color: Color(0xff65758B),
-            ),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ],
-      ),
-    );
   }
 
-  Widget _buildDurationCard(FlightProvider item) {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: kSecondaryColor.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Column(
-        children: [
-          Icon(
-            Icons.schedule,
+  return Expanded(
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Container(
+              width: 8,
+              height: 8,
+              decoration: BoxDecoration(
+                color: color,
+                shape: BoxShape.circle,
+              ),
+            ),
+            SizedBox(width: 8),
+            Text(
+              title,
+              style: GoogleFonts.spaceGrotesk(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: Color(0xff65758B),
+              ),
+            ),
+          ],
+        ),
+        SizedBox(height: 8),
+        Text(
+          dateTime != null ? DateFormat('HH:mm').format(dateTime!) : '--:--',
+          style: GoogleFonts.spaceGrotesk(
+            fontSize: 24,
+            fontWeight: FontWeight.w700,
+            color: Color(0xff1D2025),
+          ),
+        ),
+        SizedBox(height: 4),
+        Text(
+          dateTime != null
+              ? DateFormat('dd MMM, yyyy').format(dateTime!)
+              : '-- ---, ----',
+          style: GoogleFonts.spaceGrotesk(
+            fontSize: 12,
+            fontWeight: FontWeight.w400,
+            color: Color(0xff65758B),
+          ),
+        ),
+        SizedBox(height: 4),
+        Text(
+          location ?? '---',
+          style: GoogleFonts.spaceGrotesk(
+            fontSize: 12,
+            fontWeight: FontWeight.w400,
+            color: Color(0xff65758B),
+          ),
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+        ),
+      ],
+    ),
+  );
+}
+
+Widget _buildDurationCard(FlightProvider item) {
+  return Container(
+    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+    decoration: BoxDecoration(
+      color: kSecondaryColor.withOpacity(0.1),
+      borderRadius: BorderRadius.circular(8),
+    ),
+    child: Column(
+      children: [
+        Icon(
+          Icons.schedule,
+          color: kSecondaryColor,
+          size: 16,
+        ),
+        SizedBox(height: 4),
+        Text(
+          '${item.flightDetail?.data?.duration} hrs'.tr,
+          style: GoogleFonts.spaceGrotesk(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
             color: kSecondaryColor,
-            size: 16,
           ),
-          SizedBox(height: 4),
-          Text(
-            '${item.flightDetail?.data?.duration} hrs'.tr,
-            style: GoogleFonts.spaceGrotesk(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: kSecondaryColor,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
+        ),
+      ],
+    ),
+  );
+}
 
 class AirlineTicketBooking extends StatefulWidget {
   final String baggage;
@@ -904,9 +906,7 @@ class _AirlineTicketBookingState extends State<AirlineTicketBooking> {
                       ),
                       SizedBox(width: 12),
                       Icon(
-                        isExpanded
-                            ? Icons.expand_less
-                            : Icons.expand_more,
+                        isExpanded ? Icons.expand_less : Icons.expand_more,
                         color: Color(0xff65758B),
                       ),
                     ],
@@ -1042,8 +1042,7 @@ class _AirlineTicketBookingState extends State<AirlineTicketBooking> {
                           ],
                         ),
                       ],
-                    )
-                    ,
+                    ),
                   ),
                 ],
               ),
@@ -1083,12 +1082,6 @@ class _AirlineTicketBookingState extends State<AirlineTicketBooking> {
     );
   }
 }
-
-
-
-
-
-
 
 // import 'dart:developer';
 //

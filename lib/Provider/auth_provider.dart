@@ -83,6 +83,8 @@ class AuthProvider with ChangeNotifier {
     if (result['success']) {
       _token = result['data']['access_token'];
       await saveToken(_token ?? '');
+      // Fetch user profile from backend after successful verification
+      await getMe();
       notifyListeners();
       return true;
     } else {
@@ -209,9 +211,13 @@ class AuthProvider with ChangeNotifier {
 
   Future<bool> deleteMyAccount() async {
     _token = await setToken();
+    log("Token being sent: ${_token ?? 'NO TOKEN'}"); // Debug log
+
     final result = await makeRequest(
         '${ApiUrls.baseUrl}${ApiUrls.deleteAccount}', 'POST', {}, _token ?? '',
         requiresAuth: true);
+
+    log("Delete account response: $result"); // Debug log
 
     if (result['success']) {
       showSuccessToast(result['data']['message']);

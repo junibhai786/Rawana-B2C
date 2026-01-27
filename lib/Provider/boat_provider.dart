@@ -14,6 +14,55 @@ class BoatProvider with ChangeNotifier {
   BoatDetailModel? boatDetail;
   BoatDetailModel? _boatDetail;
   Map<int, BoatList?> boatListPerCategory = {};
+
+  // Pagination State
+  final Map<int, Map<String, dynamic>> _lastSearchParams = {};
+  final Map<int, bool> _isLoadingMore = {};
+  final Map<int, int> _currentPage = {};
+
+  bool isLoadingMore(int index) => _isLoadingMore[index] ?? false;
+
+  Future<void> fetchNextPage(int index) async {
+    if (isLoadingMore(index)) return;
+
+    final currentList = boatListPerCategory[index];
+
+    if (currentList == null ||
+        currentList.currentPage == null ||
+        currentList.lastPage == null ||
+        currentList.currentPage! >= currentList.lastPage!) {
+      return;
+    }
+
+    _isLoadingMore[index] = true;
+    notifyListeners();
+
+    try {
+      final nextPage = currentList.currentPage! + 1;
+      final params = _lastSearchParams[index] ?? {};
+
+      // Call API with next page
+      await boatlistapi(
+        index,
+        searchParams: params,
+        page: nextPage,
+        isLoadMore: true,
+      );
+    } catch (e) {
+      log("Error fetching next page for index $index: $e");
+    } finally {
+      _isLoadingMore[index] = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> resetPagination(int index) async {
+    _currentPage[index] = 1;
+    _isLoadingMore[index] = false;
+    final params = _lastSearchParams[index] ?? {};
+    await boatlistapi(index, searchParams: params, page: 1, isLoadMore: false);
+  }
+
   TextEditingController searchController = TextEditingController();
 
   int _selectedHomeTab = 1;
@@ -121,12 +170,21 @@ class BoatProvider with ChangeNotifier {
   Future<bool> boatlistapi(int index,
       {String? sortBy,
       String? searchQuery,
-      required Map<String, Object?> searchParams}) async {
-    log("Boat List API Call for category index $index ===>");
+      required Map<String, Object?> searchParams,
+      int page = 1,
+      bool isLoadMore = false}) async {
+    log("Boat List API Call for category index $index ===> Page $page");
     await loadToken();
+
+    // Cache search params for pagination (only if it's a fresh search)
+    if (!isLoadMore) {
+      _lastSearchParams[index] = Map.from(searchParams);
+    }
 
     // Convert searchParams to query parameters
     final queryParams = {
+      'page': page.toString(),
+      'per_page': '5',
       if (searchParams['location'] != null)
         'location': searchParams['location'],
       if (searchParams['startDate'] != null)
@@ -142,6 +200,8 @@ class BoatProvider with ChangeNotifier {
       if (searchParams['boat_features'] != null &&
           searchParams['boat_features'] != '')
         'attrs[15]': searchParams['boat_features'],
+      if (searchParams['text'] != null && searchParams['text'] != '')
+        's': searchParams['text'],
       if (sortBy != null) 'orderby': sortBy,
     };
 
@@ -151,15 +211,45 @@ class BoatProvider with ChangeNotifier {
     log('$url checkurl');
 
     log("API URL: $url");
+
+    // 🧪 VISUAL TEST: Show toast when loading next page
+    //if (page > 1) {
+    // EasyLoading.showToast("⏳ Loading Page $page...",
+    //    duration: const Duration(seconds: 1),
+    //    toastPosition: EasyLoadingToastPosition.bottom);
+    //}
+
     final result =
         await makeRequest(url, 'GET', {}, _token ?? '', requiresAuth: true);
 
     if (result['success']) {
       log("Boat List Response for index $index ===> ${result['data']}");
-      BoatList boatList = BoatList.fromJson(result['data']);
-      boatListPerCategory[index] = boatList;
+      BoatList newBoatList = BoatList.fromJson(result['data']);
+
+      if (isLoadMore && boatListPerCategory[index] != null) {
+        // Append data
+        final currentData = boatListPerCategory[index]!.data ?? [];
+        final newData = newBoatList.data ?? [];
+
+        boatListPerCategory[index]!.data = [...currentData, ...newData];
+        boatListPerCategory[index]!.currentPage = newBoatList.currentPage;
+        boatListPerCategory[index]!.lastPage = newBoatList.lastPage;
+        boatListPerCategory[index]!.total = newBoatList.total;
+        boatListPerCategory[index]!.text = newBoatList.text;
+      } else {
+        // Replace data
+        boatListPerCategory[index] = newBoatList;
+      }
 
       notifyListeners();
+
+      // 🧪 VISUAL TEST: Confirm data loaded
+      //if (page > 1) {
+      // EasyLoading.showToast(
+      //    "✅ Loaded ${newBoatList.data?.length ?? 0} new items!",
+      //   duration: const Duration(seconds: 2),
+      //   toastPosition: EasyLoadingToastPosition.bottom);
+      // }
       return true;
     } else {
       log("Failed to fetch Car list. Error: ${result['message']}");

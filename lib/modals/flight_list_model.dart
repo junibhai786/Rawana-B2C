@@ -2,187 +2,225 @@
 
 class FlightList {
   List<Flight>? data;
-  int? total;
-  int? currentPage;
-  int? lastPage;
-  int? perPage;
-  int? startId;
-  int? endId;
-  int? status;
 
-  FlightList(
-      {this.data,
-      this.total,
-      this.currentPage,
-      this.lastPage,
-      this.perPage,
-      this.startId,
-      this.endId,
-      this.status});
+  FlightList({this.data});
 
   FlightList.fromJson(Map<String, dynamic> json) {
-    if (json['data'] != null) {
+    if (json['data'] != null && json['data']['flights'] != null) {
       data = <Flight>[];
-      json['data'].forEach((v) {
+      (json['data']['flights'] as List).forEach((v) {
         data!.add(Flight.fromJson(v));
       });
     }
-    total = json['total'];
-    currentPage = json['current_page'];
-    lastPage = json['last_page'];
-    perPage = json['per_page'];
-    startId = json['start_id'];
-    endId = json['end_id'];
-    status = json['status'];
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = Map<String, dynamic>();
-    if (this.data != null) {
-      data['data'] = this.data!.map((v) => v.toJson()).toList();
+    final Map<String, dynamic> jsonData = {};
+    if (data != null) {
+      jsonData['data'] = {'flights': data!.map((v) => v.toJson()).toList()};
     }
-    data['total'] = total;
-    data['current_page'] = currentPage;
-    data['last_page'] = lastPage;
-    data['per_page'] = perPage;
-    data['start_id'] = startId;
-    data['end_id'] = endId;
-    data['status'] = status;
-    return data;
+    return jsonData;
   }
 }
 
 class Flight {
-  int? id;
-  String? title;
-  String? code;
-  String? reviewScore;
-  String? departureTime;
-  String? arrivalTime;
-  String? duration;
-  String? minPrice;
-  AirportTo? airportTo;
-  AirportTo? airportFrom;
-  int? airlineId;
-  String? status;
-  dynamic createUser;
-  dynamic? updateUser;
-  String? createdAt;
-  String? updatedAt;
-  dynamic? deletedAt;
-  dynamic? authorId;
-  String? airlineImageUrl;
-  bool? canBook;
-  Airline? airline;
-  List<BookingPassenger>? bookingPassengers;
-  List<FlightSeat>? flightSeat;
+  String? id;
+  String? totalPrice;
+  String? currency;
+  List<FlightDetail>? flightDetails;
+  String? rawData; // Store raw JSON for price revalidation
 
-  Flight(
-      {this.id,
-      this.title,
-      this.code,
-      this.reviewScore,
-      this.departureTime,
-      this.arrivalTime,
-      this.duration,
-      this.minPrice,
-      this.airportTo,
-      this.airportFrom,
-      this.airlineId,
-      this.status,
-      this.createUser,
-      this.updateUser,
-      this.createdAt,
-      this.updatedAt,
-      this.deletedAt,
-      this.authorId,
-      this.airlineImageUrl,
-      this.canBook,
-      this.airline,
-      this.bookingPassengers,
-      this.flightSeat});
+  Flight({
+    this.id,
+    this.totalPrice,
+    this.currency,
+    this.flightDetails,
+    this.rawData,
+  });
 
   Flight.fromJson(Map<String, dynamic> json) {
-    id = json['id'];
-    title = json['title'];
-    code = json['code'];
-    reviewScore = json['review_score'];
-    departureTime = json['departure_time'];
-    arrivalTime = json['arrival_time'];
-    duration = json['duration'];
-    minPrice = json['min_price'];
-    airportTo = json['airport_to'] != null && json['airport_to'] is Map
-        ? AirportTo.fromJson(json['airport_to'])
-        : null;
-    airportFrom = json['airport_from'] != null && json['airport_from'] is Map
-        ? AirportTo.fromJson(json['airport_from'])
-        : null;
-    airlineId = json['airline_id'];
-    status = json['status'];
-    createUser = json['create_user'];
-    updateUser = json['update_user'];
-    createdAt = json['created_at'];
-    updatedAt = json['updated_at'];
-    deletedAt = json['deleted_at'];
-    authorId = json['author_id'];
-    airlineImageUrl = json['airline_image_url'];
-    canBook = json['can_book'];
-    airline =
-        json['airline'] != null ? Airline.fromJson(json['airline']) : null;
-    if (json['booking_passengers'] != null) {
-      bookingPassengers = <BookingPassenger>[];
-      json['booking_passengers'].forEach((v) {
-        bookingPassengers!.add(BookingPassenger.fromJson(v));
+    id = json['id']?.toString();
+    totalPrice = json['total_price']?.toString();
+    currency = json['currency']?.toString();
+
+    if (json['flight_details'] != null) {
+      flightDetails = <FlightDetail>[];
+      (json['flight_details'] as List).forEach((v) {
+        flightDetails!.add(FlightDetail.fromJson(v));
       });
     }
-    if (json['flight_seat'] != null) {
-      flightSeat = <FlightSeat>[];
-      json['flight_seat'].forEach((v) {
-        flightSeat!.add(FlightSeat.fromJson(v));
+
+    // Store raw JSON for future use (price revalidation)
+    rawData = json.toString();
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'total_price': totalPrice,
+      'currency': currency,
+      if (flightDetails != null)
+        'flight_details': flightDetails!.map((v) => v.toJson()).toList(),
+      'raw_data': rawData,
+    };
+  }
+}
+
+class FlightDetail {
+  String? direction; // "Departure" or "Return"
+  String? airlineLogo;
+  String? airlineCode;
+  String? flightNumber;
+  String? depIata;
+  String? depTime;
+  String? depDate;
+  String? arrIata;
+  String? arrTime;
+  String? arrDate;
+  bool? isNextDay;
+  String? duration;
+  int? stops;
+  List<FlightSegment>? segments;
+
+  FlightDetail({
+    this.direction,
+    this.airlineLogo,
+    this.airlineCode,
+    this.flightNumber,
+    this.depIata,
+    this.depTime,
+    this.depDate,
+    this.arrIata,
+    this.arrTime,
+    this.arrDate,
+    this.isNextDay,
+    this.duration,
+    this.stops,
+    this.segments,
+  });
+
+  FlightDetail.fromJson(Map<String, dynamic> json) {
+    direction = json['direction']?.toString();
+    airlineLogo = json['airline_logo']?.toString();
+    airlineCode = json['airline_code']?.toString();
+    flightNumber = json['flight_number']?.toString();
+    depIata = json['dep_iata']?.toString();
+    depTime = json['dep_time']?.toString();
+    depDate = json['dep_date']?.toString();
+    arrIata = json['arr_iata']?.toString();
+    arrTime = json['arr_time']?.toString();
+    arrDate = json['arr_date']?.toString();
+    isNextDay = json['is_next_day'];
+    duration = json['duration']?.toString();
+    stops = json['stops'];
+
+    if (json['segments'] != null) {
+      segments = <FlightSegment>[];
+      (json['segments'] as List).forEach((v) {
+        segments!.add(FlightSegment.fromJson(v));
       });
     }
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = Map<String, dynamic>();
-    data['id'] = id;
-    data['title'] = title;
-    data['code'] = code;
-    data['review_score'] = reviewScore;
-    data['departure_time'] = departureTime;
-    data['arrival_time'] = arrivalTime;
-    data['duration'] = duration;
-    data['min_price'] = minPrice;
-    if (airportTo != null) {
-      data['airport_to'] = airportTo!.toJson();
-    }
-    if (airportFrom != null) {
-      data['airport_from'] = airportFrom!.toJson();
-    }
-    data['airline_id'] = airlineId;
-    data['status'] = status;
-    data['create_user'] = createUser;
-    data['update_user'] = updateUser;
-    data['created_at'] = createdAt;
-    data['updated_at'] = updatedAt;
-    data['deleted_at'] = deletedAt;
-    data['author_id'] = authorId;
-    data['airline_image_url'] = airlineImageUrl;
-    data['can_book'] = canBook;
-    if (airline != null) {
-      data['airline'] = airline!.toJson();
-    }
-    if (bookingPassengers != null) {
-      data['booking_passengers'] =
-          bookingPassengers!.map((v) => v.toJson()).toList();
-    }
-    if (flightSeat != null) {
-      data['flight_seat'] = flightSeat!.map((v) => v.toJson()).toList();
-    }
-    return data;
+    return {
+      'direction': direction,
+      'airline_logo': airlineLogo,
+      'airline_code': airlineCode,
+      'flight_number': flightNumber,
+      'dep_iata': depIata,
+      'dep_time': depTime,
+      'dep_date': depDate,
+      'arr_iata': arrIata,
+      'arr_time': arrTime,
+      'arr_date': arrDate,
+      'is_next_day': isNextDay,
+      'duration': duration,
+      'stops': stops,
+      if (segments != null)
+        'segments': segments!.map((v) => v.toJson()).toList(),
+    };
   }
 }
 
+class FlightSegment {
+  SegmentLocation? departure;
+  SegmentLocation? arrival;
+  String? carrierCode;
+  String? number;
+  String? aircraft;
+  String? operating;
+  String? duration;
+  String? id;
+  int? numberOfStops;
+  bool? blacklistedInEU;
+
+  FlightSegment({
+    this.departure,
+    this.arrival,
+    this.carrierCode,
+    this.number,
+    this.aircraft,
+    this.operating,
+    this.duration,
+    this.id,
+    this.numberOfStops,
+    this.blacklistedInEU,
+  });
+
+  FlightSegment.fromJson(Map<String, dynamic> json) {
+    departure = json['departure'] != null
+        ? SegmentLocation.fromJson(json['departure'])
+        : null;
+    arrival = json['arrival'] != null
+        ? SegmentLocation.fromJson(json['arrival'])
+        : null;
+    carrierCode = json['carrierCode']?.toString();
+    number = json['number']?.toString();
+    aircraft = json['aircraft']?.toString();
+    operating = json['operating']?.toString();
+    duration = json['duration']?.toString();
+    id = json['id']?.toString();
+    numberOfStops = json['numberOfStops'];
+    blacklistedInEU = json['blacklistedInEU'];
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      if (departure != null) 'departure': departure!.toJson(),
+      if (arrival != null) 'arrival': arrival!.toJson(),
+      'carrierCode': carrierCode,
+      'number': number,
+      'aircraft': aircraft,
+      'operating': operating,
+      'duration': duration,
+      'id': id,
+      'numberOfStops': numberOfStops,
+      'blacklistedInEU': blacklistedInEU,
+    };
+  }
+}
+
+class SegmentLocation {
+  String? iataCode;
+  String? at; // ISO datetime string
+
+  SegmentLocation({this.iataCode, this.at});
+
+  SegmentLocation.fromJson(Map<String, dynamic> json) {
+    iataCode = json['iataCode']?.toString();
+    at = json['at']?.toString();
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'iataCode': iataCode,
+      'at': at,
+    };
+  }
+}
+
+// Old API classes (used by flight_details_model.dart for details endpoint)
 class AirportTo {
   int? id;
   String? name;
@@ -375,26 +413,5 @@ class FlightSeat {
     data['deleted_at'] = deletedAt;
     data['author_id'] = authorId;
     return data;
-  }
-}
-
-class BookingPassenger {
-  String? name;
-  int? age;
-
-  BookingPassenger({this.name, this.age});
-
-  factory BookingPassenger.fromJson(Map<String, dynamic> json) {
-    return BookingPassenger(
-      name: json['name'],
-      age: json['age'],
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'name': name,
-      'age': age,
-    };
   }
 }

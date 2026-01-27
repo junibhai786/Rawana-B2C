@@ -7,6 +7,7 @@ class SpaceList {
   int? startId;
   int? endId;
   int? status;
+  String? text;
 
   SpaceList(
       {this.data,
@@ -16,7 +17,8 @@ class SpaceList {
       this.perPage,
       this.startId,
       this.endId,
-      this.status});
+      this.status,
+      this.text});
 
   SpaceList.fromJson(Map<String, dynamic> json) {
     if (json['data'] != null) {
@@ -32,6 +34,7 @@ class SpaceList {
     startId = json['start_id'];
     endId = json['end_id'];
     status = json['status'];
+    text = json['text'];
   }
 
   Map<String, dynamic> toJson() {
@@ -46,6 +49,7 @@ class SpaceList {
     data['start_id'] = this.startId;
     data['end_id'] = this.endId;
     data['status'] = this.status;
+    data['text'] = this.text;
     return data;
   }
 }

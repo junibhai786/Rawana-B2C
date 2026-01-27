@@ -7,6 +7,7 @@ class TourList {
   int? startId;
   int? endId;
   int? status;
+  String? text;
 
   TourList(
       {this.data,
@@ -16,7 +17,8 @@ class TourList {
       this.perPage,
       this.startId,
       this.endId,
-      this.status});
+      this.status,
+      this.text});
 
   TourList.fromJson(Map<String, dynamic> json) {
     if (json['data'] != null) {
@@ -32,6 +34,7 @@ class TourList {
     startId = json['start_id'];
     endId = json['end_id'];
     status = json['status'];
+    text = json['text'];
   }
 
   Map<String, dynamic> toJson() {
@@ -46,6 +49,7 @@ class TourList {
     data['start_id'] = startId;
     data['end_id'] = endId;
     data['status'] = status;
+    data['text'] = text;
     return data;
   }
 }

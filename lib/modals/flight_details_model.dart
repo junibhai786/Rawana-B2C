@@ -119,10 +119,7 @@ class Data {
     airline =
         json['airline'] != null ? new Airline.fromJson(json['airline']) : null;
     if (json['booking_passengers'] != null) {
-      bookingPassengers = <dynamic>[];
-      json['booking_passengers'].forEach((v) {
-        bookingPassengers!.add(BookingPassenger.fromJson(v));
-      });
+      bookingPassengers = json['booking_passengers'] as List<dynamic>;
     }
   }
 
@@ -287,9 +284,13 @@ class FlightSeat {
     price = json['price'];
     maxPassengers = json['max_passengers'];
     flightId = json['flight_id'];
-    seatType = json['seat_type'] != null
-        ? new SeatType.fromJson(json['seat_type'])
-        : null;
+    // Handle seat_type - API can return List (empty array) or Map (object)
+    if (json['seat_type'] != null &&
+        json['seat_type'] is Map<String, dynamic>) {
+      seatType = new SeatType.fromJson(json['seat_type']);
+    } else {
+      seatType = null;
+    }
     person = json['person'];
     baggageCheckIn = json['baggage_check_in'];
     baggageCabin = json['baggage_cabin'];

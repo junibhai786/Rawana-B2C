@@ -7,6 +7,7 @@ class EventList {
   int? startId;
   int? endId;
   int? status;
+  String? text;
 
   EventList(
       {this.data,
@@ -16,7 +17,8 @@ class EventList {
       this.perPage,
       this.startId,
       this.endId,
-      this.status});
+      this.status,
+      this.text});
 
   EventList.fromJson(Map<String, dynamic> json) {
     if (json['data'] != null) {
@@ -32,6 +34,7 @@ class EventList {
     startId = json['start_id'];
     endId = json['end_id'];
     status = json['status'];
+    text = json['text'];
   }
 
   Map<String, dynamic> toJson() {
@@ -46,6 +49,7 @@ class EventList {
     data['start_id'] = startId;
     data['end_id'] = endId;
     data['status'] = status;
+    data['text'] = text;
     return data;
   }
 }

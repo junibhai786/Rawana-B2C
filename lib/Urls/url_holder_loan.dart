@@ -1,6 +1,7 @@
 class ApiUrls {
   //// production
-  static const baseUrl ="https://travolyo.com/api/";//"https://dentirostral-pseudoindependently-michell.ngrok-free.dev/api/";    // "https://travolyo.com/api/";
+  static const baseUrl =
+      "https://travolyo.com/api/"; //"https://dentirostral-pseudoindependently-michell.ngrok-free.dev/api/";    // "https://travolyo.com/api/";
   static const webUrl = "https://travolyo.com/admin/";
 
   static const login = "auth/login";
@@ -74,13 +75,13 @@ class ApiUrls {
   static const hotelcheckout = 'checkout/me';
   static const bookinghistoryendpoint = 'me/booking-history';
   static const hotelSearch = 'hotel/search';
-  static const hotellocations='locations';
+  static const hotellocations = 'locations';
   static const carSearch = 'car/search';
   static const boatSearch = 'boat/search';
   static const tourSearch = 'tour/search';
   static const eventSearch = 'event/search';
   static const spaceSearch = 'space/search';
-  static const flightSearch = 'flight/search';
+  static const flightSearch = 'v1/flights/search';
   static const downloadInvoice = 'dowanload/invoice';
   static const flightDetailsEndPoint = 'flight/details';
   static const flightBookingDetails = 'checkout/detail';
@@ -163,4 +164,5 @@ class ApiUrls {
   static const String vendorService = 'vendor/coupon/services';
   static const String addVendorService = 'vendor/coupon/add';
   static const String editVendorService = 'vendor/coupon/update';
+  static const airportSearchEndpoint = 'v1/airports/search';
 }

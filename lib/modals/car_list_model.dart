@@ -7,6 +7,7 @@ class CarList {
   int? status;
   int? startId;
   int? endId;
+  String? text;
 
   CarList(
       {this.data,
@@ -16,7 +17,8 @@ class CarList {
       this.perPage,
       this.status,
       this.startId,
-      this.endId});
+      this.endId,
+      this.text});
 
   CarList.fromJson(Map<String, dynamic> json) {
     if (json['data'] != null) {
@@ -30,6 +32,9 @@ class CarList {
     lastPage = json['last_page'];
     perPage = json['per_page'];
     status = json['status'];
+    startId = json['start_id'];
+    endId = json['end_id'];
+    text = json['text'];
   }
 
   Map<String, dynamic> toJson() {
@@ -42,6 +47,9 @@ class CarList {
     data['last_page'] = lastPage;
     data['per_page'] = perPage;
     data['status'] = status;
+    data['start_id'] = startId;
+    data['end_id'] = endId;
+    data['text'] = text;
     return data;
   }
 }

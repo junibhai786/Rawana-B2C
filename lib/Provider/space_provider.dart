@@ -24,6 +24,55 @@ import 'package:image_picker/image_picker.dart';
 class SpaceProvider with ChangeNotifier {
   String? _token;
   Map<int, SpaceList?> spaceListPerCategory = {};
+
+  // Pagination State
+  final Map<int, Map<String, dynamic>> _lastSearchParams = {};
+  final Map<int, bool> _isLoadingMore = {};
+  final Map<int, int> _currentPage = {};
+
+  bool isLoadingMore(int index) => _isLoadingMore[index] ?? false;
+
+  Future<void> fetchNextPage(int index) async {
+    if (isLoadingMore(index)) return;
+
+    final currentList = spaceListPerCategory[index];
+
+    if (currentList == null ||
+        currentList.currentPage == null ||
+        currentList.lastPage == null ||
+        currentList.currentPage! >= currentList.lastPage!) {
+      return;
+    }
+
+    _isLoadingMore[index] = true;
+    notifyListeners();
+
+    try {
+      final nextPage = currentList.currentPage! + 1;
+      final params = _lastSearchParams[index] ?? {};
+
+      // Call API with next page
+      await spacelistapi(
+        index,
+        searchParams: params,
+        page: nextPage,
+        isLoadMore: true,
+      );
+    } catch (e) {
+      log("Error fetching next page for index $index: $e");
+    } finally {
+      _isLoadingMore[index] = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> resetPagination(int index) async {
+    _currentPage[index] = 1;
+    _isLoadingMore[index] = false;
+    final params = _lastSearchParams[index] ?? {};
+    await spacelistapi(index, searchParams: params, page: 1, isLoadMore: false);
+  }
+
   SpaceDetailModal? spaceDetail;
   SpaceDetailModal? _spaceDetail;
   vendor_modal.SpaceVendorList? spaceVendor;
@@ -133,12 +182,21 @@ class SpaceProvider with ChangeNotifier {
   Future<bool?> spacelistapi(int index,
       {String? sortBy,
       String? searchQuery,
-      required Map<String, dynamic> searchParams}) async {
-    log("Space List API Call for category index $index ===>");
+      required Map<String, dynamic> searchParams,
+      int page = 1,
+      bool isLoadMore = false}) async {
+    log("Space List API Call for category index $index ===> Page $page");
     await loadToken();
+
+    // Cache search params for pagination (only if it's a fresh search)
+    if (!isLoadMore) {
+      _lastSearchParams[index] = Map.from(searchParams);
+    }
 
     // Convert searchParams to query parameters
     final queryParams = {
+      'page': page.toString(),
+      'per_page': '5',
       if (searchParams['location'] != null)
         'location': searchParams['location'],
       if (searchParams['startDate'] != null)
@@ -163,7 +221,15 @@ class SpaceProvider with ChangeNotifier {
     final queryString = Uri(queryParameters: queryParams).query;
     log('$queryString queryStringgg');
     String url = '${ApiUrls.baseUrl}${ApiUrls.spaceSearch}?$queryString';
-    log('$url checkurl');
+    log("API URL: $url");
+
+    // 🧪 VISUAL TEST: Show toast when loading next page
+    // if (page > 1) {
+    //  EasyLoading.showToast("⏳ Loading Page $page...",
+    //     duration: const Duration(seconds: 1),
+    //    toastPosition: EasyLoadingToastPosition.bottom);
+    // }
+
     final result = await makeRequest(
       url,
       'GET',
@@ -174,9 +240,31 @@ class SpaceProvider with ChangeNotifier {
 
     if (result['success']) {
       log("Space List Response for index $index ===> ${result['data']}");
-      SpaceList spaceList = SpaceList.fromJson(result['data']);
-      spaceListPerCategory[index] = spaceList;
+      SpaceList newSpaceList = SpaceList.fromJson(result['data']);
+
+      if (isLoadMore && spaceListPerCategory[index] != null) {
+        // Append data
+        final currentData = spaceListPerCategory[index]!.data ?? [];
+        final newData = newSpaceList.data ?? [];
+
+        spaceListPerCategory[index]!.data = [...currentData, ...newData];
+        spaceListPerCategory[index]!.currentPage = newSpaceList.currentPage;
+        spaceListPerCategory[index]!.lastPage = newSpaceList.lastPage;
+        spaceListPerCategory[index]!.total = newSpaceList.total;
+        spaceListPerCategory[index]!.text = newSpaceList.text;
+      } else {
+        // Replace data
+        spaceListPerCategory[index] = newSpaceList;
+      }
       notifyListeners();
+
+      // 🧪 VISUAL TEST: Confirm data loaded
+      // if (page > 1) {
+      //  EasyLoading.showToast(
+      //     "✅ Loaded ${newSpaceList.data?.length ?? 0} new items!",
+      //      duration: const Duration(seconds: 2),
+      //      toastPosition: EasyLoadingToastPosition.bottom);
+      // }
       return true;
     } else {
       log("Failed to fetch sapce list. Error: ${result['message']}");

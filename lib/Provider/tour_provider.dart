@@ -13,6 +13,56 @@ class TourProvider with ChangeNotifier {
   Map<int, TourList?> tourListPerCategory = {};
   TourDetailModal? tourDetail;
   TourDetailModal? _tourDetail;
+
+  // Pagination State   1............................
+  final Map<int, Map<String, dynamic>> _lastSearchParams = {};
+  final Map<int, bool> _isLoadingMore = {};
+  final Map<int, int> _currentPage = {};
+
+  bool isLoadingMore(int index) => _isLoadingMore[index] ?? false;
+
+  Future<void> fetchNextPage(int index) async {
+    print("⚡ PROVIDER FETCH NEXT PAGE: Index $index");
+    if (isLoadingMore(index)) return;
+
+    final currentList = tourListPerCategory[index];
+
+    if (currentList == null ||
+        currentList.currentPage == null ||
+        currentList.lastPage == null ||
+        currentList.currentPage! >= currentList.lastPage!) {
+      return;
+    }
+
+    _isLoadingMore[index] = true;
+    notifyListeners();
+
+    try {
+      final nextPage = currentList.currentPage! + 1;
+      final params = _lastSearchParams[index] ?? {};
+
+      // Call API with next page
+      await tourlistapi(
+        index,
+        searchParams: params,
+        page: nextPage,
+        isLoadMore: true,
+      );
+    } catch (e) {
+      log("Error fetching next page for index $index: $e");
+    } finally {
+      _isLoadingMore[index] = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> resetPagination(int index) async {
+    _currentPage[index] = 1;
+    _isLoadingMore[index] = false;
+    final params = _lastSearchParams[index] ?? {};
+    await tourlistapi(index, searchParams: params, page: 1, isLoadMore: false);
+  }
+
   Future<void> loadToken() async {
     final prefs = await SharedPreferences.getInstance();
     _token = prefs.getString('userToken');
@@ -35,12 +85,21 @@ class TourProvider with ChangeNotifier {
   Future<bool?> tourlistapi(int index,
       {String? sortBy,
       String? searchQuery,
-      required Map<String, dynamic> searchParams}) async {
-    log("Tour List API Call for category index $index ===>");
+      required Map<String, dynamic> searchParams,
+      int page = 1,
+      bool isLoadMore = false}) async {
+    log("Tour List API Call for category index $index ===> Page: $page");
     await loadToken();
+
+    // Cache search params for pagination (only if it's a fresh search)
+    if (!isLoadMore) {
+      _lastSearchParams[index] = Map.from(searchParams);
+    }
 
     // Convert searchParams to query parameters
     final queryParams = {
+      'page': page.toString(), // Add page parameter
+      'per_page': '5', // 🧪 TEST MODE: Force small page size to see pagination
       if (searchParams['location'] != null)
         'location': searchParams['location'],
       if (searchParams['startDate'] != null)
@@ -70,6 +129,14 @@ class TourProvider with ChangeNotifier {
     log('$queryString queryStringgg');
     String url = '${ApiUrls.baseUrl}${ApiUrls.tourSearch}?$queryString';
     log('$url checkurl');
+
+    // 🧪 VISUAL TEST: Show toast when loading next page
+    // if (page > 1) {
+    // EasyLoading.showToast("⏳ Loading Page $page...",
+    //   duration: Duration(seconds: 1),
+    //   toastPosition: EasyLoadingToastPosition.bottom);
+    // }
+
     final result = await makeRequest(
       url,
       'GET',
@@ -79,10 +146,35 @@ class TourProvider with ChangeNotifier {
     );
 
     if (result['success']) {
-      log("Tour List Response for index $index ===> ${result['data']}");
-      TourList tourList = TourList.fromJson(result['data']);
-      tourListPerCategory[index] = tourList;
+      log("Tour List Response for index $index ===> Page $page loaded. Items: ${result['data']['data']?.length ?? 0}");
+
+      TourList newTourList = TourList.fromJson(result['data']);
+
+      if (isLoadMore && tourListPerCategory[index] != null) {
+        // Append data
+        final currentData = tourListPerCategory[index]!.data ?? [];
+        final newData = newTourList.data ?? [];
+
+        tourListPerCategory[index]!.data = [...currentData, ...newData];
+        tourListPerCategory[index]!.currentPage = newTourList.currentPage;
+        tourListPerCategory[index]!.lastPage = newTourList.lastPage;
+        tourListPerCategory[index]!.total = newTourList.total;
+        tourListPerCategory[index]!.text = newTourList.text;
+      } else {
+        // Replace data
+        tourListPerCategory[index] = newTourList;
+      }
+
       notifyListeners();
+
+      // 🧪 VISUAL TEST: Confirm data loaded
+      // if (page > 1) {
+      //  EasyLoading.showToast(
+      //     "✅ Loaded ${newTourList.data?.length ?? 0} new items!",
+      //    duration: Duration(seconds: 2),
+      //   toastPosition: EasyLoadingToastPosition.bottom);
+      //}
+
       return true;
     } else {
       log("Failed to fetch tour list. Error: ${result['message']}");
