@@ -523,15 +523,22 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                     loading = false;
                                   });
 
+                                  // if (check) {
+                                  //   Navigator.of(context).push(
+                                  //     MaterialPageRoute(
+                                  //       builder: (context) {
+                                  //         return OtpScreen(
+                                  //           email: emailController.value.text,
+                                  //         );
+                                  //       },
+                                  //     ),
+                                  //   );
+                                  // }
                                   if (check) {
-                                    Navigator.of(context).push(
+                                    Navigator.of(context).pushAndRemoveUntil(
                                       MaterialPageRoute(
-                                        builder: (context) {
-                                          return OtpScreen(
-                                            email: emailController.value.text,
-                                          );
-                                        },
-                                      ),
+                                          builder: (context) => BottomNav()),
+                                      (route) => false,
                                     );
                                   }
                                 } else {

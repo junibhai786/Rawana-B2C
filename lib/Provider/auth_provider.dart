@@ -223,6 +223,8 @@ class AuthProvider with ChangeNotifier {
       showSuccessToast(result['data']['message']);
 
       // Additional cleanup if needed
+      // Clear local state and token equivalent to logout
+      await logoutState();
       return true;
     } else {
       log("result${result}");
@@ -230,6 +232,14 @@ class AuthProvider with ChangeNotifier {
       showErrorToast(result['message']);
       return false;
     }
+  }
+
+  Future<void> logoutState() async {
+    _token = null;
+    _userProfile = null;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.clear();
+    notifyListeners();
   }
 
   Future<bool> resetpassowrd(

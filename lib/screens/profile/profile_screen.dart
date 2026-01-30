@@ -47,7 +47,7 @@ class _AccountScreenState extends State<AccountScreen> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (BuildContext context) {
+      builder: (BuildContext sheetContext) {
         return Container(
           padding: const EdgeInsets.all(24),
           child: Column(
@@ -78,7 +78,7 @@ class _AccountScreenState extends State<AccountScreen> {
                         padding: const EdgeInsets.symmetric(vertical: 12),
                       ),
                       onPressed: () {
-                        Navigator.pop(context);
+                        Navigator.pop(sheetContext);
                       },
                       child: Text(
                         'Cancel'.tr,
@@ -98,7 +98,7 @@ class _AccountScreenState extends State<AccountScreen> {
                         padding: const EdgeInsets.symmetric(vertical: 12),
                       ),
                       onPressed: () async {
-                        Navigator.pop(context); // Close dialog first
+                        Navigator.pop(sheetContext); // Close dialog first
 
                         // Show loading
                         ScaffoldMessenger.of(context).showSnackBar(
@@ -114,10 +114,7 @@ class _AccountScreenState extends State<AccountScreen> {
                         final result = await authProvider.deleteMyAccount();
 
                         if (result == true && context.mounted) {
-                          // Clear SharedPreferences
-                          SharedPreferences prefs =
-                              await SharedPreferences.getInstance();
-                          await prefs.clear();
+                          // Note: authProvider.deleteMyAccount() now handles clearing SharedPreferences/state via logoutState()
 
                           // Navigate to login screen
                           Navigator.pushAndRemoveUntil(
