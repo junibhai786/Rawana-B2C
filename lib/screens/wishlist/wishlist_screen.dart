@@ -101,14 +101,11 @@ class _WishlistScreenState extends State<WishlistScreen> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(
-                            "Wishlists".tr,
-                            style: GoogleFonts.spaceGrotesk(
-                              fontWeight: FontWeight.w600,
-                              color: Colors.black,
-                              fontSize: 18
-                            )
-                          ),
+                          Text("Wishlists".tr,
+                              style: GoogleFonts.spaceGrotesk(
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.black,
+                                  fontSize: 18)),
                           if (!isGuest) // Show Edit button only if logged in
                             GestureDetector(
                               onTap: () {
@@ -116,15 +113,12 @@ class _WishlistScreenState extends State<WishlistScreen> {
                                   isEditMode = !isEditMode;
                                 });
                               },
-                              child: Text(
-                                isEditMode ? 'Done'.tr : 'Edit'.tr,
-                                style: GoogleFonts.spaceGrotesk(
-                                  fontSize: 18,
-                                  decoration: TextDecoration.underline,
-                                  fontWeight: FontWeight.w400,
-
-                                )
-                              ),
+                              child: Text(isEditMode ? 'Done'.tr : 'Edit'.tr,
+                                  style: GoogleFonts.spaceGrotesk(
+                                    fontSize: 18,
+                                    decoration: TextDecoration.underline,
+                                    fontWeight: FontWeight.w400,
+                                  )),
                             )
                         ],
                       ),
@@ -217,9 +211,10 @@ class _WishlistScreenState extends State<WishlistScreen> {
                                     context,
                                     MaterialPageRoute(
                                       builder: (context) => RoomDetailScreen(
-                                          hotelId: wishlistItems
-                                                  ?.data[index].objectId ??
-                                              0),
+                                          hotelId: (wishlistItems
+                                                      ?.data[index].objectId ??
+                                                  '0')
+                                              .toString()),
                                     ),
                                   );
                                 } else if (wishlistItems

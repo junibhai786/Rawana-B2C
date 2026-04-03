@@ -422,8 +422,8 @@ class _AccountScreenState extends State<AccountScreen> {
                                               padding:
                                                   const EdgeInsets.all(6.0),
                                               child: Text(
-                                                  provider.myProfile?.data!
-                                                          .phone ??
+                                                  provider.myProfile?.data
+                                                          ?.phone ??
                                                       '',
                                                   style:
                                                       GoogleFonts.spaceGrotesk(

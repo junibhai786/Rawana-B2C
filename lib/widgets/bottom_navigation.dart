@@ -1,8 +1,6 @@
-
 // ignore_for_file: prefer_const_constructors
 
 import 'dart:developer';
-import 'dart:ui';
 
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -64,110 +62,56 @@ class _BottomNavState extends State<BottomNav> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      extendBody: true,
       body: Center(
         child: _widgetOptions.elementAt(_selectedIndex),
       ),
       bottomNavigationBar: Container(
-        // Positioning: 25px from left, 20px from bottom (since top: 767px suggests bottom positioning)
-        margin: EdgeInsets.only(
-          left: 25,
-          right: 25,
-          bottom: 20, // Approximating from top: 767px
-        ),
-        // Fixed width and height
-        width: 344,
-        height: 75,
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(100), // 100px border radius
-          child: BackdropFilter(
-            filter: ImageFilter.blur(
-              sigmaX: 8.0,
-              sigmaY: 8.0,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          border: Border(
+            top: BorderSide(color: kBorderColor, width: 0.5),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 8,
+              offset: const Offset(0, -2),
             ),
-            child: Container(
-              padding: EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Colors.white.withOpacity(0.8),
-                    Colors.white.withOpacity(0.6),
-                  ],
+          ],
+        ),
+        child: SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.only(top: 8, bottom: 6),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _buildNavItem(
+                  index: 0,
+                  icon: 'assets/icons/bottom_search.svg',
+                  activeIcon: 'assets/icons/search_filled.svg',
+                  label: 'Explore'.tr,
                 ),
-                borderRadius: BorderRadius.circular(100),
-                border: Border.all(
-                  color: Colors.white.withOpacity(0.5),
-                  width: 1,
+                _buildNavItem(
+                  index: 1,
+                  icon: 'assets/icons/img.svg',
+                  activeIcon: 'assets/icons/img.svg',
+                  label: 'Wishlist'.tr,
                 ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 15,
-                    spreadRadius: 0,
-                    offset: Offset(0, 3),
+                if (enableMyPlain)
+                  _buildNavItem(
+                    index: 2,
+                    icon: 'assets/icons/home_profile.svg',
+                    activeIcon: 'assets/icons/home_profile.svg',
+                    label: 'My Plans'.tr,
                   ),
-                ],
-              ),
-              child: Row(
-                // Equal spacing with gaps
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  // Explore Tab - with gap
-                  Expanded(
-                    child: Container(
-                      margin: EdgeInsets.only(right: 5), // Half of 10px gap
-                      child: _buildNavItem(
-                        index: 0,
-                        icon: 'assets/icons/bottom_search.svg',
-                        activeIcon: 'assets/icons/search_filled.svg',
-                        label: 'Explore'.tr,
-                      ),
-                    ),
-                  ),
-
-                  // Wishlist Tab - with gaps on both sides
-                  Expanded(
-                    child: Container(
-                      margin: EdgeInsets.symmetric(horizontal: 5), // 10px total gap
-                      child: _buildNavItem(
-                        index: 1,
-                        icon: 'assets/icons/img.svg',
-                        activeIcon: 'assets/icons/img.svg',
-                        label: 'Wishlist'.tr,
-                      ),
-                    ),
-                  ),
-
-                  // My Plans Tab (Conditional) - with gaps
-                  if (enableMyPlain)
-                    Expanded(
-                      child: Container(
-                        margin: EdgeInsets.symmetric(horizontal: 5), // 10px total gap
-                        child: _buildNavItem(
-                          index: 2,
-                          icon: 'assets/icons/home_profile.svg',
-                          activeIcon: 'assets/icons/home_profile.svg',
-                          label: 'My Plans'.tr,
-                        ),
-                      ),
-                    ),
-
-                  // Profile Tab - with gap
-                  Expanded(
-                    child: Container(
-                      margin: EdgeInsets.only(left: 5), // Half of 10px gap
-                      child: _buildNavItem(
-                        index: enableMyPlain ? 3 : 2,
-                        icon: 'assets/icons/profile_icon.svg',
-                        activeIcon: 'assets/icons/profile_filled.svg',
-                        label: 'Profile'.tr,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+                _buildNavItem(
+                  index: enableMyPlain ? 3 : 2,
+                  icon: 'assets/icons/profile_icon.svg',
+                  activeIcon: 'assets/icons/profile_filled.svg',
+                  label: 'Profile'.tr,
+                ),
+              ],
             ),
           ),
         ),
@@ -181,45 +125,41 @@ class _BottomNavState extends State<BottomNav> {
     required String activeIcon,
     required String label,
   }) {
-    bool isSelected = _selectedIndex == index;
+    final bool isSelected = _selectedIndex == index;
 
     return GestureDetector(
       onTap: () => _onItemTapped(index),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          // Icon with circular background when selected
-          SvgPicture.asset(
-            isSelected ? activeIcon : icon,
-            colorFilter: ColorFilter.mode(
-              isSelected ? kSecondaryColor : Color(0xff65758B),
-              BlendMode.srcIn,
+      behavior: HitTestBehavior.opaque,
+      child: SizedBox(
+        width: 72,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SvgPicture.asset(
+              isSelected ? activeIcon : icon,
+              colorFilter: ColorFilter.mode(
+                isSelected ? kPrimaryColor : kNavInactiveColor,
+                BlendMode.srcIn,
+              ),
+              height: 22,
+              width: 22,
             ),
-            height: 22,
-            width: 22,
-          ),
-          SizedBox(height: 4),
-          // Label
-          Text(
-            label,
-            style: GoogleFonts.spaceGrotesk(
-              fontSize: 11,
-              fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-              color: isSelected ? kSecondaryColor : Colors.grey[700]!.withOpacity(0.8),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: GoogleFonts.spaceGrotesk(
+                fontSize: 11,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                color: isSelected ? kPrimaryColor : kNavInactiveColor,
+                height: 1.2,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 }
-
-
-
-
-
-
-
 
 // // ignore_for_file: prefer_const_constructors
 //

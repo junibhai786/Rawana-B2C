@@ -93,7 +93,7 @@ class WishlistDetailsScreen extends StatelessWidget {
                         context,
                         MaterialPageRoute(
                           builder: (context) => RoomDetailScreen(
-                            hotelId: 3,
+                            hotelId: '3',
                           ),
                         ),
                       ),

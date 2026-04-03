@@ -64,6 +64,7 @@ dependencies:
   firebase_messaging: ^14.7.10
   firebase_core: ^2.24.2
   google_fonts: ^6.1.0
+  shimmer: ^3.0.0
   # flutter_inappwebview: ^6.1.5
 
 dependency_overrides:

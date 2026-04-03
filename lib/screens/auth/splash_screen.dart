@@ -1,9 +1,6 @@
-
 import 'package:flutter/material.dart';
-
+import 'package:shared_preferences/shared_preferences.dart';
 import '../onboarding/onboarding_screen.dart';
-
-
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -18,7 +15,12 @@ class _SplashScreenState extends State<SplashScreen> {
     super.initState();
 
     // Wait for 5 seconds, then navigate to onboarding
-    Future.delayed(const Duration(seconds: 5), () {
+    Future.delayed(const Duration(seconds: 5), () async {
+      // Set flag that app has launched before
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('has_launched_before', true);
+
+      // ignore: use_build_context_synchronously
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
@@ -54,19 +56,12 @@ class _SplashScreenState extends State<SplashScreen> {
               'assets/images/logo.png',
               width: 250,
             ),
-
-
-
-
           ],
         ),
       ),
     );
   }
 }
-
-
-
 
 // import 'dart:async';
 // import 'package:flutter/material.dart';

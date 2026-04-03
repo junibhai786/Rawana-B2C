@@ -255,7 +255,8 @@ class _MapScreenState extends State<MapScreen> {
                                         MaterialPageRoute(
                                           builder: (context) =>
                                               RoomDetailScreen(
-                                                  hotelId: hotel.id!),
+                                                  hotelId:
+                                                      hotel.id!.toString()),
                                         ),
                                       );
                                     },
