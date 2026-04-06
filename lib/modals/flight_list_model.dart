@@ -2,8 +2,10 @@
 
 class FlightList {
   List<Flight>? data;
+  int? lastPage;
+  int? total;
 
-  FlightList({this.data});
+  FlightList({this.data, this.lastPage, this.total});
 
   FlightList.fromJson(Map<String, dynamic> json) {
     if (json['data'] != null && json['data']['flights'] != null) {
@@ -30,23 +32,100 @@ class Flight {
   List<FlightDetail>? flightDetails;
   String? rawData; // Store raw JSON for price revalidation
 
+  // New fields from updated API //pre also
+  String? airlineName;
+  String? airlineCode;
+  String? airlineLogo;
+  String? stopsLabel;
+  String? badge;
+  String? provider; // duffel or travolyo_b2b_xml_agency
+  String? cabinClass;
+  String? flightNumber;
+
+  // Top-level fields from API response
+  String? origin;
+  String? destination;
+  String? departureAt;
+  String? arrivalAt;
+  String? duration;
+  int? stops;
+  bool? isNextDay;
+  List<Segment>? segments;
+
+  // Round-trip fields
+  String? returnDepartureAt;
+  String? returnArrivalAt;
+  String? returnDuration;
+  int? returnStops;
+
   Flight({
     this.id,
     this.totalPrice,
     this.currency,
     this.flightDetails,
     this.rawData,
+    this.airlineName,
+    this.airlineCode,
+    this.airlineLogo,
+    this.stopsLabel,
+    this.badge,
+    this.provider,
+    this.cabinClass,
+    this.flightNumber,
+    this.origin,
+    this.destination,
+    this.departureAt,
+    this.arrivalAt,
+    this.duration,
+    this.stops,
+    this.isNextDay,
+    this.segments,
+    this.returnDepartureAt,
+    this.returnArrivalAt,
+    this.returnDuration,
+    this.returnStops,
   });
 
   Flight.fromJson(Map<String, dynamic> json) {
     id = json['id']?.toString();
-    totalPrice = json['total_price']?.toString();
+    totalPrice =
+        json['total_price']?.toString() ?? json['total_amount']?.toString();
     currency = json['currency']?.toString();
+    airlineName = json['airline_name'];
+    airlineCode = json['airline_code'];
+    airlineLogo = json['airline_logo'];
+    stopsLabel = json['stops_label'];
+    badge = json['badge'];
+    provider = json['provider'];
+    cabinClass = json['cabin_class'];
+    flightNumber = json['flight_number'];
+
+    // Capture top-level fields
+    origin = json['origin'];
+    destination = json['destination'];
+    departureAt = json['departure_at'];
+    arrivalAt = json['arrival_at'];
+    duration = json['duration'];
+    stops = json['stops'];
+    isNextDay = json['is_next_day'];
+
+    // Capture round-trip fields
+    returnDepartureAt = json['return_departure_at'];
+    returnArrivalAt = json['return_arrival_at'];
+    returnDuration = json['return_duration'];
+    returnStops = json['return_stops'];
 
     if (json['flight_details'] != null) {
       flightDetails = <FlightDetail>[];
       (json['flight_details'] as List).forEach((v) {
         flightDetails!.add(FlightDetail.fromJson(v));
+      });
+    }
+
+    if (json['segments'] != null) {
+      segments = <Segment>[];
+      (json['segments'] as List).forEach((v) {
+        segments!.add(Segment.fromJson(v));
       });
     }
 
@@ -59,15 +138,60 @@ class Flight {
       'id': id,
       'total_price': totalPrice,
       'currency': currency,
+      'airline_name': airlineName,
+      'airline_code': airlineCode,
+      'airline_logo': airlineLogo,
+      'stops_label': stopsLabel,
+      'badge': badge,
+      'provider': provider,
+      'cabin_class': cabinClass,
+      'flight_number': flightNumber,
+      'origin': origin,
+      'destination': destination,
+      'departure_at': departureAt,
+      'arrival_at': arrivalAt,
+      'duration': duration,
+      'stops': stops,
+      'is_next_day': isNextDay,
+      'return_departure_at': returnDepartureAt,
+      'return_arrival_at': returnArrivalAt,
+      'return_duration': returnDuration,
+      'return_stops': returnStops,
       if (flightDetails != null)
         'flight_details': flightDetails!.map((v) => v.toJson()).toList(),
+      if (segments != null)
+        'segments': segments!.map((v) => v.toJson()).toList(),
       'raw_data': rawData,
     };
   }
+
+  /// Get departure flight detail (direction == "Departure")
+  FlightDetail? getDepartureDetail() {
+    return flightDetails?.firstWhere(
+      (detail) => detail.direction?.toLowerCase() == 'departure',
+      orElse: () => flightDetails!.first,
+    );
+  }
+
+  /// Get return flight detail (direction == "Return")
+  FlightDetail? getReturnDetail() {
+    if (flightDetails == null || flightDetails!.isEmpty) return null;
+    return flightDetails!.cast<FlightDetail?>().firstWhere(
+          (detail) => detail?.direction?.toLowerCase() == 'return',
+          orElse: () => null,
+        );
+  }
+
+  /// Check if this is a round-trip flight
+  bool get isRoundTrip => getReturnDetail() != null;
+
+  /// Check if this is a one-way flight
+  bool get isOneWay => !isRoundTrip;
 }
 
 class FlightDetail {
   String? direction; // "Departure" or "Return"
+  String? airlineName;
   String? airlineLogo;
   String? airlineCode;
   String? flightNumber;
@@ -84,6 +208,7 @@ class FlightDetail {
 
   FlightDetail({
     this.direction,
+    this.airlineName,
     this.airlineLogo,
     this.airlineCode,
     this.flightNumber,
@@ -101,6 +226,7 @@ class FlightDetail {
 
   FlightDetail.fromJson(Map<String, dynamic> json) {
     direction = json['direction']?.toString();
+    airlineName = json['airline_name'];
     airlineLogo = json['airline_logo']?.toString();
     airlineCode = json['airline_code']?.toString();
     flightNumber = json['flight_number']?.toString();
@@ -125,6 +251,7 @@ class FlightDetail {
   Map<String, dynamic> toJson() {
     return {
       'direction': direction,
+      'airline_name': airlineName,
       'airline_logo': airlineLogo,
       'airline_code': airlineCode,
       'flight_number': flightNumber,
@@ -197,6 +324,57 @@ class FlightSegment {
       'id': id,
       'numberOfStops': numberOfStops,
       'blacklistedInEU': blacklistedInEU,
+    };
+  }
+}
+
+/// Simple Segment model for top-level segments in Flight
+class Segment {
+  String? from;
+  String? to;
+  String? depDatetime;
+  String? arrDatetime;
+  String? flightNumber;
+  String? airlineCode;
+  String? airlineName;
+  String? baggage;
+  String? cabinClass;
+
+  Segment({
+    this.from,
+    this.to,
+    this.depDatetime,
+    this.arrDatetime,
+    this.flightNumber,
+    this.airlineCode,
+    this.airlineName,
+    this.baggage,
+    this.cabinClass,
+  });
+
+  Segment.fromJson(Map<String, dynamic> json) {
+    from = json['from'];
+    to = json['to'];
+    depDatetime = json['dep_datetime'];
+    arrDatetime = json['arr_datetime'];
+    flightNumber = json['flight_number'];
+    airlineCode = json['airline_code'];
+    airlineName = json['airline_name'];
+    baggage = json['baggage']?.toString();
+    cabinClass = json['cabin_class'];
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'from': from,
+      'to': to,
+      'dep_datetime': depDatetime,
+      'arr_datetime': arrDatetime,
+      'flight_number': flightNumber,
+      'airline_code': airlineCode,
+      'airline_name': airlineName,
+      'baggage': baggage,
+      'cabin_class': cabinClass,
     };
   }
 }

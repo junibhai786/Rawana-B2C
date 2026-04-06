@@ -1,43 +1,50 @@
 // ignore_for_file: unnecessary_const, prefer_const_constructors, sort_child_properties_last, prefer_const_literals_to_create_immutables, unused_local_variable, avoid_print, use_build_context_synchronously
 
-import 'dart:developer';
-
 import 'package:google_fonts/google_fonts.dart';
 import 'package:moonbnd/Provider/home_provider.dart';
 import 'package:moonbnd/data_models/room_detail_screen_data.dart' as rd;
 import 'package:moonbnd/modals/hotel_detail_model.dart';
+import 'package:moonbnd/modals/hotel_room_model.dart' hide Room;
+import 'package:moonbnd/modals/hotel_search_model.dart';
 import 'package:moonbnd/modals/room_model.dart';
 import 'package:moonbnd/screens/auth/signin_screen.dart';
-import 'package:moonbnd/screens/hotel/booking_screen.dart';
-import 'package:moonbnd/widgets/enquiry_bottomsheet.dart';
-import 'package:moonbnd/widgets/guest_bottomsheet.dart';
+
 import 'package:moonbnd/widgets/popup_login.dart';
 import 'package:moonbnd/widgets/room_widget.dart';
 import 'package:moonbnd/widgets/tertiary_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:moonbnd/screens/hotel/hotel_checkout_screen.dart';
+import 'package:moonbnd/modals/hotel_room_model.dart' as hotel_room;
+import 'package:moonbnd/modals/room_model.dart' as model_room;
+import 'package:moonbnd/Provider/search_hotel_provider.dart';
+import 'package:moonbnd/Provider/currency_provider.dart';
+import 'dart:developer';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:get/get.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
-import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
 
 import '../../constants.dart';
 import '../../modals/hotel_list_model.dart';
 
 class RoomDetailScreen extends StatefulWidget {
-  final int hotelId;
+  final String hotelId;
+  final String? provider;
   final Room? room;
-  final Hotel? hotelData; // Add this line
+  final Hotel? hotelData;
+  final HotelModel?
+      searchData; // Search API data — when provided, no detail API call is made
   RoomDetailScreen(
       {super.key,
       required this.hotelId,
+      this.provider,
       this.room,
-      this.hotelData}); // Update this line
+      this.hotelData,
+      this.searchData});
 
   @override
   State<RoomDetailScreen> createState() => _RoomDetailScreenState();
@@ -46,11 +53,12 @@ class RoomDetailScreen extends StatefulWidget {
 class _RoomDetailScreenState extends State<RoomDetailScreen>
     with TickerProviderStateMixin {
   int currentPage = 0;
-  bool isBookTab = true;
   DateTime? checkInDate;
   DateTime? checkOutDate;
   RoomResponse? roomResponse;
   String selectedGuests = "1 ${'adults'.tr}, 0 ${'children'.tr}";
+  int adultsCount = 1;
+  int childrenCount = 0;
   bool loading = false;
   // Add this new variable
   int total = 0;
@@ -60,27 +68,181 @@ class _RoomDetailScreenState extends State<RoomDetailScreen>
 
   // Add this variable with other class variables
   double bookingFee = 0;
+  final ScrollController _scrollController = ScrollController();
+  final GlobalKey _bookingKey = GlobalKey();
+  bool checkingAvailability = false;
+
+  // Track children ages
+  List<int> _childrenAges = [];
+
+  /// Whether we are using search data directly (no detail API call)
+  bool get _useSearchData => widget.searchData != null;
+
+  /// HotelDetail converted from search data (used when _useSearchData is true)
+  HotelDetail? _searchConvertedDetail;
+
+  /// Debug log all search data fields to verify API→UI mapping
+  void _debugLogSearchData(HotelModel model) {
+    debugPrint('════════════════════════════════════════════════════════');
+    debugPrint('🏨 [RoomDetailScreen] SEARCH DATA DEBUG LOG');
+    debugPrint('════════════════════════════════════════════════════════');
+    debugPrint('Hotel ID        : ${model.id}');
+    debugPrint('DB Hotel ID     : ${model.dbHotelId}');
+    debugPrint('Provider        : ${model.provider}');
+    debugPrint('Name            : ${model.name}');
+    debugPrint('Slug            : ${model.slug}');
+    debugPrint(
+        'Star Rating     : ${model.starRating} (type: ${model.starRating.runtimeType})');
+    debugPrint('City            : ${model.city}');
+    debugPrint('Country         : ${model.country}');
+    debugPrint('Address         : ${model.address}');
+    debugPrint(
+        'Description     : ${(model.description ?? '').length > 80 ? '${model.description!.substring(0, 80)}...' : model.description}');
+    debugPrint('Short Desc      : ${model.shortDescription}');
+    debugPrint('Check-in Time   : ${model.checkInTime}');
+    debugPrint('Check-out Time  : ${model.checkOutTime}');
+    debugPrint(
+        'Latitude        : ${model.latitude} (type: ${model.latitude.runtimeType})');
+    debugPrint(
+        'Longitude       : ${model.longitude} (type: ${model.longitude.runtimeType})');
+    debugPrint(
+        'Lowest Price    : ${model.lowestPrice} (type: ${model.lowestPrice.runtimeType})');
+    debugPrint('Currency        : ${model.currency}');
+    debugPrint('Badge           : ${model.badge}');
+    debugPrint('API Source      : ${model.apiSource}');
+    debugPrint('Images count    : ${model.images.length}');
+    for (var i = 0; i < model.images.length; i++) {
+      debugPrint('  Image[$i]      : ${model.images[i]}');
+    }
+    debugPrint('Amenities count : ${model.amenities.length}');
+    for (var a in model.amenities) {
+      debugPrint('  Amenity        : $a');
+    }
+    debugPrint('Services count  : ${model.services.length}');
+    for (var s in model.services) {
+      debugPrint('  Service        : $s');
+    }
+    debugPrint('Rooms count     : ${model.rooms.length}');
+    for (var i = 0; i < model.rooms.length; i++) {
+      final r = model.rooms[i];
+      debugPrint('  ────── Room[$i] ──────');
+      debugPrint('  Room ID        : ${r.id}');
+      debugPrint('  Room Name      : ${r.name}');
+      debugPrint('  Room Type      : ${r.roomType}');
+      debugPrint('  Bed Config     : ${r.bedConfiguration}');
+      debugPrint('  Max Adults     : ${r.maxAdults}');
+      debugPrint('  Max Children   : ${r.maxChildren}');
+      debugPrint(
+          '  Base Price     : ${r.basePrice} (type: ${r.basePrice.runtimeType})');
+      debugPrint(
+          '  Total Price    : ${r.totalPrice} (type: ${r.totalPrice.runtimeType})');
+      debugPrint('  Nights         : ${r.nights}');
+      debugPrint('  Currency       : ${r.currency}');
+      debugPrint('  Available      : ${r.isAvailable}');
+      debugPrint('  Size (sqm)     : ${r.sizeSqm}');
+      debugPrint('  View Type      : ${r.viewType}');
+      debugPrint(
+          '  Description    : ${(r.description ?? '').length > 60 ? '${r.description!.substring(0, 60)}...' : r.description}');
+      debugPrint('  Images         : ${r.images.length} → ${r.images}');
+      debugPrint('  Amenities      : ${r.amenities.length} → ${r.amenities}');
+    }
+    debugPrint('════════════════════════════════════════════════════════');
+    debugPrint('🔄 [RoomDetailScreen] CONVERTED HotelDetail:');
+    final det = _searchConvertedDetail;
+    debugPrint('  detail.data.title    : ${det?.data?.title}');
+    debugPrint('  detail.data.address  : ${det?.data?.address}');
+    debugPrint(
+        '  detail.data.content  : ${(det?.data?.content ?? '').length > 60 ? '${det!.data!.content!.substring(0, 60)}...' : det?.data?.content}');
+    debugPrint('  detail.data.image    : ${det?.data?.image}');
+    debugPrint('  detail.data.gallery  : ${det?.data?.gallery?.length} images');
+    debugPrint('  detail.data.starRate : ${det?.data?.starRate}');
+    debugPrint('  detail.data.price    : ${det?.data?.price}');
+    debugPrint('  detail.data.mapLat   : ${det?.data?.mapLat}');
+    debugPrint('  detail.data.mapLng   : ${det?.data?.mapLng}');
+    debugPrint('  detail.data.checkIn  : ${det?.data?.checkInTime}');
+    debugPrint('  detail.data.checkOut : ${det?.data?.checkOutTime}');
+    debugPrint('  detail.status        : ${det?.status}');
+    debugPrint('════════════════════════════════════════════════════════');
+  }
+
+  /// Convert HotelModel (search result) to HotelDetail for display compatibility
+  HotelDetail _convertSearchData(HotelModel model) {
+    final displayPrice = model.convertedLowestPrice ?? model.lowestPrice;
+    return HotelDetail(
+      data: Data(
+        id: int.tryParse(model.id),
+        title: model.name ?? '',
+        address: model.address ?? '',
+        content: model.description ?? model.shortDescription ?? '',
+        gallery: model.images.isNotEmpty ? model.images : null,
+        image: model.images.isNotEmpty ? model.images.first : null,
+        starRate: (model.starRating is num)
+            ? (model.starRating as num).toInt()
+            : int.tryParse(model.starRating?.toString() ?? ''),
+        checkInTime: model.checkInTime,
+        checkOutTime: model.checkOutTime,
+        mapLat: model.latitude?.toString(),
+        mapLng: model.longitude?.toString(),
+        price: displayPrice?.toString(),
+      ),
+      status: 1,
+    );
+  }
 
   @override
   void initState() {
     super.initState();
-    setState(() {
-      loading = true; // Set loading to true when fetching data
-    });
-    Provider.of<HomeProvider>(context, listen: false)
-        .fetchHotelDetails(widget.hotelId)
-        .then((hotelDetail) {
-      setState(() {
-        loading = false; // Set loading to false when data is fetched
-        // Calculate booking fee from hotel details
-        bookingFee = double.parse(hotelDetail?.data?.bookingFee
-                ?.firstWhere(
-                  (fee) => fee.name == "Service fee",
-                  orElse: () => BookingFee(name: "Service fee".tr, price: "0"),
-                )
-                .price ??
-            "0");
+
+    // Attempt to pull dates and guest counts from SearchHotelProvider if not already set
+    final searchProvider =
+        Provider.of<SearchHotelProvider>(context, listen: false);
+    if (checkInDate == null && searchProvider.lastCheckIn != null) {
+      checkInDate = searchProvider.lastCheckIn;
+    }
+    if (checkOutDate == null && searchProvider.lastCheckOut != null) {
+      checkOutDate = searchProvider.lastCheckOut;
+    }
+
+    // Initialize guest defaults from search if available
+    adultsCount = searchProvider.lastAdults > 0 ? searchProvider.lastAdults : 1;
+    childrenCount = searchProvider.lastChildren;
+    selectedGuests =
+        "$adultsCount ${'adults'.tr}, $childrenCount ${'children'.tr}";
+
+    if (_useSearchData) {
+      // No API call needed — data comes from search response
+      _searchConvertedDetail = _convertSearchData(widget.searchData!);
+      _debugLogSearchData(widget.searchData!);
+      loading = false;
+    } else {
+      loading = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _loadHotelDetails();
       });
+    }
+  }
+
+  Future<void> _loadHotelDetails() async {
+    if (!mounted) return;
+    setState(() {
+      loading = true;
+    });
+
+    final homeProvider = Provider.of<HomeProvider>(context, listen: false);
+    final currency =
+        Provider.of<CurrencyProvider>(context, listen: false).selectedCurrency;
+    final detail = await homeProvider.fetchHotelDetails(widget.hotelId,
+        provider: widget.provider, currency: currency);
+
+    if (!mounted) return;
+    setState(() {
+      loading = false;
+      // Safely extract booking fee
+      final fee = detail?.data?.bookingFee?.firstWhere(
+        (fee) => fee.name == "Service fee",
+        orElse: () => BookingFee(name: "Service fee".tr, price: "0"),
+      );
+      bookingFee = double.tryParse(fee?.price ?? "0") ?? 0;
     });
   }
 
@@ -136,14 +298,23 @@ class _RoomDetailScreenState extends State<RoomDetailScreen>
       return;
     }
 
+    setState(() {
+      checkingAvailability = true;
+    });
+
     final homeProvider = Provider.of<HomeProvider>(context, listen: false);
     final result = await homeProvider.checkHotelAvailability(
-      hotelId: widget.hotelId.toString(),
+      hotelId: widget.hotelId,
       startDate: checkInDate!,
       endDate: checkOutDate!,
       adults: adults,
       children: children,
     );
+
+    if (!mounted) return;
+    setState(() {
+      checkingAvailability = false;
+    });
 
     if (result != null) {
       setState(() {
@@ -167,6 +338,12 @@ class _RoomDetailScreenState extends State<RoomDetailScreen>
     }
   }
 
+  /// Primary CTA handler - checks availability and loads rooms
+  Future<void> _handleReserveNow() async {
+    // First, check availability
+    await _checkAvailability();
+  }
+
   void _showGuestBottomSheet() {
     final guestParts = selectedGuests.split(',');
     final adults =
@@ -174,14 +351,366 @@ class _RoomDetailScreenState extends State<RoomDetailScreen>
     final children =
         int.parse(RegExp(r'\d+').firstMatch(guestParts[1])?.group(0) ?? '0');
 
-    showGuestBottomSheet(
-      context,
-      initialAdults: adults,
-      initialChildren: children,
-      onSave: (adults, children) {
-        setState(() {
-          selectedGuests = "$adults ${'adults'.tr}, $children ${'children'.tr}";
-        });
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) {
+        int tempAdult = adults;
+        int tempChild = children;
+        int tempUnit = 1;
+        List<int> tempChildAges = List<int>.from(_childrenAges);
+
+        // Sync tempChildAges with tempChild count
+        if (tempChildAges.length < tempChild) {
+          while (tempChildAges.length < tempChild) {
+            tempChildAges.add(8);
+          }
+        } else if (tempChildAges.length > tempChild) {
+          tempChildAges = tempChildAges.sublist(0, tempChild);
+        }
+
+        return StatefulBuilder(
+          builder: (context, modalSetState) {
+            Widget _guestCounterRow(
+              String label,
+              String subtitle,
+              int count,
+              int minVal,
+              VoidCallback onDecrement,
+              VoidCallback onIncrement,
+            ) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          label.tr,
+                          style: GoogleFonts.spaceGrotesk(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 15,
+                            color: const Color(0xff1D2025),
+                          ),
+                        ),
+                        Text(
+                          subtitle.tr,
+                          style: GoogleFonts.spaceGrotesk(
+                            fontSize: 12,
+                            color: const Color(0xff6B7280),
+                          ),
+                        ),
+                      ],
+                    ),
+                    Row(
+                      children: [
+                        InkWell(
+                          onTap: count > minVal
+                              ? () {
+                                  modalSetState(() {
+                                    count--;
+                                    if (label == 'Children') {
+                                      tempChild = count;
+                                      if (tempChildAges.isNotEmpty) {
+                                        tempChildAges.removeLast();
+                                      }
+                                    } else if (label == 'Adults') {
+                                      tempAdult = count;
+                                    } else if (label == 'Unit') {
+                                      tempUnit = count;
+                                    }
+                                  });
+                                }
+                              : null,
+                          borderRadius: BorderRadius.circular(20),
+                          child: Container(
+                            width: 32,
+                            height: 32,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: count > minVal
+                                    ? const Color(0xFF05A8C7)
+                                    : const Color(0xffE5E7EB),
+                              ),
+                            ),
+                            child: Icon(
+                              Icons.remove,
+                              size: 16,
+                              color: count > minVal
+                                  ? const Color(0xFF05A8C7)
+                                  : const Color(0xffD1D5DB),
+                            ),
+                          ),
+                        ),
+                        SizedBox(
+                          width: 36,
+                          child: Text(
+                            '$count',
+                            textAlign: TextAlign.center,
+                            style: GoogleFonts.spaceGrotesk(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 16,
+                              color: const Color(0xff1D2025),
+                            ),
+                          ),
+                        ),
+                        InkWell(
+                          onTap: () {
+                            modalSetState(() {
+                              count++;
+                              if (label == 'Children') {
+                                tempChild = count;
+                                tempChildAges.add(8);
+                              } else if (label == 'Adults') {
+                                tempAdult = count;
+                              } else if (label == 'Unit') {
+                                tempUnit = count;
+                              }
+                            });
+                          },
+                          borderRadius: BorderRadius.circular(20),
+                          child: Container(
+                            width: 32,
+                            height: 32,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: const Color(0xFF05A8C7),
+                              ),
+                            ),
+                            child: const Icon(
+                              Icons.add,
+                              size: 16,
+                              color: Color(0xFF05A8C7),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              );
+            }
+
+            List<Widget> _buildChildAgeRows() {
+              if (tempChild == 0) {
+                return [];
+              }
+              return List.generate(
+                tempChild,
+                (index) {
+                  if (index >= tempChildAges.length) {
+                    tempChildAges.add(8);
+                  }
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Child ${index + 1} Age'.tr,
+                              style: GoogleFonts.spaceGrotesk(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 15,
+                                color: const Color(0xff1D2025),
+                              ),
+                            ),
+                            Text(
+                              'Years'.tr,
+                              style: GoogleFonts.spaceGrotesk(
+                                fontSize: 12,
+                                color: const Color(0xff6B7280),
+                              ),
+                            ),
+                          ],
+                        ),
+                        Row(
+                          children: [
+                            InkWell(
+                              onTap: tempChildAges[index] > 0
+                                  ? () {
+                                      modalSetState(() {
+                                        tempChildAges[index]--;
+                                      });
+                                    }
+                                  : null,
+                              borderRadius: BorderRadius.circular(20),
+                              child: Container(
+                                width: 32,
+                                height: 32,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: tempChildAges[index] > 0
+                                        ? const Color(0xFF05A8C7)
+                                        : const Color(0xffE5E7EB),
+                                  ),
+                                ),
+                                child: Icon(
+                                  Icons.remove,
+                                  size: 16,
+                                  color: tempChildAges[index] > 0
+                                      ? const Color(0xFF05A8C7)
+                                      : const Color(0xffD1D5DB),
+                                ),
+                              ),
+                            ),
+                            SizedBox(
+                              width: 36,
+                              child: Text(
+                                '${tempChildAges[index]}',
+                                textAlign: TextAlign.center,
+                                style: GoogleFonts.spaceGrotesk(
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 16,
+                                  color: const Color(0xff1D2025),
+                                ),
+                              ),
+                            ),
+                            InkWell(
+                              onTap: () {
+                                modalSetState(() {
+                                  tempChildAges[index]++;
+                                });
+                              },
+                              borderRadius: BorderRadius.circular(20),
+                              child: Container(
+                                width: 32,
+                                height: 32,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: const Color(0xFF05A8C7),
+                                  ),
+                                ),
+                                child: const Icon(
+                                  Icons.add,
+                                  size: 16,
+                                  color: Color(0xFF05A8C7),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              );
+            }
+
+            return Padding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+                left: 20,
+                right: 20,
+                top: 20,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Guests'.tr,
+                        style: GoogleFonts.spaceGrotesk(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 18,
+                          color: const Color(0xff1D2025),
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close, color: Colors.redAccent),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                    ],
+                  ),
+                  const Divider(),
+                  _guestCounterRow(
+                    'Adults',
+                    'Above 12 years',
+                    tempAdult,
+                    1,
+                    () => modalSetState(() => tempAdult--),
+                    () => modalSetState(() => tempAdult++),
+                  ),
+                  const Divider(height: 1),
+                  _guestCounterRow(
+                    'Children',
+                    'Below 12 years',
+                    tempChild,
+                    0,
+                    () {
+                      modalSetState(() {
+                        if (tempChild > 0) {
+                          tempChild--;
+                          if (tempChildAges.isNotEmpty) {
+                            tempChildAges.removeLast();
+                          }
+                        }
+                      });
+                    },
+                    () {
+                      modalSetState(() {
+                        tempChild++;
+                        tempChildAges.add(8);
+                      });
+                    },
+                  ),
+                  if (tempChild > 0) ...[
+                    const Divider(height: 1),
+                    ..._buildChildAgeRows(),
+                  ],
+                  const Divider(height: 1),
+                  _guestCounterRow(
+                    'Unit',
+                    'Rooms',
+                    tempUnit,
+                    1,
+                    () => modalSetState(() => tempUnit--),
+                    () => modalSetState(() => tempUnit++),
+                  ),
+                  const SizedBox(height: 20),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        setState(() {
+                          selectedGuests =
+                              "$tempAdult ${'adults'.tr}, $tempChild ${'children'.tr}";
+                          adultsCount = tempAdult;
+                          childrenCount = tempChild;
+                          _childrenAges = tempChildAges;
+                        });
+                        Navigator.pop(context);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF05A8C7),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        minimumSize: const Size(double.infinity, 48),
+                      ),
+                      child: Text('Done'.tr),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                ],
+              ),
+            );
+          },
+        );
       },
     );
   }
@@ -192,6 +721,141 @@ class _RoomDetailScreenState extends State<RoomDetailScreen>
     setState(() {
       selectedRooms[roomId] = quantity;
     });
+  }
+
+  Future<void> _onRoomSelected(dynamic room) async {
+    if (checkInDate == null || checkOutDate == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+            content: Text('Please select check-in and check-out dates'.tr)),
+      );
+      // Scroll to booking section if dates are missing
+      Scrollable.ensureVisible(
+        _bookingKey.currentContext!,
+        duration: const Duration(milliseconds: 500),
+        curve: Curves.easeInOut,
+      );
+      return;
+    }
+
+    EasyLoading.show(status: 'Preparing your booking...'.tr);
+
+    final homeProvider = Provider.of<HomeProvider>(context, listen: false);
+
+    // Prepare data for prebook
+    String roomId = '';
+    String roomName = '';
+    String offerId = widget.hotelId;
+    String provider = widget.provider ?? (widget.searchData?.provider ?? '');
+
+    hotel_room.HotelRoomModel? roomModel;
+
+    if (room is hotel_room.HotelRoomModel) {
+      roomModel = room;
+      roomId = (room.roomId != null && room.roomId!.isNotEmpty)
+          ? room.roomId!
+          : room.id;
+      offerId = (room.offerId != null && room.offerId!.isNotEmpty)
+          ? room.offerId!
+          : widget.hotelId;
+      roomName = room.name ?? '';
+    } else if (room is model_room.Room) {
+      roomId = room.id.toString();
+      roomName = room.title;
+      // Map model_room.Room to hotel_room.HotelRoomModel for Checkout Screen
+      roomModel = hotel_room.HotelRoomModel(
+        id: room.id.toString(),
+        name: room.title,
+        totalPrice: room.price,
+        currency: widget.searchData?.convertedCurrency ??
+            widget.searchData?.currency ??
+            'USD',
+        images: [room.image],
+        maxAdults: room.maxAdults,
+        maxChildren: room.maxChildren,
+      );
+    }
+
+    if (roomModel == null) {
+      EasyLoading.dismiss();
+      return;
+    }
+
+    final hotelData =
+        _useSearchData ? widget.searchData : homeProvider.hotelDetail?.data;
+    final hName =
+        hotelData is HotelModel ? hotelData.name : (hotelData as Data?)?.title;
+    final hCity = hotelData is HotelModel
+        ? hotelData.city
+        : (hotelData as Data?)?.address;
+    final hCountry = hotelData is HotelModel ? hotelData.country : '';
+
+    try {
+      final response = await homeProvider.preBookHotel(
+        offerId: offerId,
+        roomId: roomId,
+        checkIn: DateFormat('yyyy-MM-dd').format(checkInDate!),
+        checkOut: DateFormat('yyyy-MM-dd').format(checkOutDate!),
+        adults: adultsCount,
+        provider: provider,
+        hotelName: hName ?? '',
+        roomName: roomName,
+        city: hCity ?? '',
+        country: hCountry ?? '',
+      );
+
+      EasyLoading.dismiss();
+
+      if (response != null && response.success == true) {
+        final hotelDetailObj = _useSearchData
+            ? _searchConvertedDetail!
+            : homeProvider.hotelDetail!;
+
+        if (!mounted) return;
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => HotelCheckoutScreen(
+              hotel: hotelDetailObj,
+              room: roomModel!,
+              checkIn: checkInDate!,
+              checkOut: checkOutDate!,
+              adults: adultsCount,
+              children: childrenCount,
+              prebookResponse: response,
+              city: widget.searchData?.city,
+              country: widget.searchData?.country,
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      EasyLoading.dismiss();
+      log("Error in _onRoomSelected: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('An error occurred. Please try again.'.tr)),
+      );
+    }
+  }
+
+  /// Map amenity name to a suitable icon
+  IconData _amenityIcon(String amenity) {
+    final a = amenity.toLowerCase();
+    if (a.contains('wifi') || a.contains('wi-fi')) return Icons.wifi;
+    if (a.contains('pool') || a.contains('swimming')) return Icons.pool;
+    if (a.contains('restaurant') || a.contains('dining'))
+      return Icons.restaurant_menu;
+    if (a.contains('spa') || a.contains('wellness')) return Icons.spa;
+    if (a.contains('gym') || a.contains('fitness')) return Icons.fitness_center;
+    if (a.contains('parking')) return Icons.local_parking;
+    if (a.contains('bar')) return Icons.local_bar;
+    if (a.contains('breakfast')) return Icons.free_breakfast;
+    if (a.contains('shuttle') || a.contains('metro') || a.contains('transport'))
+      return Icons.directions_bus;
+    if (a.contains('water sport')) return Icons.surfing;
+    if (a.contains('room service') || a.contains('الخدمة'))
+      return Icons.room_service;
+    return Icons.check_circle_outline;
   }
 
   Widget _buildAmenityPill(String text, IconData icon) {
@@ -221,1146 +885,1563 @@ class _RoomDetailScreenState extends State<RoomDetailScreen>
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final item = Provider.of<HomeProvider>(context, listen: true);
-    print('Item: $item');
-    return Scaffold(
-      extendBodyBehindAppBar: true,
-      body: loading
-          ? Center(
-              child: CircularProgressIndicator(
-                  color: kSecondaryColor)) // Show loading indicator
-          : SafeArea(
-              child: SingleChildScrollView(
-                  child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                    //appbar + haven slider
-                    // This replaces the entire previous Stack(children: [...]) structure
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // 1. Back and Favorite Buttons (App Bar)
-                        // This section maintains the exact style and logic you provided
-                        SafeArea(
-                          child: Padding(
-                            padding: EdgeInsets.symmetric(
-                              vertical: 12,
-                            ),
-                            child: Row(
-                              children: [
-                                // Back button
-                                InkWell(
-                                  onTap: () {
-                                    Navigator.pop(context);
-                                  },
-                                  child: Padding(
-                                    padding:
-                                        EdgeInsets.symmetric(horizontal: 12),
-                                    child: Container(
-                                      height: 32,
-                                      width: 32,
-                                      decoration: BoxDecoration(
-                                        color: Colors.grey
-                                            .shade200, // Use Colors.white or theme color
-                                        borderRadius: BorderRadius.circular(50),
-                                      ),
-                                      child: Icon(
-                                        Icons.arrow_back_ios_new,
-                                        color: Colors.black,
-                                        size: 18,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-
-                                Spacer(),
-
-                                // Favorite button
-                                // InkWell(
-                                //   onTap: () async {
-                                //     log("message");
-                                //     final homeProvider =
-                                //     Provider.of<HomeProvider>(context, listen: false);
-                                //     final success = await homeProvider.addToWishlist(
-                                //       '${widget.hotelId}',
-                                //       'hotel',
-                                //     );
-                                //     homeProvider.fetchHotelDetails(widget.hotelId);
-                                //     await homeProvider.hotellistapi(1, searchParams: {});
-                                //
-                                //     if (success == "Added to wishlist") {
-                                //       setState(() {
-                                //         item.hotelDetail?.data?.isInWishlist = true;
-                                //       });
-                                //     } else if (success == "Removed from wishlist") {
-                                //       setState(() {
-                                //         item.hotelDetail?.data?.isInWishlist = false;
-                                //       });
-                                //     }
-                                //
-                                //     ScaffoldMessenger.of(context).showSnackBar(
-                                //       SnackBar(content: Text(success)),
-                                //     );
-                                //   },
-                                //   child: Padding(
-                                //     padding: EdgeInsets.symmetric(horizontal: 12),
-                                //     child: Container(
-                                //       height: 32,
-                                //       width: 32,
-                                //       decoration: BoxDecoration(
-                                //         color: Colors.grey.shade200, // Use Colors.white or theme color
-                                //         borderRadius: BorderRadius.circular(50),
-                                //       ),
-                                //       child: Icon(
-                                //         item.hotelDetail?.data?.isInWishlist == true
-                                //             ? Icons.favorite
-                                //             : Icons.favorite_border,
-                                //         color: item.hotelDetail?.data?.isInWishlist == true
-                                //             ? Colors.red
-                                //             : Colors.black,
-                                //         size: 18,
-                                //       ),
-                                //     ),
-                                //   ),
-                                // ),
-                              ],
-                            ),
-                          ),
-                        ),
-
-                        Column(
-                          children: [
-                            const SizedBox(height: 12),
-                            Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 12),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 15),
-                                    child: Text(
-                                      item.hotelDetail?.data?.title ?? ''.tr,
-                                      style: GoogleFonts.spaceGrotesk(
-                                        fontWeight: FontWeight.w700, // Bold
-                                        fontSize: 24,
-                                        height: 32 / 24,
-                                        letterSpacing: 0,
-                                        color: Colors.black,
-                                      ),
-                                      maxLines: 3,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 15),
-                                    child: Row(
-                                      children: [
-                                        const Icon(Icons.location_on_rounded,
-                                            color: Colors.black54),
-                                        const SizedBox(width: 5),
-                                        Expanded(
-                                          child: Text(
-                                            (item.hotelDetail?.data?.address ??
-                                                    '')
-                                                .tr, // <-- .tr ONLY here
-                                            style: GoogleFonts.spaceGrotesk(
-                                              fontWeight: FontWeight
-                                                  .w400, // Regular weight
-                                              fontSize: 14,
-                                              height: 19.5 / 14, // line-height
-                                              letterSpacing: 0,
-                                              color: Colors.black54,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 15),
-                                    child: Text(
-                                      "${item.hotelDetail?.data?.reviewScore?.totalReview ?? 0} Reviews"
-                                          .tr, // .tr ONLY here
-                                      style: GoogleFonts.spaceGrotesk(
-                                        fontWeight: FontWeight.w400, // Regular
-                                        fontSize: 13,
-                                        height: 19.5 / 13, // line-height
-                                        letterSpacing: 0,
-                                        color:
-                                            const Color(0xFF65758B), // #65758B
-                                      ),
-                                    ),
-                                  ),
-
-                                  const SizedBox(height: 10),
-
-                                  // ───────────────────────────────
-                                  // 1. IMAGE SLIDER (wrapped inside rounded top)
-                                  // ───────────────────────────────
-                                  ClipRRect(
-                                    child: Stack(
-                                      children: [
-                                        SizedBox(
-                                          height: 250,
-                                          width:
-                                              MediaQuery.of(context).size.width,
-                                          child: PageView.builder(
-                                            onPageChanged: (value) {
-                                              setState(() {
-                                                currentPage = value;
-                                              });
-                                            },
-                                            itemCount: item.hotelDetail?.data
-                                                    ?.gallery?.length ??
-                                                0,
-                                            itemBuilder: (context, index) =>
-                                                SliderContent(
-                                              imageUrl: item.hotelDetail?.data
-                                                      ?.gallery?[index] ??
-                                                  '',
-                                            ),
-                                            physics:
-                                                const ClampingScrollPhysics(),
-                                          ),
-                                        ),
-                                        Positioned(
-                                          bottom: 12,
-                                          right: 12,
-                                          child: Container(
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: 12,
-                                              vertical: 4,
-                                            ),
-                                            decoration: BoxDecoration(
-                                              color: Colors.black,
-                                              // borderRadius: BorderRadius.circular(5),
-                                            ),
-                                            child: Text(
-                                              '${currentPage + 1} / ${item.hotelDetail?.data?.gallery?.length}',
-                                              style: GoogleFonts.spaceGrotesk(
-                                                color: Colors.white,
-                                                fontWeight: FontWeight.w500,
-                                                fontSize: 12,
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-
-                                  const SizedBox(height: 10),
-
-                                  // ───────────────────────────────
-                                  // 5. ABOUT THIS HOTEL
-                                  // ───────────────────────────────
-                                  Padding(
-                                    padding: const EdgeInsets.only(left: 10),
-                                    child: Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceEvenly,
-                                      children: [
-                                        _buildAmenityPill('Wifi', Icons.wifi),
-                                        _buildAmenityPill('Pool', Icons.pool),
-                                        _buildAmenityPill('Restaurant',
-                                            Icons.restaurant_menu),
-                                      ],
-                                    ),
-                                  ),
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 15),
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        // Text(
-                                        //   'About this hotel'.tr,
-                                        //   style: TextStyle(
-                                        //     fontSize: 18,
-                                        //     fontWeight: FontWeight.w600,
-                                        //     fontFamily: 'Inter'.tr,
-                                        //     color: Colors.black,
-                                        //   ),
-                                        // ),
-                                        const SizedBox(height: 10),
-
-                                        ExpandableHtmlContent(
-                                          content:
-                                              item.hotelDetail?.data?.content ??
-                                                  '',
-                                          primaryColor: kPrimaryColor,
-                                          textStyle: GoogleFonts.spaceGrotesk(
-                                            fontWeight:
-                                                FontWeight.w400, // Regular
-                                            fontSize: 14,
-                                            height: 21 / 14, // line-height
-                                            letterSpacing: 0,
-                                            color: const Color(
-                                                0xFF65758B), // #65758B
-                                          ),
-                                          readMoreText:
-                                              'Read more'.tr, // .tr ONLY here
-                                        ),
-
-                                        const SizedBox(height: 20),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                          ],
-                        ),
-
-                        Padding(
-                          padding: EdgeInsets.all(20.0),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(15),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.grey.withOpacity(0.3),
-                                  spreadRadius: 2,
-                                  blurRadius: 5,
-                                ),
-                              ],
-                              border: Border.all(color: Colors.grey.shade300),
-                            ),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                // Tabs: Book and Enquiry
-                                Row(
-                                  children: [
-                                    Expanded(
-                                      child: InkWell(
-                                        onTap: () {
-                                          setState(() {
-                                            isBookTab = true;
-                                          });
-                                        },
-                                        child: Container(
-                                          padding: EdgeInsets.all(15),
-                                          alignment: Alignment.center,
-                                          child: Text(
-                                            'Book'.tr,
-                                            style: GoogleFonts.spaceGrotesk(
-                                              color: isBookTab
-                                                  ? kSecondaryColor
-                                                  : grey,
-                                              fontSize: 14,
-                                              fontWeight: isBookTab
-                                                  ? FontWeight.bold
-                                                  : FontWeight.normal,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                    Expanded(
-                                      child: InkWell(
-                                        onTap: () {
-                                          setState(() {
-                                            isBookTab = false;
-                                          });
-                                          EnquiryBottomSheet.show(
-                                            context,
-                                            serviceId: item
-                                                    .hotelDetail?.data?.id
-                                                    .toString() ??
-                                                '',
-                                            serviceType: 'hotel',
-                                            onEnquirySubmit:
-                                                (name, email, phone, note) {
-                                              print(
-                                                  'Enquiry submitted: $name, $email, $phone, $note');
-                                            },
-                                            onClose: () {
-                                              setState(() {
-                                                isBookTab = true;
-                                              });
-                                            },
-                                          );
-                                        },
-                                        child: Container(
-                                          padding: EdgeInsets.all(15),
-                                          alignment: Alignment.center,
-                                          child: Text(
-                                            'Enquiry'.tr,
-                                            style: GoogleFonts.spaceGrotesk(
-                                              color: !isBookTab
-                                                  ? kSecondaryColor
-                                                  : grey,
-                                              fontSize: 14,
-                                              fontWeight: !isBookTab
-                                                  ? FontWeight.bold
-                                                  : FontWeight.normal,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-// line
-                                // Row(
-                                //   children: [
-                                //     Expanded(
-                                //       child: Divider(
-                                //         height: isBookTab ? 3 : 1,
-                                //         thickness: isBookTab ? 3 : 1,
-                                //         color: isBookTab ? kSecondaryColor : grey,
-                                //       ),
-                                //     ),
-                                //     Expanded(
-                                //       child: Divider(
-                                //         height: isBookTab ? 1 : 3,
-                                //         thickness: isBookTab ? 1 : 3,
-                                //         color: !isBookTab ? kSecondaryColor : grey,
-                                //       ),
-                                //     ),
-                                //   ],
-                                // ),
-
-                                // Only show content for Book tab
-                                if (isBookTab) ...[
-                                  // Pricing or Enquiry Message based on Tab
-                                  Padding(
-                                    padding: EdgeInsets.all(16.0),
-                                    child: Align(
-                                      alignment: Alignment.centerLeft,
-                                      child: roomResponse != null &&
-                                              roomResponse!.rooms.isNotEmpty
-                                          ? Text(
-                                              '\$${roomResponse!.rooms[0].price.toStringAsFixed(2)}',
-                                              style: TextStyle(
-                                                fontSize: 20,
-                                                fontFamily: 'Inter'.tr,
-                                                fontWeight: FontWeight.w600,
-                                                color: kPrimaryColor,
-                                              ),
-                                            )
-                                          : Text(
-                                              'Check availability for pricing'
-                                                  .tr,
-                                              style: GoogleFonts.spaceGrotesk(
-                                                fontSize: 16,
-                                                fontWeight: FontWeight.w500,
-                                                color: Colors.black,
-                                              )),
-                                    ),
-                                  ),
-
-                                  // Container for Check-in, Check-out, and Guests
-                                  Padding(
-                                    padding: EdgeInsets.symmetric(
-                                        vertical: 15.0, horizontal: 15),
-                                    child: Container(
-                                      padding: EdgeInsets.all(10),
-                                      decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(15),
-                                        border: Border.all(
-                                            color: Colors.grey.shade300),
-                                      ),
-                                      child: Column(
-                                        children: [
-                                          Row(
-                                            children: [
-                                              // Check-in date
-                                              Expanded(
-                                                child: GestureDetector(
-                                                  onTap: () {
-                                                    _selectDate(context, true);
-                                                  },
-                                                  child: Column(
-                                                    crossAxisAlignment:
-                                                        CrossAxisAlignment
-                                                            .start,
-                                                    children: [
-                                                      Text(
-                                                        "Check-in".tr,
-                                                        style: TextStyle(
-                                                          fontFamily:
-                                                              'Inter'.tr,
-                                                          color: kPrimaryColor,
-                                                          fontSize: 12,
-                                                        ),
-                                                      ),
-                                                      SizedBox(height: 5),
-                                                      Container(
-                                                        padding:
-                                                            EdgeInsets.all(8),
-                                                        decoration:
-                                                            BoxDecoration(
-                                                          borderRadius:
-                                                              BorderRadius
-                                                                  .circular(8),
-                                                          border: Border.all(
-                                                              color: Colors.grey
-                                                                  .shade300),
-                                                        ),
-                                                        child: Text(
-                                                          checkInDate != null
-                                                              ? DateFormat(
-                                                                      'd/MM/yyyy')
-                                                                  .format(
-                                                                      checkInDate!)
-                                                              : 'Select date'
-                                                                  .tr,
-                                                          style: TextStyle(
-                                                            color:
-                                                                checkInDate !=
-                                                                        null
-                                                                    ? Colors
-                                                                        .black
-                                                                    : Colors
-                                                                        .grey,
-                                                            fontWeight:
-                                                                checkInDate !=
-                                                                        null
-                                                                    ? FontWeight
-                                                                        .normal
-                                                                    : FontWeight
-                                                                        .w300,
-                                                          ),
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                ),
-                                              ),
-
-                                              // Vertical line
-                                              Container(
-                                                width: 1,
-                                                height: 60,
-                                                color: Colors.grey,
-                                                margin: EdgeInsets.symmetric(
-                                                    horizontal: 10),
-                                              ),
-
-                                              // Check-out date
-                                              Expanded(
-                                                child: GestureDetector(
-                                                  onTap: () {
-                                                    _selectDate(context, false);
-                                                  },
-                                                  child: Column(
-                                                    crossAxisAlignment:
-                                                        CrossAxisAlignment
-                                                            .center,
-                                                    children: [
-                                                      Text("Check-out".tr,
-                                                          style: TextStyle(
-                                                            fontFamily:
-                                                                'Inter'.tr,
-                                                            color:
-                                                                kPrimaryColor,
-                                                            fontSize: 12,
-                                                          )),
-                                                      SizedBox(height: 5),
-                                                      Container(
-                                                        padding:
-                                                            EdgeInsets.all(8),
-                                                        decoration:
-                                                            BoxDecoration(
-                                                          borderRadius:
-                                                              BorderRadius
-                                                                  .circular(8),
-                                                          border: Border.all(
-                                                              color: Colors.grey
-                                                                  .shade300),
-                                                        ),
-                                                        child: Text(
-                                                          checkOutDate != null
-                                                              ? (checkOutDate!.isAfter(
-                                                                      checkInDate ??
-                                                                          DateTime
-                                                                              .now())
-                                                                  ? DateFormat(
-                                                                          'd/MM/yyyy')
-                                                                      .format(
-                                                                          checkOutDate!)
-                                                                  : 'Invalid date'
-                                                                      .tr)
-                                                              : 'Select date'
-                                                                  .tr,
-                                                          style: TextStyle(
-                                                            color: checkOutDate !=
-                                                                    null
-                                                                ? (checkOutDate!.isAfter(checkInDate ??
-                                                                        DateTime
-                                                                            .now())
-                                                                    ? Colors
-                                                                        .black
-                                                                    : Colors
-                                                                        .red)
-                                                                : Colors.grey,
-                                                            fontWeight:
-                                                                checkOutDate !=
-                                                                        null
-                                                                    ? FontWeight
-                                                                        .normal
-                                                                    : FontWeight
-                                                                        .w300,
-                                                          ),
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-
-                                          // Guests Dropdown
-                                          Divider(
-                                            thickness: 1,
-                                          ),
-                                          Padding(
-                                            padding: EdgeInsets.only(top: 5),
-                                            child: Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                Text(
-                                                  "Guests".tr,
-                                                  style: TextStyle(
-                                                      fontSize: 12,
-                                                      fontFamily: 'Inter'.tr,
-                                                      fontWeight:
-                                                          FontWeight.w600,
-                                                      color: kPrimaryColor),
-                                                ),
-                                                InkWell(
-                                                  onTap: _showGuestBottomSheet,
-                                                  child: Container(
-                                                    padding:
-                                                        EdgeInsets.symmetric(
-                                                            horizontal: 12,
-                                                            vertical: 8),
-                                                    decoration: BoxDecoration(
-                                                      border: Border.all(
-                                                          color: Colors
-                                                              .grey.shade300),
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              8),
-                                                    ),
-                                                    child: Row(
-                                                      mainAxisAlignment:
-                                                          MainAxisAlignment
-                                                              .spaceBetween,
-                                                      children: [
-                                                        Text(
-                                                          selectedGuests,
-                                                          style: TextStyle(
-                                                            fontFamily:
-                                                                'Inter'.tr,
-                                                            fontSize: 14,
-                                                          ),
-                                                        ),
-                                                        Icon(Icons
-                                                            .arrow_drop_down),
-                                                      ],
-                                                    ),
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-
-                                  SizedBox(height: 20),
-
-                                  // Check Availability Button
-                                  Padding(
-                                    padding:
-                                        EdgeInsets.symmetric(horizontal: 15),
-                                    child: TertiaryButton(
-                                      text: "Check Availability".tr,
-                                      press: _checkAvailability,
-                                    ),
-                                  ),
-
-                                  SizedBox(height: 20),
-                                ],
-                              ],
-                            ),
-                          ),
-                        ),
-
-                        if (roomResponse != null)
-                          ...roomResponse!.rooms.map((room) => RoomWidget(
-                                room: room,
-                                onQuantityChanged: updateSelectedRooms,
-                              )),
-
-                        SizedBox(
-                          height: 5,
-                        ),
-
-                        SizedBox(
-                          height: 10,
-                        ), // Divider(
-                        //   thickness: 1,
-                        //   endIndent: 30,
-                        //   indent: 30,
-                        // ),
-
-                        ...item.hotelDetail?.data?.terms?.map((term) {
-                              return Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  // --- Category Heading ---
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 20),
-                                    child: Text(
-                                      term.parent?.title ?? '',
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 16,
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 10),
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 20),
-                                    child: Wrap(
-                                      runSpacing:
-                                          0, // Vertical spacing between lines
-                                      spacing:
-                                          0, // Horizontal spacing between items
-                                      children: term.child?.map((facility) {
-                                            String iconPath =
-                                                facility.imageUrl ??
-                                                    'assets/haven/wifi.png';
-                                            return _buildFacilityItem(
-                                                iconPath, facility.title ?? '');
-                                          }).toList() ??
-                                          <Widget>[],
-                                    ),
-                                  ),
-
-                                  const SizedBox(height: 20),
-                                ],
-                              );
-                            }) ??
-                            [],
-
-                        SizedBox(
-                          height: 10,
-                        ),
-
-                        SizedBox(
-                          height: 5,
-                        ),
-                        // Padding(
-                        //   padding: EdgeInsets.all(20.0),
-                        //   child: Column(
-                        //     crossAxisAlignment: CrossAxisAlignment.start,
-                        //     children: [
-                        //       Text('Rules'.tr,
-                        //           style: TextStyle(
-                        //               color: kPrimaryColor,
-                        //               fontSize: 18,
-                        //               fontFamily: 'Inter'.tr,
-                        //               fontWeight: FontWeight.w600)),
-                        //       SizedBox(height: 20),
-                        //       _buildRuleItem('Check in'.tr,
-                        //           item.hotelDetail?.data?.checkInTime ?? ''),
-                        //       SizedBox(height: 10),
-                        //       _buildRuleItem('Check out'.tr,
-                        //           item.hotelDetail?.data?.checkOutTime ?? ''),
-                        //       SizedBox(height: 20),
-                        //       Column(
-                        //         crossAxisAlignment: CrossAxisAlignment.start,
-                        //         children: item.hotelDetail?.data?.policy
-                        //                 ?.map((policy) {
-                        //               return Column(
-                        //                 crossAxisAlignment: CrossAxisAlignment.start,
-                        //                 children: [
-                        //                   Text(
-                        //                     policy.title ?? '',
-                        //                     style: TextStyle(
-                        //                       fontFamily: 'Inter'.tr,
-                        //                       fontWeight: FontWeight.w600,
-                        //                       fontSize: 16,
-                        //                       color: kPrimaryColor,
-                        //                     ),
-                        //                   ),
-                        //                   SizedBox(height: 8),
-                        //                   Text(
-                        //                     policy.content ?? '',
-                        //                     style: TextStyle(
-                        //                       fontFamily: 'Inter'.tr,
-                        //                       fontSize: 14,
-                        //                       color: Colors.grey[600],
-                        //                     ),
-                        //                   ),
-                        //                   SizedBox(height: 16),
-                        //                 ],
-                        //               );
-                        //             }).toList() ??
-                        //             [],
-                        //       ),
-                        //       SizedBox(height: 20),
-                        //       Divider(
-                        //         thickness: 1,
-                        //         indent: 20,
-                        //         endIndent: 20,
-                        //       )
-                        //     ],
-                        //   ),
-                        // ),
-                        //
-                        // SizedBox(
-                        //   height: 5,
-                        // ),
-
-                        //map
-
-                        // Padding(
-                        //   padding: EdgeInsets.symmetric(horizontal: 20),
-                        //   child: Text("Location".tr,
-                        //       style: TextStyle(
-                        //           fontFamily: 'Inter'.tr,
-                        //           color: kPrimaryColor,
-                        //           fontSize: 18,
-                        //           fontWeight: FontWeight.w600)),
-                        // ),
-                        // SizedBox(
-                        //   height: 12,
-                        // ),
-                        // Padding(
-                        //   padding: const EdgeInsets.symmetric(horizontal: 20),
-                        //   child: Container(
-                        //     height: 200,
-                        //     child: GoogleMap(
-                        //       initialCameraPosition: CameraPosition(
-                        //         target: LatLng(
-                        //             double.parse(
-                        //                 item.hotelDetail?.data?.mapLat ?? '0'),
-                        //             double.parse(
-                        //                 item.hotelDetail?.data?.mapLng?.toString() ??
-                        //                     '0')),
-                        //         zoom: double.parse(
-                        //             item.hotelDetail?.data?.mapZoom?.toString() ??
-                        //                 '12'),
-                        //       ),
-                        //       markers: {
-                        //         Marker(
-                        //           markerId: MarkerId('hotel'),
-                        //           position: LatLng(
-                        //             double.parse(
-                        //                 item.hotelDetail?.data?.mapLat ?? '0'),
-                        //             double.parse(
-                        //                 item.hotelDetail?.data?.mapLng?.toString() ??
-                        //                     '0'),
-                        //           ),
-                        //         ),
-                        //       },
-                        //     ),
-                        //   ),
-                        // ),
-                        //
-                        // SizedBox(
-                        //   height: 32,
-                        // ),
-                        //
-                        // Divider(
-                        //   thickness: 1,
-                        //   indent: 20,
-                        //   endIndent: 20,
-                        // ),
-                        // //review slider
-                        // SizedBox(
-                        //   height: 12,
-                        // ),
-                        _buildRatingSection(item.hotelDetail!),
-                        _buildRatingBars(item.hotelDetail!),
-                        ...(item.hotelDetail?.data?.reviewLists?.data ?? [])
-                            .map((review) => _buildReviewItem(review)),
-                        SizedBox(
-                          height: 5,
-                        ),
-
-                        // This seciton is being comment out because it is the section where we are writing the review ...
-
-                        Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 20),
-                          child: Text("Write a Review".tr,
-                              style: TextStyle(
-                                  color: kPrimaryColor,
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w600)),
-                        ),
-
-                        SizedBox(
-                          height: 5,
-                        ),
-                        _buildReviewWidget(item.hotelDetail ?? HotelDetail()),
-                        SizedBox(height: 10),
-                        Divider(thickness: 1),
-                        ...(item.hotelDetail?.data?.extraPrice ?? [])
-                            .map((element) {
-                          return Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 15),
-                            child: Row(
-                              children: [
-                                Checkbox(
-                                    materialTapTargetSize:
-                                        MaterialTapTargetSize.shrinkWrap,
-                                    value: element.valueType,
-                                    onChanged: (bool? value) {
-                                      if (value != null) {
-                                        element.valueType = value;
-
-                                        if (element.valueType == true) {
-                                          extraPrice +=
-                                              int.parse(element.price ?? "0");
-                                        } else {
-                                          extraPrice -=
-                                              int.parse(element.price ?? "0");
-                                        }
-                                        setState(() {});
-                                      }
-                                    }),
-                                Text(element.name ?? ""),
-                                Spacer(),
-                                Text("\$${element.price}"),
-                              ],
-                            ),
-                          );
-                        }),
-                        _buildExtraServicesWidget(
-                            item.hotelDetail ?? HotelDetail(), selectedRooms),
-
-                        Divider(),
-
-                        SizedBox(
-                          height: 10,
-                        ),
-                        Divider(
-                          thickness: 1,
-                        ),
-                      ],
-                    ),
-
-                    //price & reserve button
-                  ])),
-            ),
-      bottomNavigationBar: BottomAppBar(
+  Widget _buildErrorState(String error) {
+    return SafeArea(
+      child: Center(
         child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          padding: const EdgeInsets.all(32.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              //price
-              SizedBox(
-                height: 44,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Text(
-                          () {
-                            double totalPrice = 0;
-                            if (roomResponse != null &&
-                                roomResponse!.rooms.isNotEmpty) {
-                              selectedRooms.forEach((roomId, quantity) {
-                                var room = roomResponse!.rooms
-                                    .firstWhere((r) => r.id == roomId);
-                                totalPrice += room.price * quantity;
-                              });
-                              // Add service fee to the total price
-                              totalPrice += bookingFee + extraPrice;
-                              return "\$${totalPrice.toStringAsFixed(2)}".tr;
-                            }
-
-                            return "\$${bookingFee.toStringAsFixed(2)}".tr;
-                          }(),
-                          style: TextStyle(
-                            fontFamily: 'Inter'.tr,
-                            fontWeight: FontWeight.w600,
-                            fontSize: 14,
-                          ),
-                        ),
-                        Text(
-                          " / night".tr,
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontFamily: 'Inter'.tr,
-                          ),
-                        ),
-                      ],
-                    ),
-                    Text(
-                      checkInDate != null && checkOutDate != null
-                          ? "${DateFormat('MMM d').format(checkInDate!)} - ${DateFormat('MMM d').format(checkOutDate!)}"
-                          : "Select dates".tr,
-                      style: TextStyle(
-                          fontFamily: 'Inter'.tr,
-                          fontWeight: FontWeight.w500,
-                          fontSize: 13,
-                          decoration: TextDecoration.underline),
-                    )
-                  ],
+              Icon(Icons.error_outline, size: 64, color: Colors.red.shade300),
+              const SizedBox(height: 16),
+              Text(
+                'Failed to load hotel details'.tr,
+                style: GoogleFonts.spaceGrotesk(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
                 ),
+                textAlign: TextAlign.center,
               ),
-
-              //reserve button
-              SizedBox(
-                height: 44,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: kSecondaryColor,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                  onPressed: () async {
-                    final prefs = await SharedPreferences.getInstance();
-                    final token = prefs.getString('userToken');
-
-                    if (token == null) {
-                      // Show the custom bottom sheet
-                      showModalBottomSheet(
-                        context: context,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.only(
-                            topLeft: Radius.circular(16),
-                            topRight: Radius.circular(16),
-                          ),
-                        ),
-                        builder: (context) => CustomBottomSheet(
-                          title: 'Log in to complete',
-                          content: 'your booking',
-                          onCancel: () {
-                            Navigator.of(context)
-                                .pop(); // Close the bottom sheet
-                          },
-                          onLogin: () {
-                            // Close the bottom sheet
-                            Navigator.of(context).pushReplacement(
-                              MaterialPageRoute(
-                                  builder: (context) => SignInScreen()),
-                            ); // Navigate to SignInScreen
-                          },
-                        ),
-                      );
-                      return; // Exit the function if token is null
-                    }
-                    if (checkInDate == null || checkOutDate == null) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                            content: Text(
-                                'Please select check-in and check-out dates'
-                                    .tr)),
-                      );
-                      return;
-                    }
-
-                    if (roomResponse == null || roomResponse!.rooms.isEmpty) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                            content:
-                                Text('Please check availability first'.tr)),
-                      );
-                      return;
-                    }
-
-                    final selectedRoomsList = selectedRooms.entries
-                        .where((entry) => entry.value > 0)
-                        .map((entry) => {
-                              'id': entry.key,
-                              'number_selected': entry.value,
-                            })
-                        .toList();
-
-                    if (selectedRoomsList.isEmpty) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                            content:
-                                Text('Please select at least one room'.tr)),
-                      );
-                      return;
-                    }
-                    // extraPrice.((serviceName, isSelected) {
-                    //   if (isSelected) {
-                    //     print('$serviceName added to cart');
-                    //   }
-                    // });
-
-                    final homeProvider =
-                        Provider.of<HomeProvider>(context, listen: false);
-
-                    final result = await homeProvider.addToCartForHotel(
-                      serviceId: item.hotelDetail?.data?.id.toString() ?? '',
-                      serviceType: 'hotel',
-                      startDate: checkInDate!,
-                      endDate: checkOutDate!,
-                      extraPrices: item.hotelDetail?.data?.extraPrice,
-                      adults: int.parse(
-                          selectedGuests.split(',')[0].trim().split(' ')[0]),
-                      children: int.tryParse(selectedGuests
-                              .split(',')[1]
-                              .trim()
-                              .split(' ')[0]) ??
-                          0,
-                      rooms: selectedRoomsList,
-                    );
-
-                    if (result != null && result['status'] == 1) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                            content: Text('Successfully added to booking')),
-                      );
-
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                            builder: (context) => BookingScreenForHotel(
-                                bookingCode: result['booking_code'])),
-                      );
-                      print("Booking Code: ${result['booking_code']}");
-                      // NavNigate to cart screen or show confirmation dialog
-                    } else {
-                      String errorMessage = 'Failed to add to booking';
-                      if (result != null && result['errors'] != null) {
-                        if (result['errors']['rooms'] != null) {
-                          errorMessage = result['errors']['rooms'][0];
-                        } else {
-                          errorMessage = result['errors'].values.join(', ');
-                        }
-                      }
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text(errorMessage)),
-                      );
-                    }
-                  },
-                  child: Text("Book Now".tr),
+              const SizedBox(height: 8),
+              Text(
+                error,
+                style: GoogleFonts.spaceGrotesk(
+                  fontSize: 14,
+                  color: Colors.grey[600],
                 ),
-              )
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  OutlinedButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: Text('Go Back'.tr),
+                  ),
+                  const SizedBox(width: 12),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: kSecondaryColor,
+                    ),
+                    onPressed: _loadHotelDetails,
+                    child: Text('Retry'.tr),
+                  ),
+                ],
+              ),
             ],
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return SafeArea(
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.hotel_outlined, size: 64, color: Colors.grey.shade400),
+              const SizedBox(height: 16),
+              Text(
+                'Hotel details not available'.tr,
+                style: GoogleFonts.spaceGrotesk(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              OutlinedButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text('Go Back'.tr),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSearchRoomCard(HotelRoomModel room) {
+    final price = room.convertedTotalPrice ??
+        room.convertedBasePrice ??
+        room.totalPrice ??
+        room.basePrice;
+    final priceStr = price != null
+        ? double.tryParse(price.toString())?.toStringAsFixed(2) ?? '0.00'
+        : '0.00';
+    final currency = room.convertedCurrency?.isNotEmpty == true
+        ? room.convertedCurrency!
+        : (room.currency ??
+            widget.searchData?.convertedCurrency ??
+            widget.searchData?.currency ??
+            'USD');
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey.shade200),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            spreadRadius: 0,
+            blurRadius: 10,
+            offset: Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Room Name & Type
+          Text(
+            room.name ?? 'Room'.tr,
+            style: GoogleFonts.spaceGrotesk(
+              fontWeight: FontWeight.w700,
+              fontSize: 18,
+              color: kPrimaryColor,
+            ),
+          ),
+          if (room.roomType != null && room.roomType!.isNotEmpty)
+            Text(
+              room.roomType!,
+              style: GoogleFonts.spaceGrotesk(
+                fontSize: 14,
+                color: Colors.grey[600],
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          const SizedBox(height: 12),
+
+          // Details Row (Icons)
+          Wrap(
+            spacing: 16,
+            runSpacing: 8,
+            children: [
+              _roomDetailChip(
+                  Icons.person_outline, "Max ${room.maxAdults ?? 0} Adults"),
+              _roomDetailChip(Icons.child_care_outlined,
+                  "Max ${room.maxChildren ?? 0} Children"),
+              if (room.sizeSqm != null)
+                _roomDetailChip(
+                    Icons.square_foot_outlined, '${room.sizeSqm} sqm'),
+              if (room.viewType != null && room.viewType!.isNotEmpty)
+                _roomDetailChip(Icons.landscape_outlined, room.viewType!),
+            ],
+          ),
+          const SizedBox(height: 12),
+
+          // Description (Truncated)
+          if (room.description != null && room.description!.isNotEmpty)
+            Text(
+              room.description!,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.spaceGrotesk(
+                fontSize: 13,
+                color: const Color(0xFF65758B),
+                height: 1.5,
+              ),
+            ),
+
+          const SizedBox(height: 12),
+
+          // Bed configuration if available in a readable way
+          if (room.bedConfiguration.isNotEmpty)
+            Text(
+              room.bedConfiguration.entries
+                  .map((e) => "${e.value}x ${e.key}")
+                  .join(", "),
+              style: GoogleFonts.spaceGrotesk(
+                fontSize: 12,
+                color: Colors.grey[500],
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 12.0),
+            child: Divider(height: 1, color: Color(0xffF1F5F9)),
+          ),
+
+          // Price and Select Row
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    room.isAvailable ? 'Available'.tr : 'Not Available'.tr,
+                    style: GoogleFonts.spaceGrotesk(
+                      fontSize: 12,
+                      color: room.isAvailable ? Colors.green : Colors.red,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  RichText(
+                    text: TextSpan(
+                      style: GoogleFonts.spaceGrotesk(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: kPrimaryColor,
+                      ),
+                      children: [
+                        TextSpan(text: "$currency $priceStr"),
+                        if (room.nights != null)
+                          TextSpan(
+                            text: " / ${room.nights} nights",
+                            style: GoogleFonts.spaceGrotesk(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w400,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              ElevatedButton(
+                onPressed: () => _onRoomSelected(room),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: kSecondaryColor,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                ),
+                child: Text(
+                  "Select",
+                  style: GoogleFonts.spaceGrotesk(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRoomShimmer() {
+    return Column(
+      children: List.generate(
+          2,
+          (index) => Container(
+                height: 180,
+                margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade100,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: const Center(child: CircularProgressIndicator()),
+              )),
+    );
+  }
+
+  Widget _buildEmptyRoomsState() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32.0),
+        child: Column(
+          children: [
+            Icon(Icons.hotel_outlined, size: 48, color: Colors.grey.shade300),
+            const SizedBox(height: 12),
+            Text(
+              "No rooms available for selected dates".tr,
+              textAlign: TextAlign.center,
+              style: GoogleFonts.spaceGrotesk(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+                color: Colors.grey.shade600,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _roomDetailChip(IconData icon, String label) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 14, color: Colors.grey[600]),
+        const SizedBox(width: 4),
+        Text(label,
+            style: GoogleFonts.spaceGrotesk(
+                fontSize: 12, color: Colors.grey[600])),
+      ],
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final item = Provider.of<HomeProvider>(context, listen: true);
+
+    // Unified detail: search-converted data takes priority, then provider detail
+    final detail = _useSearchData ? _searchConvertedDetail : item.hotelDetail;
+    final detailError = _useSearchData ? null : item.hotelDetailError;
+    final hasData = detail?.data != null;
+
+    return Scaffold(
+      extendBodyBehindAppBar: true,
+      body: loading
+          ? Center(child: CircularProgressIndicator(color: kSecondaryColor))
+          : detailError != null
+              ? _buildErrorState(detailError)
+              : !hasData
+                  ? _buildEmptyState()
+                  : SafeArea(
+                      child: SingleChildScrollView(
+                          controller: _scrollController,
+                          child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                //appbar + haven slider
+                                // This replaces the entire previous Stack(children: [...]) structure
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    // 1. Back and Favorite Buttons (App Bar)
+                                    // This section maintains the exact style and logic you provided
+                                    SafeArea(
+                                      child: Padding(
+                                        padding: EdgeInsets.symmetric(
+                                          vertical: 12,
+                                        ),
+                                        child: Row(
+                                          children: [
+                                            // Back button
+                                            InkWell(
+                                              onTap: () {
+                                                Navigator.pop(context);
+                                              },
+                                              child: Padding(
+                                                padding: EdgeInsets.symmetric(
+                                                    horizontal: 12),
+                                                child: Container(
+                                                  height: 32,
+                                                  width: 32,
+                                                  decoration: BoxDecoration(
+                                                    color: Colors.grey
+                                                        .shade200, // Use Colors.white or theme color
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            50),
+                                                  ),
+                                                  child: Icon(
+                                                    Icons.arrow_back_ios_new,
+                                                    color: Colors.black,
+                                                    size: 18,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+
+                                            Spacer(),
+
+                                            // Favorite button
+                                            // InkWell(
+                                            //   onTap: () async {
+                                            //     log("message");
+                                            //     final homeProvider =
+                                            //     Provider.of<HomeProvider>(context, listen: false);
+                                            //     final success = await homeProvider.addToWishlist(
+                                            //       '${widget.hotelId}',
+                                            //       'hotel',
+                                            //     );
+                                            //     homeProvider.fetchHotelDetails(widget.hotelId);
+                                            //     await homeProvider.hotellistapi(1, searchParams: {});
+                                            //
+                                            //     if (success == "Added to wishlist") {
+                                            //       setState(() {
+                                            //         item.hotelDetail?.data?.isInWishlist = true;
+                                            //       });
+                                            //     } else if (success == "Removed from wishlist") {
+                                            //       setState(() {
+                                            //         item.hotelDetail?.data?.isInWishlist = false;
+                                            //       });
+                                            //     }
+                                            //
+                                            //     ScaffoldMessenger.of(context).showSnackBar(
+                                            //       SnackBar(content: Text(success)),
+                                            //     );
+                                            //   },
+                                            //   child: Padding(
+                                            //     padding: EdgeInsets.symmetric(horizontal: 12),
+                                            //     child: Container(
+                                            //       height: 32,
+                                            //       width: 32,
+                                            //       decoration: BoxDecoration(
+                                            //         color: Colors.grey.shade200, // Use Colors.white or theme color
+                                            //         borderRadius: BorderRadius.circular(50),
+                                            //       ),
+                                            //       child: Icon(
+                                            //         item.hotelDetail?.data?.isInWishlist == true
+                                            //             ? Icons.favorite
+                                            //             : Icons.favorite_border,
+                                            //         color: item.hotelDetail?.data?.isInWishlist == true
+                                            //             ? Colors.red
+                                            //             : Colors.black,
+                                            //         size: 18,
+                                            //       ),
+                                            //     ),
+                                            //   ),
+                                            // ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+
+                                    Column(
+                                      children: [
+                                        const SizedBox(height: 12),
+                                        Padding(
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 12),
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Padding(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                        horizontal: 15),
+                                                child: Text(
+                                                  detail?.data?.title ?? ''.tr,
+                                                  style:
+                                                      GoogleFonts.spaceGrotesk(
+                                                    fontWeight:
+                                                        FontWeight.w700, // Bold
+                                                    fontSize: 24,
+                                                    height: 32 / 24,
+                                                    letterSpacing: 0,
+                                                    color: Colors.black,
+                                                  ),
+                                                  maxLines: 3,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                ),
+                                              ),
+                                              Padding(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                        horizontal: 15),
+                                                child: Row(
+                                                  children: [
+                                                    const Icon(
+                                                        Icons
+                                                            .location_on_rounded,
+                                                        color: Colors.black54),
+                                                    const SizedBox(width: 5),
+                                                    Expanded(
+                                                      child: Text(
+                                                        _useSearchData
+                                                            ? [
+                                                                detail?.data
+                                                                        ?.address ??
+                                                                    '',
+                                                                if (widget.searchData
+                                                                            ?.city !=
+                                                                        null &&
+                                                                    widget
+                                                                        .searchData!
+                                                                        .city!
+                                                                        .isNotEmpty)
+                                                                  widget
+                                                                      .searchData!
+                                                                      .city!,
+                                                                if (widget.searchData
+                                                                            ?.country !=
+                                                                        null &&
+                                                                    widget
+                                                                        .searchData!
+                                                                        .country!
+                                                                        .isNotEmpty)
+                                                                  widget
+                                                                      .searchData!
+                                                                      .country!,
+                                                              ]
+                                                                .where((s) => s
+                                                                    .isNotEmpty)
+                                                                .toSet()
+                                                                .join(', ')
+                                                            : (detail?.data
+                                                                        ?.address ??
+                                                                    '')
+                                                                .tr, // <-- .tr ONLY for non-search
+                                                        style: GoogleFonts
+                                                            .spaceGrotesk(
+                                                          fontWeight: FontWeight
+                                                              .w400, // Regular weight
+                                                          fontSize: 14,
+                                                          height: 19.5 /
+                                                              14, // line-height
+                                                          letterSpacing: 0,
+                                                          color: Colors.black54,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+
+                                              if (!_useSearchData)
+                                                Padding(
+                                                  padding: const EdgeInsets
+                                                      .symmetric(
+                                                      horizontal: 15),
+                                                  child: Text(
+                                                    "${detail?.data?.reviewScore?.totalReview ?? 0} Reviews"
+                                                        .tr, // .tr ONLY here
+                                                    style: GoogleFonts
+                                                        .spaceGrotesk(
+                                                      fontWeight: FontWeight
+                                                          .w400, // Regular
+                                                      fontSize: 13,
+                                                      height: 19.5 /
+                                                          13, // line-height
+                                                      letterSpacing: 0,
+                                                      color: const Color(
+                                                          0xFF65758B), // #65758B
+                                                    ),
+                                                  ),
+                                                ),
+
+                                              const SizedBox(height: 10),
+
+                                              // ───────────────────────────────
+                                              // 1. IMAGE SLIDER (wrapped inside rounded top)
+                                              // ───────────────────────────────
+                                              ClipRRect(
+                                                child: Stack(
+                                                  children: [
+                                                    SizedBox(
+                                                      height: 250,
+                                                      width:
+                                                          MediaQuery.of(context)
+                                                              .size
+                                                              .width,
+                                                      child: PageView.builder(
+                                                        onPageChanged: (value) {
+                                                          setState(() {
+                                                            currentPage = value;
+                                                          });
+                                                        },
+                                                        itemCount: detail
+                                                                ?.data
+                                                                ?.gallery
+                                                                ?.length ??
+                                                            0,
+                                                        itemBuilder:
+                                                            (context, index) =>
+                                                                SliderContent(
+                                                          imageUrl: detail?.data
+                                                                      ?.gallery?[
+                                                                  index] ??
+                                                              '',
+                                                        ),
+                                                        physics:
+                                                            const ClampingScrollPhysics(),
+                                                      ),
+                                                    ),
+                                                    Positioned(
+                                                      bottom: 12,
+                                                      right: 12,
+                                                      child: Container(
+                                                        padding:
+                                                            const EdgeInsets
+                                                                .symmetric(
+                                                          horizontal: 12,
+                                                          vertical: 4,
+                                                        ),
+                                                        decoration:
+                                                            BoxDecoration(
+                                                          color: Colors.black,
+                                                          // borderRadius: BorderRadius.circular(5),
+                                                        ),
+                                                        child: Text(
+                                                          '${currentPage + 1} / ${detail?.data?.gallery?.length ?? 0}',
+                                                          style: GoogleFonts
+                                                              .spaceGrotesk(
+                                                            color: Colors.white,
+                                                            fontWeight:
+                                                                FontWeight.w500,
+                                                            fontSize: 12,
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+
+                                              const SizedBox(height: 10),
+
+                                              // ───────────────────────────────
+                                              // 5. ABOUT THIS HOTEL
+                                              // ───────────────────────────────
+                                              // Dynamic amenity quick-pills from API data
+                                              if (_useSearchData &&
+                                                  widget.searchData!.amenities
+                                                      .isNotEmpty)
+                                                Padding(
+                                                  padding:
+                                                      const EdgeInsets.only(
+                                                          left: 10),
+                                                  child: Wrap(
+                                                    spacing: 8,
+                                                    runSpacing: 6,
+                                                    children: widget
+                                                        .searchData!.amenities
+                                                        .take(4)
+                                                        .map((a) {
+                                                      return _buildAmenityPill(
+                                                          a, _amenityIcon(a));
+                                                    }).toList(),
+                                                  ),
+                                                )
+                                              else if (!_useSearchData)
+                                                Padding(
+                                                  padding:
+                                                      const EdgeInsets.only(
+                                                          left: 10),
+                                                  child: Row(
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment
+                                                            .spaceEvenly,
+                                                    children: [
+                                                      _buildAmenityPill(
+                                                          'Wifi', Icons.wifi),
+                                                      _buildAmenityPill(
+                                                          'Pool', Icons.pool),
+                                                      _buildAmenityPill(
+                                                          'Restaurant',
+                                                          Icons
+                                                              .restaurant_menu),
+                                                    ],
+                                                  ),
+                                                ),
+                                              Padding(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                        horizontal: 15),
+                                                child: Column(
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
+                                                  children: [
+                                                    // Text(
+                                                    //   'About this hotel'.tr,
+                                                    //   style: TextStyle(
+                                                    //     fontSize: 18,
+                                                    //     fontWeight: FontWeight.w600,
+                                                    //     fontFamily: 'Inter'.tr,
+                                                    //     color: Colors.black,
+                                                    //   ),
+                                                    // ),
+                                                    const SizedBox(height: 10),
+
+                                                    ExpandableHtmlContent(
+                                                      content: detail
+                                                              ?.data?.content ??
+                                                          '',
+                                                      primaryColor:
+                                                          kPrimaryColor,
+                                                      textStyle: GoogleFonts
+                                                          .spaceGrotesk(
+                                                        fontWeight: FontWeight
+                                                            .w400, // Regular
+                                                        fontSize: 14,
+                                                        height: 21 /
+                                                            14, // line-height
+                                                        letterSpacing: 0,
+                                                        color: const Color(
+                                                            0xFF65758B), // #65758B
+                                                      ),
+                                                      readMoreText: 'Read more'
+                                                          .tr, // .tr ONLY here
+                                                    ),
+
+                                                    const SizedBox(height: 20),
+                                                  ],
+                                                ),
+                                              ),
+
+                                              const SizedBox(height: 10),
+                                            ],
+                                          ),
+                                        ),
+                                        const SizedBox(height: 12),
+                                      ],
+                                    ),
+
+                                    // Padding(
+                                    //   padding: EdgeInsets.symmetric(
+                                    //     horizontal: 16.0,
+                                    //     vertical: 20.0,
+                                    //   ),
+                                    //   child: Column(
+                                    //     key: _bookingKey,
+                                    //     crossAxisAlignment:
+                                    //         CrossAxisAlignment.start,
+                                    //     children: [
+                                    //       // Section Title: "Book Your Stay"
+                                    //       Text(
+                                    //         'Book Your Stay'.tr,
+                                    //         style: GoogleFonts.spaceGrotesk(
+                                    //           fontSize: 22,
+                                    //           fontWeight: FontWeight.w700,
+                                    //           color: Colors.black,
+                                    //         ),
+                                    //       ),
+                                    //       const SizedBox(height: 6),
+
+                                    //       // Subtitle
+                                    //       Text(
+                                    //         'Select a room below to see pricing'
+                                    //             .tr,
+                                    //         style: GoogleFonts.spaceGrotesk(
+                                    //           fontSize: 13,
+                                    //           fontWeight: FontWeight.w400,
+                                    //           color: Colors.grey[600],
+                                    //         ),
+                                    //       ),
+                                    //       const SizedBox(height: 20),
+
+                                    //       // Booking Card
+                                    //       Container(
+                                    //         decoration: BoxDecoration(
+                                    //           color: Colors.white,
+                                    //           borderRadius:
+                                    //               BorderRadius.circular(12),
+                                    //           boxShadow: [
+                                    //             BoxShadow(
+                                    //               color: Colors.grey
+                                    //                   .withOpacity(0.15),
+                                    //               spreadRadius: 1,
+                                    //               blurRadius: 8,
+                                    //             ),
+                                    //           ],
+                                    //           border: Border.all(
+                                    //               color: Colors.grey.shade200),
+                                    //         ),
+                                    //         child: Column(
+                                    //           mainAxisSize: MainAxisSize.min,
+                                    //           children: [
+                                    //             // Date and Guest Selection Container
+                                    //             Padding(
+                                    //               padding: const EdgeInsets.all(
+                                    //                   16.0),
+                                    //               child: Column(
+                                    //                 children: [
+                                    //                   // Check-in and Check-out in row
+                                    //                   Row(
+                                    //                     children: [
+                                    //                       // Check-in date
+                                    //                       Expanded(
+                                    //                         child:
+                                    //                             GestureDetector(
+                                    //                           onTap: () =>
+                                    //                               _selectDate(
+                                    //                                   context,
+                                    //                                   true),
+                                    //                           child: Column(
+                                    //                             crossAxisAlignment:
+                                    //                                 CrossAxisAlignment
+                                    //                                     .start,
+                                    //                             children: [
+                                    //                               Text(
+                                    //                                 "Check-in"
+                                    //                                     .tr,
+                                    //                                 style: GoogleFonts
+                                    //                                     .spaceGrotesk(
+                                    //                                   fontSize:
+                                    //                                       13,
+                                    //                                   fontWeight:
+                                    //                                       FontWeight
+                                    //                                           .w400,
+                                    //                                   color: const Color(
+                                    //                                       0xff1D2025),
+                                    //                                 ),
+                                    //                               ),
+                                    //                               const SizedBox(
+                                    //                                   height:
+                                    //                                       6),
+                                    //                               Container(
+                                    //                                 height: 48,
+                                    //                                 padding: const EdgeInsets
+                                    //                                     .symmetric(
+                                    //                                     horizontal:
+                                    //                                         12,
+                                    //                                     vertical:
+                                    //                                         8),
+                                    //                                 decoration:
+                                    //                                     BoxDecoration(
+                                    //                                   borderRadius:
+                                    //                                       BorderRadius.circular(
+                                    //                                           8),
+                                    //                                   border: Border.all(
+                                    //                                       color:
+                                    //                                           const Color(0xffE5E7EB)),
+                                    //                                   color: Colors
+                                    //                                       .white,
+                                    //                                 ),
+                                    //                                 child: Row(
+                                    //                                   children: [
+                                    //                                     SvgPicture
+                                    //                                         .asset(
+                                    //                                       'assets/icons/calendar.svg',
+                                    //                                       width:
+                                    //                                           16,
+                                    //                                       height:
+                                    //                                           16,
+                                    //                                       color:
+                                    //                                           const Color(0xff6B7280),
+                                    //                                     ),
+                                    //                                     const SizedBox(
+                                    //                                         width:
+                                    //                                             8),
+                                    //                                     Expanded(
+                                    //                                       child:
+                                    //                                           Text(
+                                    //                                         checkInDate != null
+                                    //                                             ? '${checkInDate!.day}/${checkInDate!.month}/${checkInDate!.year}'
+                                    //                                             : 'dd/mm/yyyy'.tr,
+                                    //                                         style:
+                                    //                                             GoogleFonts.spaceGrotesk(
+                                    //                                           fontSize: 13,
+                                    //                                           fontWeight: FontWeight.w500,
+                                    //                                           color: checkInDate != null ? const Color(0xff1D2025) : const Color(0xff6B7280),
+                                    //                                         ),
+                                    //                                       ),
+                                    //                                     ),
+                                    //                                   ],
+                                    //                                 ),
+                                    //                               ),
+                                    //                             ],
+                                    //                           ),
+                                    //                         ),
+                                    //                       ),
+                                    //                       const SizedBox(
+                                    //                           width: 10),
+                                    //                       // Check-out date
+                                    //                       Expanded(
+                                    //                         child:
+                                    //                             GestureDetector(
+                                    //                           onTap: () =>
+                                    //                               _selectDate(
+                                    //                                   context,
+                                    //                                   false),
+                                    //                           child: Column(
+                                    //                             crossAxisAlignment:
+                                    //                                 CrossAxisAlignment
+                                    //                                     .start,
+                                    //                             children: [
+                                    //                               Text(
+                                    //                                 "Check-out"
+                                    //                                     .tr,
+                                    //                                 style: GoogleFonts
+                                    //                                     .spaceGrotesk(
+                                    //                                   fontSize:
+                                    //                                       13,
+                                    //                                   fontWeight:
+                                    //                                       FontWeight
+                                    //                                           .w400,
+                                    //                                   color: const Color(
+                                    //                                       0xff1D2025),
+                                    //                                 ),
+                                    //                               ),
+                                    //                               const SizedBox(
+                                    //                                   height:
+                                    //                                       6),
+                                    //                               Container(
+                                    //                                 height: 48,
+                                    //                                 padding: const EdgeInsets
+                                    //                                     .symmetric(
+                                    //                                     horizontal:
+                                    //                                         12,
+                                    //                                     vertical:
+                                    //                                         8),
+                                    //                                 decoration:
+                                    //                                     BoxDecoration(
+                                    //                                   borderRadius:
+                                    //                                       BorderRadius.circular(
+                                    //                                           8),
+                                    //                                   border: Border.all(
+                                    //                                       color:
+                                    //                                           const Color(0xffE5E7EB)),
+                                    //                                   color: Colors
+                                    //                                       .white,
+                                    //                                 ),
+                                    //                                 child: Row(
+                                    //                                   children: [
+                                    //                                     SvgPicture
+                                    //                                         .asset(
+                                    //                                       'assets/icons/calendar.svg',
+                                    //                                       width:
+                                    //                                           16,
+                                    //                                       height:
+                                    //                                           16,
+                                    //                                       color:
+                                    //                                           const Color(0xff6B7280),
+                                    //                                     ),
+                                    //                                     const SizedBox(
+                                    //                                         width:
+                                    //                                             8),
+                                    //                                     Expanded(
+                                    //                                       child:
+                                    //                                           Text(
+                                    //                                         checkOutDate != null && checkOutDate!.isAfter(checkInDate ?? DateTime.now())
+                                    //                                             ? '${checkOutDate!.day}/${checkOutDate!.month}/${checkOutDate!.year}'
+                                    //                                             : (checkOutDate != null && checkInDate != null && !checkOutDate!.isAfter(checkInDate!) ? 'Invalid'.tr : 'dd/mm/yyyy'.tr),
+                                    //                                         style:
+                                    //                                             GoogleFonts.spaceGrotesk(
+                                    //                                           fontSize: 13,
+                                    //                                           fontWeight: FontWeight.w500,
+                                    //                                           color: checkOutDate != null ? (checkOutDate!.isAfter(checkInDate ?? DateTime.now()) ? const Color(0xff1D2025) : Colors.red) : const Color(0xff6B7280),
+                                    //                                         ),
+                                    //                                       ),
+                                    //                                     ),
+                                    //                                   ],
+                                    //                                 ),
+                                    //                               ),
+                                    //                             ],
+                                    //                           ),
+                                    //                         ),
+                                    //                       ),
+                                    //                     ],
+                                    //                   ),
+
+                                    //                   const SizedBox(
+                                    //                       height: 16),
+
+                                    //                   // Guests Selector
+                                    //                   Column(
+                                    //                     crossAxisAlignment:
+                                    //                         CrossAxisAlignment
+                                    //                             .start,
+                                    //                     children: [
+                                    //                       Text(
+                                    //                         "Guests".tr,
+                                    //                         style: GoogleFonts
+                                    //                             .spaceGrotesk(
+                                    //                           fontSize: 13,
+                                    //                           fontWeight:
+                                    //                               FontWeight
+                                    //                                   .w400,
+                                    //                           color: const Color(
+                                    //                               0xff1D2025),
+                                    //                         ),
+                                    //                       ),
+                                    //                       const SizedBox(
+                                    //                           height: 6),
+                                    //                       InkWell(
+                                    //                         onTap:
+                                    //                             _showGuestBottomSheet,
+                                    //                         child: Container(
+                                    //                           height: 48,
+                                    //                           padding:
+                                    //                               const EdgeInsets
+                                    //                                   .symmetric(
+                                    //                                   horizontal:
+                                    //                                       12,
+                                    //                                   vertical:
+                                    //                                       8),
+                                    //                           decoration:
+                                    //                               BoxDecoration(
+                                    //                             border: Border.all(
+                                    //                                 color: const Color(
+                                    //                                     0xffE5E7EB)),
+                                    //                             borderRadius:
+                                    //                                 BorderRadius
+                                    //                                     .circular(
+                                    //                                         8),
+                                    //                             color: Colors
+                                    //                                 .white,
+                                    //                           ),
+                                    //                           child: Row(
+                                    //                             children: [
+                                    //                               SvgPicture
+                                    //                                   .asset(
+                                    //                                 'assets/icons/user.svg',
+                                    //                                 width: 20,
+                                    //                                 height: 20,
+                                    //                                 color: const Color(
+                                    //                                     0xff6B7280),
+                                    //                               ),
+                                    //                               const SizedBox(
+                                    //                                   width: 8),
+                                    //                               Expanded(
+                                    //                                 child: Text(
+                                    //                                   selectedGuests,
+                                    //                                   style: GoogleFonts
+                                    //                                       .spaceGrotesk(
+                                    //                                     fontSize:
+                                    //                                         14,
+                                    //                                     color: const Color(
+                                    //                                         0xff1D2025),
+                                    //                                     fontWeight:
+                                    //                                         FontWeight.w500,
+                                    //                                   ),
+                                    //                                   overflow:
+                                    //                                       TextOverflow
+                                    //                                           .ellipsis,
+                                    //                                 ),
+                                    //                               ),
+                                    //                               const Icon(
+                                    //                                 Icons
+                                    //                                     .keyboard_arrow_down,
+                                    //                                 color: Color(
+                                    //                                     0xff6B7280),
+                                    //                                 size: 20,
+                                    //                               ),
+                                    //                             ],
+                                    //                           ),
+                                    //                         ),
+                                    //                       ),
+                                    //                     ],
+                                    //                   ),
+                                    //                 ],
+                                    //               ),
+                                    //             ),
+
+                                    //             // Divider before button
+                                    //             Divider(
+                                    //               thickness: 1,
+                                    //               color: Colors.grey.shade200,
+                                    //               height: 0,
+                                    //             ),
+
+                                    //             // Reserve Now Button (full-width, medium height)
+                                    //             Padding(
+                                    //               padding: EdgeInsets.symmetric(
+                                    //                   horizontal: 16,
+                                    //                   vertical: 12),
+                                    //               child: SizedBox(
+                                    //                 width: double.infinity,
+                                    //                 height: 48,
+                                    //                 child: ElevatedButton(
+                                    //                   style: ElevatedButton
+                                    //                       .styleFrom(
+                                    //                     backgroundColor:
+                                    //                         kSecondaryColor,
+                                    //                     foregroundColor:
+                                    //                         Colors.white,
+                                    //                     shape:
+                                    //                         RoundedRectangleBorder(
+                                    //                       borderRadius:
+                                    //                           BorderRadius
+                                    //                               .circular(8),
+                                    //                     ),
+                                    //                     elevation: 0,
+                                    //                   ),
+                                    //                   onPressed:
+                                    //                       _handleReserveNow,
+                                    //                   child: Text(
+                                    //                     'Reserve Now'.tr,
+                                    //                     style: GoogleFonts
+                                    //                         .spaceGrotesk(
+                                    //                       fontSize: 16,
+                                    //                       fontWeight:
+                                    //                           FontWeight.w600,
+                                    //                     ),
+                                    //                   ),
+                                    //                 ),
+                                    //               ),
+                                    //             ),
+                                    //           ],
+                                    //         ),
+                                    //       ),
+                                    //     ],
+                                    //   ),
+                                    // ),
+
+                                    if (checkingAvailability)
+                                      _buildRoomShimmer()
+                                    else if (roomResponse != null)
+                                      roomResponse!.rooms.isEmpty
+                                          ? _buildEmptyRoomsState()
+                                          : Column(
+                                              children: roomResponse!.rooms
+                                                  .map((room) => RoomWidget(
+                                                        room: room,
+                                                        onQuantityChanged:
+                                                            updateSelectedRooms,
+                                                        onSelect: () =>
+                                                            _onRoomSelected(
+                                                                room),
+                                                      ))
+                                                  .toList(),
+                                            ),
+
+                                    // Show rooms from search data when no availability check has been done
+                                    if (_useSearchData &&
+                                        roomResponse == null &&
+                                        widget
+                                            .searchData!.rooms.isNotEmpty) ...[
+                                      Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 20, vertical: 10),
+                                        child: Text(
+                                          'Available Rooms'.tr,
+                                          style: GoogleFonts.spaceGrotesk(
+                                            fontWeight: FontWeight.w700,
+                                            fontSize: 18,
+                                            color: Colors.black,
+                                          ),
+                                        ),
+                                      ),
+                                      ...widget.searchData!.rooms.map(
+                                          (room) => _buildSearchRoomCard(room)),
+                                    ],
+
+                                    // Show amenities from search data
+                                    if (_useSearchData &&
+                                        widget.searchData!.amenities
+                                            .isNotEmpty) ...[
+                                      Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 20, vertical: 10),
+                                        child: Text(
+                                          'Amenities'.tr,
+                                          style: GoogleFonts.spaceGrotesk(
+                                            fontWeight: FontWeight.w700,
+                                            fontSize: 18,
+                                            color: Colors.black,
+                                          ),
+                                        ),
+                                      ),
+                                      Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 20),
+                                        child: Wrap(
+                                          spacing: 8,
+                                          runSpacing: 8,
+                                          children: widget.searchData!.amenities
+                                              .map((amenity) {
+                                            return Chip(
+                                              label: Text(
+                                                amenity,
+                                                style: GoogleFonts.spaceGrotesk(
+                                                    fontSize: 13),
+                                              ),
+                                              backgroundColor:
+                                                  const Color(0xffF1F5F9),
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(6),
+                                                side: BorderSide.none,
+                                              ),
+                                            );
+                                          }).toList(),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 20),
+                                    ],
+
+                                    SizedBox(
+                                      height: 5,
+                                    ),
+
+                                    SizedBox(
+                                      height: 10,
+                                    ), // Divider(
+                                    //   thickness: 1,
+                                    //   endIndent: 30,
+                                    //   indent: 30,
+                                    // ),
+
+                                    if (!_useSearchData)
+                                      ...detail?.data?.terms?.map((term) {
+                                            return Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                // --- Category Heading ---
+                                                Padding(
+                                                  padding: const EdgeInsets
+                                                      .symmetric(
+                                                      horizontal: 20),
+                                                  child: Text(
+                                                    term.parent?.title ?? '',
+                                                    style: const TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      fontSize: 16,
+                                                    ),
+                                                  ),
+                                                ),
+                                                const SizedBox(height: 10),
+                                                Padding(
+                                                  padding: const EdgeInsets
+                                                      .symmetric(
+                                                      horizontal: 20),
+                                                  child: Wrap(
+                                                    runSpacing:
+                                                        0, // Vertical spacing between lines
+                                                    spacing:
+                                                        0, // Horizontal spacing between items
+                                                    children: term.child
+                                                            ?.map((facility) {
+                                                          String iconPath = facility
+                                                                  .imageUrl ??
+                                                              'assets/haven/wifi.png';
+                                                          return _buildFacilityItem(
+                                                              iconPath,
+                                                              facility.title ??
+                                                                  '');
+                                                        }).toList() ??
+                                                        <Widget>[],
+                                                  ),
+                                                ),
+
+                                                const SizedBox(height: 20),
+                                              ],
+                                            );
+                                          }) ??
+                                          [],
+
+                                    SizedBox(
+                                      height: 10,
+                                    ),
+
+                                    SizedBox(
+                                      height: 5,
+                                    ),
+                                    // Padding(
+                                    //   padding: EdgeInsets.all(20.0),
+                                    //   child: Column(
+                                    //     crossAxisAlignment: CrossAxisAlignment.start,
+                                    //     children: [
+                                    //       Text('Rules'.tr,
+                                    //           style: TextStyle(
+                                    //               color: kPrimaryColor,
+                                    //               fontSize: 18,
+                                    //               fontFamily: 'Inter'.tr,
+                                    //               fontWeight: FontWeight.w600)),
+                                    //       SizedBox(height: 20),
+                                    //       _buildRuleItem('Check in'.tr,
+                                    //           item.hotelDetail?.data?.checkInTime ?? ''),
+                                    //       SizedBox(height: 10),
+                                    //       _buildRuleItem('Check out'.tr,
+                                    //           item.hotelDetail?.data?.checkOutTime ?? ''),
+                                    //       SizedBox(height: 20),
+                                    //       Column(
+                                    //         crossAxisAlignment: CrossAxisAlignment.start,
+                                    //         children: item.hotelDetail?.data?.policy
+                                    //                 ?.map((policy) {
+                                    //               return Column(
+                                    //                 crossAxisAlignment: CrossAxisAlignment.start,
+                                    //                 children: [
+                                    //                   Text(
+                                    //                     policy.title ?? '',
+                                    //                     style: TextStyle(
+                                    //                       fontFamily: 'Inter'.tr,
+                                    //                       fontWeight: FontWeight.w600,
+                                    //                       fontSize: 16,
+                                    //                       color: kPrimaryColor,
+                                    //                     ),
+                                    //                   ),
+                                    //                   SizedBox(height: 8),
+                                    //                   Text(
+                                    //                     policy.content ?? '',
+                                    //                     style: TextStyle(
+                                    //                       fontFamily: 'Inter'.tr,
+                                    //                       fontSize: 14,
+                                    //                       color: Colors.grey[600],
+                                    //                     ),
+                                    //                   ),
+                                    //                   SizedBox(height: 16),
+                                    //                 ],
+                                    //               );
+                                    //             }).toList() ??
+                                    //             [],
+                                    //       ),
+                                    //       SizedBox(height: 20),
+                                    //       Divider(
+                                    //         thickness: 1,
+                                    //         indent: 20,
+                                    //         endIndent: 20,
+                                    //       )
+                                    //     ],
+                                    //   ),
+                                    // ),
+                                    //
+                                    // SizedBox(
+                                    //   height: 5,
+                                    // ),
+
+                                    //map
+
+                                    // Padding(
+                                    //   padding: EdgeInsets.symmetric(horizontal: 20),
+                                    //   child: Text("Location".tr,
+                                    //       style: TextStyle(
+                                    //           fontFamily: 'Inter'.tr,
+                                    //           color: kPrimaryColor,
+                                    //           fontSize: 18,
+                                    //           fontWeight: FontWeight.w600)),
+                                    // ),
+                                    // SizedBox(
+                                    //   height: 12,
+                                    // ),
+                                    // Padding(
+                                    //   padding: const EdgeInsets.symmetric(horizontal: 20),
+                                    //   child: Container(
+                                    //     height: 200,
+                                    //     child: GoogleMap(
+                                    //       initialCameraPosition: CameraPosition(
+                                    //         target: LatLng(
+                                    //             double.parse(
+                                    //                 item.hotelDetail?.data?.mapLat ?? '0'),
+                                    //             double.parse(
+                                    //                 item.hotelDetail?.data?.mapLng?.toString() ??
+                                    //                     '0')),
+                                    //         zoom: double.parse(
+                                    //             item.hotelDetail?.data?.mapZoom?.toString() ??
+                                    //                 '12'),
+                                    //       ),
+                                    //       markers: {
+                                    //         Marker(
+                                    //           markerId: MarkerId('hotel'),
+                                    //           position: LatLng(
+                                    //             double.parse(
+                                    //                 item.hotelDetail?.data?.mapLat ?? '0'),
+                                    //             double.parse(
+                                    //                 item.hotelDetail?.data?.mapLng?.toString() ??
+                                    //                     '0'),
+                                    //           ),
+                                    //         ),
+                                    //       },
+                                    //     ),
+                                    //   ),
+                                    // ),
+                                    //
+                                    // SizedBox(
+                                    //   height: 32,
+                                    // ),
+                                    //
+                                    // Divider(
+                                    //   thickness: 1,
+                                    //   indent: 20,
+                                    //   endIndent: 20,
+                                    // ),
+                                    // //review slider
+                                    // SizedBox(
+                                    //   height: 12,
+                                    // ),
+                                    if (detail != null && !_useSearchData) ...[
+                                      _buildRatingSection(detail),
+                                      _buildRatingBars(detail),
+                                    ],
+                                    if (!_useSearchData)
+                                      ...(detail?.data?.reviewLists?.data ?? [])
+                                          .map((review) =>
+                                              _buildReviewItem(review)),
+                                    SizedBox(
+                                      height: 5,
+                                    ),
+
+                                    // This seciton is being comment out because it is the section where we are writing the review ...
+
+                                    if (!_useSearchData) ...[
+                                      Padding(
+                                        padding: EdgeInsets.symmetric(
+                                            horizontal: 20),
+                                        child: Text("Write a Review".tr,
+                                            style: TextStyle(
+                                                color: kPrimaryColor,
+                                                fontSize: 18,
+                                                fontWeight: FontWeight.w600)),
+                                      ),
+                                      SizedBox(
+                                        height: 5,
+                                      ),
+                                      _buildReviewWidget(
+                                          detail ?? HotelDetail()),
+                                    ],
+                                    SizedBox(height: 10),
+                                    if (!_useSearchData) Divider(thickness: 1),
+                                    if (!_useSearchData)
+                                      ...(detail?.data?.extraPrice ?? [])
+                                          .map((element) {
+                                        return Padding(
+                                          padding: EdgeInsets.symmetric(
+                                              horizontal: 15),
+                                          child: Row(
+                                            children: [
+                                              Checkbox(
+                                                  materialTapTargetSize:
+                                                      MaterialTapTargetSize
+                                                          .shrinkWrap,
+                                                  value: element.valueType,
+                                                  onChanged: (bool? value) {
+                                                    if (value != null) {
+                                                      element.valueType = value;
+
+                                                      if (element.valueType ==
+                                                          true) {
+                                                        extraPrice += int.parse(
+                                                            element.price ??
+                                                                "0");
+                                                      } else {
+                                                        extraPrice -= int.parse(
+                                                            element.price ??
+                                                                "0");
+                                                      }
+                                                      setState(() {});
+                                                    }
+                                                  }),
+                                              Text(element.name ?? ""),
+                                              Spacer(),
+                                              Text("\$${element.price}"),
+                                            ],
+                                          ),
+                                        );
+                                      }),
+                                    if (!_useSearchData)
+                                      _buildExtraServicesWidget(
+                                          detail ?? HotelDetail(),
+                                          selectedRooms),
+
+                                    if (!_useSearchData) Divider(),
+
+                                    SizedBox(
+                                      height: 10,
+                                    ),
+                                    //  Divider(
+                                    //   thickness: 1,
+                                    // ),
+
+                                    // const SizedBox(height: 10),
+
+                                    // ───────────────────────────────
+                                    // CHECK-IN / CHECK-OUT TIMES (Moved to end)
+                                    // ───────────────────────────────
+                                    if (detail?.data?.checkInTime != null ||
+                                        detail?.data?.checkOutTime != null ||
+                                        _useSearchData)
+                                      Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 20),
+                                        child: Container(
+                                          padding: const EdgeInsets.all(14),
+                                          margin:
+                                              const EdgeInsets.only(bottom: 24),
+                                          decoration: BoxDecoration(
+                                            color: const Color(0xffF1F5F9),
+                                            borderRadius:
+                                                BorderRadius.circular(10),
+                                          ),
+                                          child: Row(
+                                            children: [
+                                              Expanded(
+                                                child: Row(
+                                                  children: [
+                                                    // Icon(Icons.login,
+                                                    //     size: 18,
+                                                    //     color: kSecondaryColor),
+                                                    const SizedBox(width: 8),
+                                                    Column(
+                                                      crossAxisAlignment:
+                                                          CrossAxisAlignment
+                                                              .start,
+                                                      children: [
+                                                        Text(
+                                                          'Check-in'.tr,
+                                                          style: GoogleFonts
+                                                              .spaceGrotesk(
+                                                            fontSize: 11,
+                                                            color: const Color(
+                                                                0xFF65758B),
+                                                          ),
+                                                        ),
+                                                        Text(
+                                                          detail?.data
+                                                                  ?.checkInTime ??
+                                                              '14:00',
+                                                          style: GoogleFonts
+                                                              .spaceGrotesk(
+                                                            fontSize: 14,
+                                                            fontWeight:
+                                                                FontWeight.w600,
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                              Container(
+                                                width: 1,
+                                                height: 30,
+                                                color: Colors.grey.shade400,
+                                              ),
+                                              Expanded(
+                                                child: Row(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment.center,
+                                                  children: [
+                                                    // Icon(Icons.logout,
+                                                    //     size: 18,
+                                                    //     color: kSecondaryColor),
+                                                    const SizedBox(width: 8),
+                                                    Column(
+                                                      crossAxisAlignment:
+                                                          CrossAxisAlignment
+                                                              .start,
+                                                      children: [
+                                                        Text(
+                                                          'Check-out'.tr,
+                                                          style: GoogleFonts
+                                                              .spaceGrotesk(
+                                                            fontSize: 11,
+                                                            color: const Color(
+                                                                0xFF65758B),
+                                                          ),
+                                                        ),
+                                                        Text(
+                                                          detail?.data
+                                                                  ?.checkOutTime ??
+                                                              '11:00',
+                                                          style: GoogleFonts
+                                                              .spaceGrotesk(
+                                                            fontSize: 14,
+                                                            fontWeight:
+                                                                FontWeight.w600,
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                  ],
+                                ),
+
+                                //price & reserve button
+                              ])),
+                    ),
+      bottomNavigationBar: null,
     );
   }
 }

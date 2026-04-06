@@ -128,7 +128,8 @@ class Data {
     mapLng = json['map_lng'];
     mapZoom = json['map_zoom'];
     bannerImage = json['banner_image'];
-    gallery = json['gallery'].cast<String>();
+    gallery =
+        json['gallery'] != null ? List<String>.from(json['gallery']) : null;
     video = json['video'];
     enableExtraPrice = json['enable_extra_price'];
     if (json['extra_price'] != null) {
@@ -140,7 +141,9 @@ class Data {
     reviewScore = json['review_score'] != null
         ? ReviewScore.fromJson(json['review_score'])
         : null;
-    reviewStats = json['review_stats'].cast<String>();
+    reviewStats = json['review_stats'] != null
+        ? List<String>.from(json['review_stats'])
+        : null;
     reviewLists = json['review_lists'] != null
         ? ReviewLists.fromJson(json['review_lists'])
         : null;

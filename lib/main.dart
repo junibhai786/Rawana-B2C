@@ -10,7 +10,14 @@ import 'package:moonbnd/Provider/boat_provider.dart';
 import 'package:moonbnd/Provider/event_provider.dart';
 import 'package:moonbnd/Provider/vendor_boat_provider.dart';
 import 'package:moonbnd/Provider/vendor_tour_provider.dart';
+import 'package:moonbnd/Provider/activity_provider.dart';
+import 'package:moonbnd/Provider/flight_airport_provider.dart';
+import 'package:moonbnd/Provider/hotel_city_provider.dart';
+import 'package:moonbnd/Provider/hotel_country_provider.dart';
 import 'package:moonbnd/Provider/search_hotel_provider.dart';
+import 'package:moonbnd/Provider/hotel_checkout_provider.dart';
+import 'package:moonbnd/Provider/hotel_destination_provider.dart';
+import 'package:moonbnd/Provider/currency_provider.dart';
 import 'package:moonbnd/language/language_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -95,6 +102,13 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (context) => SearchHotelProvider()),
         ChangeNotifierProvider(create: (context) => VendorTourProvider()),
         ChangeNotifierProvider(create: (context) => VendorBoatProvider()),
+        ChangeNotifierProvider(create: (context) => HotelCountryProvider()),
+        ChangeNotifierProvider(create: (context) => HotelCityProvider()),
+        ChangeNotifierProvider(create: (context) => HotelDestinationProvider()),
+        ChangeNotifierProvider(create: (context) => FlightAirportProvider()),
+        ChangeNotifierProvider(create: (context) => ActivityProvider()),
+        ChangeNotifierProvider(create: (context) => HotelCheckoutProvider()),
+        ChangeNotifierProvider(create: (context) => CurrencyProvider()),
       ],
       child: GetMaterialApp(
         theme: havenTheme(),
@@ -121,16 +135,27 @@ class _NavigationState extends State<NavigationScreen> {
   void navigationPage() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     final token = prefs.getString("userToken");
+    final hasLaunchedBefore = prefs.getBool("has_launched_before") ?? false;
 
-    log("$token token");
+    log("Token: $token, Has Launched Before: $hasLaunchedBefore");
 
     await Future.delayed(Duration(seconds: 2));
 
     if (token == null) {
-      // ignore: use_build_context_synchronously
-      Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => SplashScreen()));
+      // No token (first time or logged out)
+      if (!hasLaunchedBefore) {
+        // First time ever: show splash → onboarding → login
+        // ignore: use_build_context_synchronously
+        Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (context) => SplashScreen()));
+      } else {
+        // Returning user but logged out: skip splash, go directly to login
+        // ignore: use_build_context_synchronously
+        Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (context) => SignInScreen()));
+      }
     } else {
+      // Token exists: user is logged in, go to home
       // ignore: use_build_context_synchronously
       Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (context) => BottomNav()));

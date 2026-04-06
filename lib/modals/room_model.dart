@@ -1,3 +1,4 @@
+
 class RoomResponse {
   final List<Room> rooms;
   final int status;
@@ -29,6 +30,9 @@ class Room {
   final String priceHtml;
   final String priceText;
   final List<TermFeature> termFeatures;
+  final int? maxAdults;
+  final int? maxChildren;
+  final String? viewType;
 
   Room({
     required this.id,
@@ -46,6 +50,9 @@ class Room {
     required this.priceHtml,
     required this.priceText,
     required this.termFeatures,
+    this.maxAdults,
+    this.maxChildren,
+    this.viewType,
   });
 
   factory Room.fromJson(Map<String, dynamic> json) {
@@ -69,6 +76,9 @@ class Room {
       termFeatures: (json['term_features'] as List)
           .map((item) => TermFeature.fromJson(item))
           .toList(),
+      maxAdults: json['max_adults'],
+      maxChildren: json['max_children'],
+      viewType: json['view_type'],
     );
   }
 }

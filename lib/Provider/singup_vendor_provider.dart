@@ -219,7 +219,8 @@ class VendorAuthProvider with ChangeNotifier {
       notificationmodelreads = notificationmodelread;
       notifyListeners();
     } else {
-      debugPrint("Failed to fetch hotel details (10) . Error: ${result['message']}");
+      debugPrint(
+          "Failed to fetch hotel details (10) . Error: ${result['message']}");
       return null;
     }
   }
@@ -289,7 +290,8 @@ class VendorAuthProvider with ChangeNotifier {
       notificationcountmodels = notificationcountmodel;
       notifyListeners();
     } else {
-      debugPrint("Failed to fetch hotel details (11). Error: ${result['message']}");
+      debugPrint("Notification count not available: ${result['message']}");
+      // Don't crash — notification endpoint may not exist on this backend
       return null;
     }
   }
@@ -361,7 +363,8 @@ class VendorAuthProvider with ChangeNotifier {
       notificationmodelunreads = notificationmodelunread;
       notifyListeners();
     } else {
-      debugPrint("Failed to fetch hotel details (12). Error: ${result['message']}");
+      debugPrint(
+          "Failed to fetch hotel details (12). Error: ${result['message']}");
       return null;
     }
   }

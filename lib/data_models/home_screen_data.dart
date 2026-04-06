@@ -19,11 +19,12 @@ class CategoryData {
 }
 
 List<CategoryData> categoryDatas = [
-  CategoryData(
-    kIcon: 'assets/icons/home.svg',
-    category: "Home".tr,
-    id: 0,
-  ),
+  // TODO: Future use — Home tab
+  // CategoryData(
+  //   kIcon: 'assets/icons/home.svg',
+  //   category: "Home".tr,
+  //   id: 0,
+  // ),
   if (enableHotel)
     CategoryData(
       kIcon: 'assets/icons/hotel.svg',
@@ -35,6 +36,12 @@ List<CategoryData> categoryDatas = [
       kIcon: 'assets/icons/flights.svg',
       category: "Flight".tr,
       id: 6,
+    ),
+  if (enableActivity)
+    CategoryData(
+      kIcon: 'assets/icons/event1.svg',
+      category: "Activities".tr,
+      id: 8,
     ),
   if (enableEvent)
     CategoryData(
