@@ -1149,8 +1149,8 @@ class HomeProvider with ChangeNotifier {
   // }
 
   Future<HotelDetail?> fetchHotelDetails(String hotelId,
-      {String? provider}) async {
-    log("Fetching Hotel Details for ID: $hotelId, provider: ${provider ?? 'not specified'}");
+      {String? provider, String? currency}) async {
+    log("Fetching Hotel Details for ID: $hotelId, provider: ${provider ?? 'not specified'}, currency: ${currency ?? 'not specified'}");
     hotelDetailLoading = true;
     hotelDetailError = null;
     hotelDetail = null;
@@ -1160,7 +1160,8 @@ class HomeProvider with ChangeNotifier {
     await loadToken();
     log("Token for hotel detail: ${_token != null ? 'present' : 'NULL'}");
 
-    final url = ApiUrls.hotelDetailUrl(hotelId, provider: provider);
+    final url =
+        ApiUrls.hotelDetailUrl(hotelId, provider: provider, currency: currency);
 
     final result =
         await makeRequest(url, 'GET', {}, _token ?? '', requiresAuth: true);

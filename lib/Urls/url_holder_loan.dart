@@ -2,8 +2,8 @@ class ApiUrls {
   //// production
   ///
   ///habib bhai
-  static const baseUrl =
-      "https://hebdomadally-bidirectional-marylyn.ngrok-free.dev/api/";
+  static const baseUrl = "https://travolyo.com/api/";
+  // "https://hebdomadally-bidirectional-marylyn.ngrok-free.dev/api/";
   // " https://hebdomadally-bidirectional-marylyn.ngrok-free.dev";
   //"https://travolyo.com/api/"; //"https://dentirostral-pseudoindependently-michell.ngrok-free.dev/api/";    // "https://travolyo.com/api/";
   static const webUrl = "https://travolyo.com/admin/";
@@ -39,6 +39,7 @@ class ApiUrls {
   static String hotelCitiesByCountry(String countryCode) =>
       'locations/cities/$countryCode';
   static const flightAirports = "locations/airports";
+  static const hotelLocationSearch = 'locations/search';
 
   static const updateProfile = "profile-update";
   static const deleteAccount = "delete-my-account";
@@ -59,12 +60,21 @@ class ApiUrls {
   static const hotelDetailsEndPoint = "hotels/detail";
 
   /// Build hotel detail URL with provider query param
-  static String hotelDetailUrl(String hotelId, {String? provider}) {
-    final base = '${baseUrl}hotels/detail/$hotelId';
+  static String hotelDetailUrl(String hotelId,
+      {String? provider, String? currency}) {
+    final params = <String, String>{};
     if (provider != null && provider.isNotEmpty) {
-      return '$base?provider=${Uri.encodeComponent(provider)}';
+      params['provider'] = provider;
     }
-    return base;
+    if (currency != null && currency.isNotEmpty) {
+      params['currency'] = currency;
+    }
+    final base = '${baseUrl}hotels/detail/$hotelId';
+    if (params.isEmpty) return base;
+    final query = params.entries
+        .map((e) => '${e.key}=${Uri.encodeComponent(e.value)}')
+        .join('&');
+    return '$base?$query';
   }
 
   static const carDetailsEndPoint = "car/detail";

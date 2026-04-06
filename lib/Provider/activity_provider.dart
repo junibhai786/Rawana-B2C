@@ -55,7 +55,10 @@ class ActivityProvider with ChangeNotifier {
   }
 
   Future<bool> searchActivities({required String destination}) async {
-    log('[ActivityProvider] Searching activities for destination: $destination');
+    log('[ActivityProvider] ═══════════════════════════════════════════');
+    log('[ActivityProvider] 🔍 Searching activities');
+    log('[ActivityProvider] Destination parameter: "$destination"');
+    log('[ActivityProvider] ═══════════════════════════════════════════');
 
     if (_token == null) {
       await _loadToken();
@@ -67,7 +70,7 @@ class ActivityProvider with ChangeNotifier {
 
     final url =
         '${ApiUrls.baseUrl}${ApiUrls.activitiesSearch}?destination=${Uri.encodeComponent(destination)}';
-    log('[ActivityProvider] URL: $url');
+    log('[ActivityProvider] 📡 Full URL: $url');
 
     try {
       final result = await makeRequest(
@@ -104,6 +107,7 @@ class ActivityProvider with ChangeNotifier {
         }
         // ───────────────────────────────────────────────────────────────
         log('[ActivityProvider] Loaded ${_activities.length} activities');
+        log('[ActivityProvider] ✅ Search successful - Found ${_activities.length} activities');
         _isLoading = false;
         notifyListeners();
         return true;

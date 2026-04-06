@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:moonbnd/Provider/search_hotel_provider.dart';
+import 'package:moonbnd/Provider/currency_provider.dart';
 import 'package:moonbnd/modals/hotel_search_model.dart';
 
 class HotelListScreen extends StatelessWidget {
@@ -32,6 +33,7 @@ class HotelListScreen extends StatelessWidget {
             adults: adults,
             children: children,
             rooms: rooms,
+            currency: context.read<CurrencyProvider>().selectedCurrency,
           );
     });
 

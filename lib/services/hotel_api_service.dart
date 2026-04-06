@@ -161,10 +161,12 @@ class HotelApiService {
   static Future<Map<String, dynamic>> fetchHotelDetail({
     required String hotelId,
     String? provider,
+    String? currency,
     required String token,
   }) async {
     try {
-      final url = ApiUrls.hotelDetailUrl(hotelId, provider: provider);
+      final url = ApiUrls.hotelDetailUrl(hotelId,
+          provider: provider, currency: currency);
 
       print('[HotelApiService] GET Hotel Detail');
       print('[HotelApiService] URL: $url');

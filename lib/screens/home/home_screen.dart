@@ -60,16 +60,19 @@ import '../../constants.dart';
 import '../../Provider/hotel_country_provider.dart';
 import '../../Provider/hotel_city_provider.dart';
 import '../../Provider/search_hotel_provider.dart';
+import '../../Provider/hotel_destination_provider.dart';
 import '../../widgets/hotel_country_selection_sheet.dart';
 import '../../widgets/hotel_city_selection_sheet.dart';
 import '../../Provider/flight_airport_provider.dart';
 import '../../widgets/flight_airport_selection_sheet.dart';
+import '../../widgets/hotel_destination_selection_sheet.dart';
 import '../../data_models/home_screen_data.dart';
 import '../../widgets/card_widget.dart';
 import '../hotel/search_hotel_screen.dart';
 import '../hotel/room_detail_screen.dart';
 
 import '../notification/notifications_screen.dart';
+import '../../Provider/currency_provider.dart';
 
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 
@@ -156,6 +159,8 @@ class _HomeScreenState extends State<HomeScreen>
 
   final TextEditingController _cityController = TextEditingController();
   final TextEditingController _countryController = TextEditingController();
+  final TextEditingController _hotelDestinationController =
+      TextEditingController();
   final TextEditingController _fromCityController = TextEditingController();
   final TextEditingController _toCityController = TextEditingController();
   final ScrollController _cityScrollController = ScrollController();
@@ -2031,9 +2036,9 @@ class _HomeScreenState extends State<HomeScreen>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── Country field ──────────────────────────────────────────────
+            // ── Destination field ──────────────────────────────────────────
             Text(
-              'Country'.tr,
+              'Destination'.tr,
               style: GoogleFonts.spaceGrotesk(
                 fontSize: 13,
                 fontWeight: FontWeight.w500,
@@ -2041,67 +2046,45 @@ class _HomeScreenState extends State<HomeScreen>
               ),
             ),
             const SizedBox(height: 4),
-            TextFormField(
-              readOnly: true,
-              controller: _countryController,
-              onTap: () => _showCountrySelection(context),
-              decoration: _fieldDecoration(
-                hint: 'Select country'.tr,
-                prefixIcon: const Icon(
-                  Icons.language,
-                  size: 20,
-                  color: kMutedColor,
-                ),
-              ),
-              style: GoogleFonts.spaceGrotesk(
-                fontSize: 14,
-                color: kHeadingColor,
-              ),
-            ),
-
-            const SizedBox(height: 12),
-
-            // ── City field ─────────────────────────────────────────────────
-            Text(
-              'City'.tr,
-              style: GoogleFonts.spaceGrotesk(
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
-                color: kHeadingColor,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Consumer<HotelCityProvider>(
-              builder: (context, cityProvider, _) {
+            Consumer<HotelDestinationProvider>(
+              builder: (context, destProvider, _) {
                 return TextFormField(
-                  controller: _cityController,
+                  controller: _hotelDestinationController,
                   readOnly: true,
-                  onTap: () {
-                    final countryCode = context
-                        .read<HotelCountryProvider>()
-                        .selectedCountryCode;
-                    HotelCitySelectionSheet.show(
-                      context,
-                      countryCode: countryCode,
-                      onCitySelected: (city) {
-                        _cityController.text = city.cityName;
-                      },
-                    );
-                  },
                   validator: (_) {
-                    if (cityProvider.selectedCity == null) {
-                      return 'Please select a city'.tr;
+                    if (!destProvider.hasValidHotelDestination) {
+                      return 'Please select a destination'.tr;
                     }
                     return null;
                   },
+                  onTap: () {
+                    // Open the hotel destination selection sheet
+                    HotelDestinationSelectionSheet.show(
+                      context,
+                      onDestinationSelected: (destination) {
+                        _hotelDestinationController.text =
+                            destination.displayName ?? '';
+                      },
+                    );
+                  },
                   decoration: _fieldDecoration(
-                    hint: 'Select city'.tr,
-                    prefixIcon: SvgPicture.asset(
-                      'assets/icons/location.svg',
-                      width: 20,
-                      height: 20,
+                    hint: 'Search destination'.tr,
+                    prefixIcon: Icon(
+                      Icons.search,
                       color: kMutedColor,
+                      size: 20,
                     ),
+                  ).copyWith(
+                    suffixIcon: _hotelDestinationController.text.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.clear,
+                                size: 18, color: kMutedColor),
+                            onPressed: () {
+                              _hotelDestinationController.clear();
+                              destProvider.clearHotelDestination();
+                            },
+                          )
+                        : null,
                   ),
                   style: GoogleFonts.spaceGrotesk(
                     fontSize: 14,
@@ -2371,45 +2354,56 @@ class _HomeScreenState extends State<HomeScreen>
               width: double.infinity,
               height: 52,
               child: ElevatedButton(
-                onPressed: () {
-                  // Validate form
-                  setState(() {
-                    _hotelValidationAttempted = true;
-                  });
-                  if (!_hotelFormKey.currentState!.validate()) {
-                    print('[HOTEL_SEARCH] Validation failed');
-                    return;
-                  }
+                onPressed: _isHotelSearchLoading
+                    ? null
+                    : () {
+                        // Validate form
+                        setState(() {
+                          _hotelValidationAttempted = true;
+                        });
+                        if (!_hotelFormKey.currentState!.validate()) {
+                          print('[HOTEL_SEARCH] Validation failed');
+                          return;
+                        }
 
-                  print('[HOTEL_SEARCH] Search Hotels button tapped');
-                  print(
-                      '[HOTEL_SEARCH] Validation passed - City: ${_cityController.text}, Check-in: $_checkInDate, Check-out: $_checkOutDate, Adults: $_hotelAdultCount, Children: $_hotelChildCount, Rooms: $_hotelRoomCount');
+                        // Get city from selected destination
+                        final destProvider =
+                            context.read<HotelDestinationProvider>();
+                        if (!destProvider.hasValidHotelDestination) {
+                          print(
+                              '[HOTEL_SEARCH] Error: No destination selected');
+                          return;
+                        }
 
-                  // Get city name from controller
-                  final cityName = _cityController.text;
-                  if (cityName.isEmpty) {
-                    print('[HOTEL_SEARCH] Error: City name is empty');
-                    return;
-                  }
+                        final cityName =
+                            destProvider.selectedHotelDestination!.city ?? '';
+                        if (cityName.isEmpty) {
+                          print('[HOTEL_SEARCH] Error: City name is empty');
+                          return;
+                        }
 
-                  // Navigate immediately — results screen handles API and shimmer
-                  print(
-                      '[HOTEL_SEARCH] Navigating to results screen immediately');
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => HotelSearchResultsScreen(
-                        cityName: cityName,
-                        checkInDate: _checkInDate,
-                        checkOutDate: _checkOutDate,
-                        guests: _guestCount,
-                        adults: _hotelAdultCount,
-                        children: _hotelChildCount,
-                        rooms: _hotelRoomCount,
-                      ),
-                    ),
-                  );
-                },
+                        print('[HOTEL_SEARCH] Search Hotels button tapped');
+                        print(
+                            '[HOTEL_SEARCH] Validation passed - City: $cityName, Check-in: $_checkInDate, Check-out: $_checkOutDate, Adults: $_hotelAdultCount, Children: $_hotelChildCount, Rooms: $_hotelRoomCount');
+
+                        // Navigate immediately — results screen handles API and shimmer
+                        print(
+                            '[HOTEL_SEARCH] Navigating to results screen immediately');
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => HotelSearchResultsScreen(
+                              cityName: cityName,
+                              checkInDate: _checkInDate,
+                              checkOutDate: _checkOutDate,
+                              guests: _guestCount,
+                              adults: _hotelAdultCount,
+                              children: _hotelChildCount,
+                              rooms: _hotelRoomCount,
+                            ),
+                          ),
+                        );
+                      },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: kPrimaryColor,
                   shape: RoundedRectangleBorder(
@@ -2681,51 +2675,151 @@ class _HomeScreenState extends State<HomeScreen>
                                   ),
                                 ],
                               ),
-                              Stack(
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  GestureDetector(
-                                    onTap: () => Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) =>
-                                            NotificationsScreen(),
-                                      ),
-                                    ),
-                                    child: SvgPicture.asset(
-                                      'assets/icons/Bell.svg',
-                                    ),
-                                  ),
-                                  Positioned(
-                                    right: -2,
-                                    top: -2,
-                                    child: Container(
-                                      padding: EdgeInsets.all(2),
-                                      constraints: BoxConstraints(
-                                        minWidth: 12,
-                                        minHeight: 12,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: Colors.red,
-                                        shape: BoxShape.circle,
-                                        border: Border.all(
+                                  Consumer<CurrencyProvider>(
+                                    builder: (context, currencyProvider, _) {
+                                      final currentCurrency = CurrencyProvider
+                                                  .currencyMap[
+                                              currencyProvider
+                                                  .selectedCurrency] ??
+                                          CurrencyProvider.currencyMap['USD']!;
+
+                                      return Container(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 10, vertical: 6),
+                                        decoration: BoxDecoration(
+                                          border:
+                                              Border.all(color: kBorderColor),
+                                          borderRadius:
+                                              BorderRadius.circular(10),
                                           color: Colors.white,
-                                          width: 2,
                                         ),
-                                      ),
-                                      child: Center(
-                                        child: Text(
-                                          provider2.notificationcountmodel
-                                                  ?.unreadCount
-                                                  .toString() ??
-                                              "",
-                                          style: TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 8,
-                                            fontWeight: FontWeight.bold,
+                                        child: DropdownButtonHideUnderline(
+                                          child: DropdownButton<String>(
+                                            value: currencyProvider
+                                                .selectedCurrency,
+                                            isDense: true,
+                                            icon: const Icon(
+                                                Icons.keyboard_arrow_down,
+                                                size: 18,
+                                                color: kSubtitleColor),
+                                            // Display button: flag + code
+                                            selectedItemBuilder: (context) =>
+                                                CurrencyProvider
+                                                    .supportedCurrencies
+                                                    .map((currencyCode) {
+                                              final data =
+                                                  CurrencyProvider.currencyMap[
+                                                          currencyCode] ??
+                                                      CurrencyProvider
+                                                          .currencyMap['USD']!;
+                                              return Center(
+                                                child: Text(
+                                                  '${data.flag} ${data.code}',
+                                                  style:
+                                                      GoogleFonts.spaceGrotesk(
+                                                    fontSize: 13,
+                                                    fontWeight: FontWeight.w600,
+                                                    color: kHeadingColor,
+                                                  ),
+                                                ),
+                                              );
+                                            }).toList(),
+                                            // Dropdown items: flag + code + name
+                                            items: CurrencyProvider
+                                                .supportedCurrencies
+                                                .map((currencyCode) {
+                                              final data =
+                                                  CurrencyProvider.currencyMap[
+                                                          currencyCode] ??
+                                                      CurrencyProvider
+                                                          .currencyMap['USD']!;
+                                              return DropdownMenuItem(
+                                                value: currencyCode,
+                                                child: Row(
+                                                  children: [
+                                                    Text(
+                                                      data.flag,
+                                                      style: const TextStyle(
+                                                        fontSize: 18,
+                                                      ),
+                                                    ),
+                                                    const SizedBox(width: 8),
+                                                    Text(
+                                                      data.code,
+                                                      style: GoogleFonts
+                                                          .spaceGrotesk(
+                                                        fontSize: 13,
+                                                        fontWeight:
+                                                            FontWeight.w600,
+                                                        color: kHeadingColor,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              );
+                                            }).toList(),
+                                            onChanged: (value) {
+                                              if (value != null) {
+                                                currencyProvider
+                                                    .setCurrency(value);
+                                              }
+                                            },
                                           ),
                                         ),
+                                      );
+                                    },
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Stack(
+                                    children: [
+                                      GestureDetector(
+                                        onTap: () => Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                NotificationsScreen(),
+                                          ),
+                                        ),
+                                        child: SvgPicture.asset(
+                                          'assets/icons/Bell.svg',
+                                        ),
                                       ),
-                                    ),
+                                      Positioned(
+                                        right: -2,
+                                        top: -2,
+                                        child: Container(
+                                          padding: EdgeInsets.all(2),
+                                          constraints: BoxConstraints(
+                                            minWidth: 12,
+                                            minHeight: 12,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: Colors.red,
+                                            shape: BoxShape.circle,
+                                            border: Border.all(
+                                              color: Colors.white,
+                                              width: 2,
+                                            ),
+                                          ),
+                                          child: Center(
+                                            child: Text(
+                                              provider2.notificationcountmodel
+                                                      ?.unreadCount
+                                                      .toString() ??
+                                                  "",
+                                              style: TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 8,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      )
+                                    ],
                                   )
                                 ],
                               )

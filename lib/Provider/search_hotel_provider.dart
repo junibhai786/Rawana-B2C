@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:moonbnd/modals/hotel_search_model.dart';
 import 'package:moonbnd/Urls/url_holder_loan.dart';
+import 'package:moonbnd/Provider/currency_provider.dart';
 
 class SearchHotelProvider with ChangeNotifier {
   // State
@@ -112,6 +113,7 @@ class SearchHotelProvider with ChangeNotifier {
     int? adults,
     int? children,
     int? rooms,
+    String? currency,
     // Backward compatibility: old API with searchParams dict
     Map<String, dynamic>? searchParams,
     bool isLoadMore = false,
@@ -184,40 +186,39 @@ class SearchHotelProvider with ChangeNotifier {
         await _loadToken();
       }
 
-      // Build request body
-      final requestBody = {
+      // Build query params matching Postman format:
+      // POST /api/hotels/search?city=Dubai&check_in=...&check_out=...&adults=1
+      final queryParams = {
         'city': city,
         'check_in': _formatDate(checkIn),
         'check_out': _formatDate(checkOut),
         'adults': adults.toString(),
         'children': children.toString(),
         'rooms': rooms.toString(),
+        'page': pageToLoad.toString(),
+        'currency': currency ?? CurrencyProvider.defaultCurrency,
       };
 
-      // Page goes as a query param on the POST URL
-      final url = Uri.parse(
-          '${ApiUrls.baseUrl}${ApiUrls.hotelSearch}?page=$pageToLoad');
+      final url = Uri.parse('${ApiUrls.baseUrl}${ApiUrls.hotelSearch}')
+          .replace(queryParameters: queryParams);
 
       debugPrint(
           '═══════════════════════════════════════════════════════════════');
       debugPrint('[HOTEL_SEARCH] ${isLoadMore ? "LOAD MORE" : "POST REQUEST"}');
       debugPrint('[HOTEL_SEARCH] URL: $url');
       debugPrint('[HOTEL_SEARCH] Page: $pageToLoad / $_lastPage');
-      debugPrint('[HOTEL_SEARCH] Body: $requestBody');
       debugPrint(
           '═══════════════════════════════════════════════════════════════');
 
-      // Make POST request
-      final response = await http
-          .post(
-            url,
-            headers: {
-              'Content-Type': 'application/json',
-              if (_token != null) 'Authorization': 'Bearer $_token',
-            },
-            body: jsonEncode(requestBody),
-          )
-          .timeout(const Duration(seconds: 30));
+      // Make POST request with query params (matching Postman)
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          if (_token != null) 'Authorization': 'Bearer $_token',
+        },
+      ).timeout(const Duration(seconds: 60));
 
       debugPrint('[HOTEL_SEARCH] Response Status: ${response.statusCode}');
 

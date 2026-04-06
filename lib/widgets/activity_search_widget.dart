@@ -1,15 +1,16 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:moonbnd/Provider/activity_provider.dart';
-import 'package:moonbnd/Provider/hotel_city_provider.dart';
-import 'package:moonbnd/Provider/hotel_country_provider.dart';
+import 'package:moonbnd/Provider/hotel_destination_provider.dart';
+import 'package:moonbnd/modals/hotel_destination_model.dart';
 import 'package:moonbnd/screens/activities/activity_results_screen.dart';
 import 'package:moonbnd/widgets/app_snackbar.dart';
-import 'package:moonbnd/widgets/hotel_city_selection_sheet.dart';
-import 'package:moonbnd/widgets/hotel_country_selection_sheet.dart';
+import 'package:moonbnd/widgets/hotel_destination_selection_sheet.dart';
 import 'package:provider/provider.dart';
 
 import '../constants.dart';
@@ -22,39 +23,15 @@ class ActivitySearchWidget extends StatefulWidget {
 }
 
 class _ActivitySearchWidgetState extends State<ActivitySearchWidget> {
-  final TextEditingController _countryController = TextEditingController();
-  final TextEditingController _cityController = TextEditingController();
+  final TextEditingController _destinationController = TextEditingController();
+  HotelDestinationResult? _selectedDestination;
   DateTime _selectedDate = DateTime.now();
   int _participants = 1;
 
   @override
   void dispose() {
-    _countryController.dispose();
-    _cityController.dispose();
+    _destinationController.dispose();
     super.dispose();
-  }
-
-  void _showCountrySelection(BuildContext context) {
-    HotelCountrySelectionSheet.show(
-      context,
-      onCountrySelected: (country) {
-        _countryController.text = country.countryName;
-        _cityController.clear();
-        context.read<HotelCityProvider>().clearOnCountryChange();
-      },
-    );
-  }
-
-  void _showCitySelection(BuildContext context) {
-    final countryCode =
-        context.read<HotelCountryProvider>().selectedCountryCode;
-    HotelCitySelectionSheet.show(
-      context,
-      countryCode: countryCode,
-      onCitySelected: (city) {
-        _cityController.text = city.cityName;
-      },
-    );
   }
 
   Future<void> _pickDate() async {
@@ -119,9 +96,9 @@ class _ActivitySearchWidgetState extends State<ActivitySearchWidget> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Country field ──────────────────────────────────────────────
+          // ── Destination field ──────────────────────────────────────────────
           Text(
-            'Country'.tr,
+            'Destination'.tr,
             style: GoogleFonts.spaceGrotesk(
               fontSize: 13,
               fontWeight: FontWeight.w500,
@@ -129,53 +106,55 @@ class _ActivitySearchWidgetState extends State<ActivitySearchWidget> {
             ),
           ),
           const SizedBox(height: 4),
-          TextFormField(
-            controller: _countryController,
-            readOnly: true,
-            onTap: () => _showCountrySelection(context),
-            decoration: _fieldDecoration(
-              hint: 'Select country'.tr,
-              prefixIcon: const Icon(
-                Icons.language,
-                size: 20,
-                color: kMutedColor,
-              ),
-            ),
-            style: GoogleFonts.spaceGrotesk(
-              fontSize: 14,
-              color: kHeadingColor,
-            ),
-          ),
-
-          const SizedBox(height: 12),
-
-          // ── City field ────────────────────────────────────────────────
-          Text(
-            'City'.tr,
-            style: GoogleFonts.spaceGrotesk(
-              fontSize: 13,
-              fontWeight: FontWeight.w500,
-              color: kHeadingColor,
-            ),
-          ),
-          const SizedBox(height: 4),
-          TextFormField(
-            controller: _cityController,
-            readOnly: true,
-            onTap: () => _showCitySelection(context),
-            decoration: _fieldDecoration(
-              hint: 'Select city'.tr,
-              prefixIcon: SvgPicture.asset(
-                'assets/icons/location.svg',
-                width: 20,
-                height: 20,
-                color: kMutedColor,
-              ),
-            ),
-            style: GoogleFonts.spaceGrotesk(
-              fontSize: 14,
-              color: kHeadingColor,
-            ),
+          Consumer<HotelDestinationProvider>(
+            builder: (context, destProvider, _) {
+              return TextFormField(
+                controller: _destinationController,
+                readOnly: true,
+                onTap: () {
+                  // Open the hotel destination selection sheet
+                  HotelDestinationSelectionSheet.show(
+                    context,
+                    onDestinationSelected: (destination) {
+                      setState(() {
+                        _selectedDestination = destination;
+                        _destinationController.text =
+                            destination.displayName ?? '';
+                      });
+                      log('[ActivitySearchWidget] Selected destination: ${destination.displayName}');
+                      log('[ActivitySearchWidget] City: ${destination.city}');
+                      log('[ActivitySearchWidget] Destination field: ${destination.destination}');
+                    },
+                  );
+                },
+                decoration: _fieldDecoration(
+                  hint: 'Search destination'.tr,
+                  prefixIcon: Icon(
+                    Icons.search,
+                    color: kMutedColor,
+                    size: 20,
+                  ),
+                ).copyWith(
+                  suffixIcon: _destinationController.text.isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(Icons.clear,
+                              size: 18, color: kMutedColor),
+                          onPressed: () {
+                            setState(() {
+                              _destinationController.clear();
+                              _selectedDestination = null;
+                            });
+                            destProvider.clearHotelDestination();
+                          },
+                        )
+                      : null,
+                ),
+                style: GoogleFonts.spaceGrotesk(
+                  fontSize: 14,
+                  color: kHeadingColor,
+                ),
+              );
+            },
           ),
 
           const SizedBox(height: 12),
@@ -277,22 +256,37 @@ class _ActivitySearchWidgetState extends State<ActivitySearchWidget> {
             height: 52,
             child: ElevatedButton(
               onPressed: () async {
-                final city = _cityController.text.trim();
-                if (city.isEmpty) {
-                  AppSnackbar.error('Please select a city first'.tr);
+                if (_selectedDestination == null) {
+                  AppSnackbar.error('Please select a destination first'.tr);
                   return;
                 }
+
+                // Extract city name for API call
+                // Prefer city field, fallback to destination field
+                final destinationForApi =
+                    _selectedDestination!.city?.isNotEmpty == true
+                        ? _selectedDestination!.city!
+                        : (_selectedDestination!.destination?.isNotEmpty == true
+                            ? _selectedDestination!.destination!
+                            : _selectedDestination!.displayName ?? '');
+
+                log('[ActivitySearchWidget] === Search Activities ===');
+                log('[ActivitySearchWidget] Display value: ${_selectedDestination!.displayName}');
+                log('[ActivitySearchWidget] City: ${_selectedDestination!.city}');
+                log('[ActivitySearchWidget] Destination field: ${_selectedDestination!.destination}');
+                log('[ActivitySearchWidget] Final API parameter: $destinationForApi');
+
                 final provider = context.read<ActivityProvider>();
                 Navigator.of(context).push(
                   MaterialPageRoute(
                     builder: (_) => ActivityResultsScreen(
-                      destination: city,
+                      destination: destinationForApi,
                       selectedDate: _selectedDate,
                       participants: _participants,
                     ),
                   ),
                 );
-                await provider.searchActivities(destination: city);
+                await provider.searchActivities(destination: destinationForApi);
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: kPrimaryColor,

@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:moonbnd/Provider/search_hotel_provider.dart';
+import 'package:moonbnd/Provider/currency_provider.dart';
 import 'package:moonbnd/modals/hotel_search_response_model.dart';
 import 'package:moonbnd/screens/hotel/room_detail_screen.dart';
 import 'package:moonbnd/constants.dart';
@@ -213,6 +214,8 @@ class _HotelSearchResultsScreenState extends State<HotelSearchResultsScreen> {
   Future<void> _startSearch() async {
     if (widget.cityName == null || widget.cityName!.isEmpty) return;
     final provider = Provider.of<SearchHotelProvider>(context, listen: false);
+    final currency =
+        Provider.of<CurrencyProvider>(context, listen: false).selectedCurrency;
     provider.resetPagination();
     await provider.searchHotels(
       city: widget.cityName,
@@ -221,6 +224,7 @@ class _HotelSearchResultsScreenState extends State<HotelSearchResultsScreen> {
       adults: widget.adults,
       children: widget.children,
       rooms: widget.rooms,
+      currency: currency,
     );
   }
 
@@ -248,6 +252,8 @@ class _HotelSearchResultsScreenState extends State<HotelSearchResultsScreen> {
     if (widget.cityName != null && widget.cityName!.isNotEmpty) {
       await Provider.of<SearchHotelProvider>(context, listen: false)
           .searchHotels(
+        currency: Provider.of<CurrencyProvider>(context, listen: false)
+            .selectedCurrency,
         searchParams: {
           'city': widget.cityName,
           'check_in': widget.checkInDate,
@@ -1172,11 +1178,14 @@ class HotelCard extends StatelessWidget {
     final hasImages = hotel.images != null && hotel.images!.isNotEmpty;
     final imageUrl = hasImages ? hotel.images!.first : null;
 
-    final lowestPrice = hotel.lowestPrice is String
-        ? double.tryParse(hotel.lowestPrice.toString()) ?? 0
-        : (hotel.lowestPrice ?? 0).toDouble();
+    final rawPrice = hotel.convertedLowestPrice ?? hotel.lowestPrice;
+    final lowestPrice = rawPrice is String
+        ? double.tryParse(rawPrice.toString()) ?? 0
+        : (rawPrice ?? 0).toDouble();
     final priceStr = lowestPrice > 0 ? lowestPrice.toStringAsFixed(0) : null;
-    final currency = hotel.currency ?? 'AED';
+    final currency = (hotel.convertedCurrency?.isNotEmpty == true)
+        ? hotel.convertedCurrency!
+        : (hotel.currency ?? 'AED');
 
     final rating = hotel.starRating ?? 0;
     final ratingInt = (rating is num)

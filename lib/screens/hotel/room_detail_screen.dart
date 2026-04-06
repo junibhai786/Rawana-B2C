@@ -19,6 +19,7 @@ import 'package:moonbnd/screens/hotel/hotel_checkout_screen.dart';
 import 'package:moonbnd/modals/hotel_room_model.dart' as hotel_room;
 import 'package:moonbnd/modals/room_model.dart' as model_room;
 import 'package:moonbnd/Provider/search_hotel_provider.dart';
+import 'package:moonbnd/Provider/currency_provider.dart';
 import 'dart:developer';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:get/get.dart';
@@ -166,6 +167,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen>
 
   /// Convert HotelModel (search result) to HotelDetail for display compatibility
   HotelDetail _convertSearchData(HotelModel model) {
+    final displayPrice = model.convertedLowestPrice ?? model.lowestPrice;
     return HotelDetail(
       data: Data(
         id: int.tryParse(model.id),
@@ -181,7 +183,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen>
         checkOutTime: model.checkOutTime,
         mapLat: model.latitude?.toString(),
         mapLng: model.longitude?.toString(),
-        price: model.lowestPrice?.toString(),
+        price: displayPrice?.toString(),
       ),
       status: 1,
     );
@@ -227,8 +229,10 @@ class _RoomDetailScreenState extends State<RoomDetailScreen>
     });
 
     final homeProvider = Provider.of<HomeProvider>(context, listen: false);
+    final currency =
+        Provider.of<CurrencyProvider>(context, listen: false).selectedCurrency;
     final detail = await homeProvider.fetchHotelDetails(widget.hotelId,
-        provider: widget.provider);
+        provider: widget.provider, currency: currency);
 
     if (!mounted) return;
     setState(() {
@@ -763,7 +767,9 @@ class _RoomDetailScreenState extends State<RoomDetailScreen>
         id: room.id.toString(),
         name: room.title,
         totalPrice: room.price,
-        currency: widget.searchData?.currency ?? 'USD',
+        currency: widget.searchData?.convertedCurrency ??
+            widget.searchData?.currency ??
+            'USD',
         images: [room.image],
         maxAdults: room.maxAdults,
         maxChildren: room.maxChildren,
@@ -962,11 +968,19 @@ class _RoomDetailScreenState extends State<RoomDetailScreen>
   }
 
   Widget _buildSearchRoomCard(HotelRoomModel room) {
-    final price = room.totalPrice ?? room.basePrice;
+    final price = room.convertedTotalPrice ??
+        room.convertedBasePrice ??
+        room.totalPrice ??
+        room.basePrice;
     final priceStr = price != null
         ? double.tryParse(price.toString())?.toStringAsFixed(2) ?? '0.00'
         : '0.00';
-    final currency = room.currency ?? widget.searchData?.currency ?? 'USD';
+    final currency = room.convertedCurrency?.isNotEmpty == true
+        ? room.convertedCurrency!
+        : (room.currency ??
+            widget.searchData?.convertedCurrency ??
+            widget.searchData?.currency ??
+            'USD');
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),

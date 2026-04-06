@@ -25,6 +25,11 @@ class HotelRoomModel {
   final dynamic basePrice;
   final dynamic totalPrice;
 
+  // Converted price fields (returned by API when currency param is sent)
+  final String? convertedCurrency;
+  final dynamic convertedBasePrice;
+  final dynamic convertedTotalPrice;
+
   final int? nights;
   final String? currency;
 
@@ -48,6 +53,9 @@ class HotelRoomModel {
     this.maxChildren,
     this.basePrice,
     this.totalPrice,
+    this.convertedCurrency,
+    this.convertedBasePrice,
+    this.convertedTotalPrice,
     this.nights,
     this.currency,
     this.isAvailable = true,
@@ -73,6 +81,9 @@ class HotelRoomModel {
         maxChildren: _safeInt(json['max_children']),
         basePrice: json['base_price'],
         totalPrice: json['total_price'],
+        convertedCurrency: _safeString(json['converted_currency']),
+        convertedBasePrice: json['converted_base_price'],
+        convertedTotalPrice: json['converted_total_price'],
         nights: _safeInt(json['nights']) ?? 1,
         currency: _safeString(json['currency']),
         isAvailable: _safeBool(json['is_available']),
@@ -99,6 +110,9 @@ class HotelRoomModel {
         'max_children': maxChildren,
         'base_price': basePrice,
         'total_price': totalPrice,
+        'converted_currency': convertedCurrency,
+        'converted_base_price': convertedBasePrice,
+        'converted_total_price': convertedTotalPrice,
         'nights': nights,
         'currency': currency,
         'is_available': isAvailable,

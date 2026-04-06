@@ -16,6 +16,8 @@ import 'package:moonbnd/Provider/hotel_city_provider.dart';
 import 'package:moonbnd/Provider/hotel_country_provider.dart';
 import 'package:moonbnd/Provider/search_hotel_provider.dart';
 import 'package:moonbnd/Provider/hotel_checkout_provider.dart';
+import 'package:moonbnd/Provider/hotel_destination_provider.dart';
+import 'package:moonbnd/Provider/currency_provider.dart';
 import 'package:moonbnd/language/language_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -102,9 +104,11 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (context) => VendorBoatProvider()),
         ChangeNotifierProvider(create: (context) => HotelCountryProvider()),
         ChangeNotifierProvider(create: (context) => HotelCityProvider()),
+        ChangeNotifierProvider(create: (context) => HotelDestinationProvider()),
         ChangeNotifierProvider(create: (context) => FlightAirportProvider()),
         ChangeNotifierProvider(create: (context) => ActivityProvider()),
         ChangeNotifierProvider(create: (context) => HotelCheckoutProvider()),
+        ChangeNotifierProvider(create: (context) => CurrencyProvider()),
       ],
       child: GetMaterialApp(
         theme: havenTheme(),

@@ -39,6 +39,11 @@ class HotelModel {
   final dynamic lowestPrice;
 
   final String? currency;
+
+  // Converted price fields (returned by API when currency param is sent)
+  final String? convertedCurrency;
+  final dynamic convertedLowestPrice;
+
   final List<HotelRoomModel> rooms;
   final String? badge;
   final String? apiSource;
@@ -64,6 +69,8 @@ class HotelModel {
     this.services = const [],
     this.lowestPrice,
     this.currency,
+    this.convertedCurrency,
+    this.convertedLowestPrice,
     this.rooms = const [],
     this.badge,
     this.apiSource,
@@ -94,6 +101,8 @@ class HotelModel {
         services: _safeStringList(json['services']),
         lowestPrice: json['lowest_price'],
         currency: _safeString(json['currency']),
+        convertedCurrency: _safeString(json['converted_currency']),
+        convertedLowestPrice: json['converted_lowest_price'],
         rooms: _safeRoomList(json['rooms']),
         badge: _safeString(json['badge']),
         apiSource: _safeString(json['api_source']),
@@ -125,6 +134,8 @@ class HotelModel {
         'services': services,
         'lowest_price': lowestPrice,
         'currency': currency,
+        'converted_currency': convertedCurrency,
+        'converted_lowest_price': convertedLowestPrice,
         'rooms': rooms.map((r) => r.toJson()).toList(),
         'badge': badge,
         'api_source': apiSource,
