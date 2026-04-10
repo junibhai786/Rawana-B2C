@@ -4,6 +4,7 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
+import 'package:moonbnd/services/session_manager.dart';
 import 'package:moonbnd/Provider/api_interface.dart'; // setToken()
 import 'package:moonbnd/Urls/url_holder_loan.dart';
 import 'package:moonbnd/modals/hotel_checkout_request_model.dart';
@@ -19,6 +20,9 @@ class HotelCheckoutProvider with ChangeNotifier {
   String? _orderError;
   HotelBookingConfirmationData? _orderData;
 
+  /// True when checkout failed due to 401 Unauthorized (session expired).
+  bool _isSessionExpired = false;
+
   bool get isFetchingOrder => _isFetchingOrder;
   String? get orderError => _orderError;
   HotelBookingConfirmationData? get orderData => _orderData;
@@ -26,9 +30,11 @@ class HotelCheckoutProvider with ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get error => _error;
   HotelCheckoutResponse? get checkoutResponse => _checkoutResponse;
+  bool get isSessionExpired => _isSessionExpired;
 
   void clearError() {
     _error = null;
+    _isSessionExpired = false;
     notifyListeners();
   }
 
@@ -43,6 +49,7 @@ class HotelCheckoutProvider with ChangeNotifier {
   }) async {
     _isLoading = true;
     _error = null;
+    _isSessionExpired = false;
     _checkoutResponse = null;
     notifyListeners();
 
@@ -126,6 +133,18 @@ class HotelCheckoutProvider with ChangeNotifier {
             errorMsg = errData['message'].toString();
           }
         } catch (_) {}
+
+        // ── Detect 401 Unauthorized / Session Expired ──────────────────────
+        if (SessionManager.isUnauthorized(
+            statusCode: statusCode, message: errorMsg)) {
+          _isSessionExpired = true;
+          _error = 'session_expired';
+          log('[HOTEL CHECKOUT ERROR] 401 Unauthorized — session expired');
+          _isLoading = false;
+          notifyListeners();
+          return false;
+        }
+
         _error = errorMsg;
         log('');
         log('[HOTEL CHECKOUT ERROR]');

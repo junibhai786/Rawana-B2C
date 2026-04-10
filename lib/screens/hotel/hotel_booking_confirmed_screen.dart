@@ -1,17 +1,79 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import 'package:moonbnd/constants.dart';
 import 'package:moonbnd/modals/hotel_booking_confirmation_model.dart';
+import 'package:moonbnd/modals/activity_model.dart';
 import 'package:moonbnd/widgets/bottom_navigation.dart';
+import 'package:moonbnd/Provider/activity_provider.dart';
+import 'package:moonbnd/screens/activities/activity_results_screen.dart';
 
-class HotelBookingConfirmedScreen extends StatelessWidget {
+class HotelBookingConfirmedScreen extends StatefulWidget {
   final HotelBookingConfirmationData data;
+  final String? city;
 
-  const HotelBookingConfirmedScreen({Key? key, required this.data})
-      : super(key: key);
+  const HotelBookingConfirmedScreen({
+    Key? key,
+    required this.data,
+    this.city,
+  }) : super(key: key);
+
+  @override
+  State<HotelBookingConfirmedScreen> createState() =>
+      _HotelBookingConfirmedScreenState();
+}
+
+class _HotelBookingConfirmedScreenState
+    extends State<HotelBookingConfirmedScreen> {
+  late HotelBookingConfirmationData data;
+  List<ActivityModel> _recommendedActivities = [];
+  bool _activitiesLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    data = widget.data;
+    _fetchRecommendedActivities();
+  }
+
+  Future<void> _fetchRecommendedActivities() async {
+    // Determine destination: prefer explicit city, fallback to hotel name
+    final destination = widget.city ?? data.hotelName;
+    if (destination == null || destination.isEmpty) {
+      log('[BookingConfirmed] No destination available for activities');
+      if (mounted) setState(() => _activitiesLoading = false);
+      return;
+    }
+
+    final currency = data.currency ?? 'USD';
+    log('[BookingConfirmed] Fetching activities for: $destination ($currency)');
+
+    try {
+      final provider = context.read<ActivityProvider>();
+      final success = await provider.searchActivities(
+        destination: destination,
+        currency: currency,
+      );
+
+      if (mounted) {
+        setState(() {
+          if (success) {
+            _recommendedActivities = provider.activities.take(3).toList();
+          }
+          _activitiesLoading = false;
+        });
+        log('[BookingConfirmed] Loaded ${_recommendedActivities.length} recommended activities');
+      }
+    } catch (e) {
+      log('[BookingConfirmed] Error fetching activities: $e');
+      if (mounted) setState(() => _activitiesLoading = false);
+    }
+  }
 
   // ── Helpers ───────────────────────────────────────────────────────────────
 
@@ -58,7 +120,7 @@ class HotelBookingConfirmedScreen extends StatelessWidget {
                 child: Column(
                   children: [
                     _buildStatusBadge(),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 10),
                     _buildDetailsCard(context),
                     if (data.specialRequests != null &&
                         data.specialRequests!.isNotEmpty) ...[
@@ -67,8 +129,10 @@ class HotelBookingConfirmedScreen extends StatelessWidget {
                     ],
                     const SizedBox(height: 28),
                     _buildBackToHomeButton(context),
-                    const SizedBox(height: 12),
-                    _buildBookAnotherButton(context),
+                    // const SizedBox(height: 12),
+                    // _buildBookAnotherButton(context),
+                    const SizedBox(height: 28),
+                    _buildRecommendedActivitiesSection(),
                   ],
                 ),
               ),
@@ -389,37 +453,363 @@ class HotelBookingConfirmedScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildBookAnotherButton(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      height: 52,
-      child: OutlinedButton(
-        onPressed: () {
-          // Pop until hotel list or home — adjust route name as needed
-          Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(builder: (_) => BottomNav()),
-            (route) => false,
-          );
-        },
-        style: OutlinedButton.styleFrom(
-          side: const BorderSide(color: kPrimaryColor, width: 1.5),
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+  // Widget _buildBookAnotherButton(BuildContext context) {
+  //   return SizedBox(
+  //     width: double.infinity,
+  //     height: 52,
+  //     child: OutlinedButton(
+  //       onPressed: () {
+  //         // Pop until hotel list or home — adjust route name as needed
+  //         Navigator.of(context).pushAndRemoveUntil(
+  //           MaterialPageRoute(builder: (_) => BottomNav()),
+  //           (route) => false,
+  //         );
+  //       },
+  //       style: OutlinedButton.styleFrom(
+  //         side: const BorderSide(color: kPrimaryColor, width: 1.5),
+  //         shape:
+  //             RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+  //       ),
+  //       child: Row(
+  //         mainAxisAlignment: MainAxisAlignment.center,
+  //         children: [
+  //           const Icon(Icons.search_rounded, color: kPrimaryColor, size: 18),
+  //           const SizedBox(width: 8),
+  //           Text(
+  //             'Book Another Hotel'.tr,
+  //             style: GoogleFonts.spaceGrotesk(
+  //               fontSize: 15,
+  //               fontWeight: FontWeight.w600,
+  //               color: kPrimaryColor,
+  //             ),
+  //           ),
+  //         ],
+  //       ),
+  //     ),
+  //   );
+  // }
+
+  // ── Recommended Activities ─────────────────────────────────────────────────
+
+  Widget _buildRecommendedActivitiesSection() {
+    // Hide completely if no activities and done loading
+    if (!_activitiesLoading && _recommendedActivities.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    final destination = widget.city ?? data.hotelName ?? '';
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Section title
+        Text(
+          'Recommended Activities'.tr,
+          style: GoogleFonts.spaceGrotesk(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: Colors.black87,
+          ),
         ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.search_rounded, color: kPrimaryColor, size: 18),
-            const SizedBox(width: 8),
-            Text(
-              'Book Another Hotel'.tr,
-              style: GoogleFonts.spaceGrotesk(
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-                color: kPrimaryColor,
+        const SizedBox(height: 4),
+        Text(
+          'Top things to do in $destination',
+          style: GoogleFonts.spaceGrotesk(
+            fontSize: 13,
+            color: const Color(0xff64748B),
+          ),
+        ),
+        const SizedBox(height: 16),
+
+        // Loading state
+        if (_activitiesLoading)
+          ...List.generate(3, (_) => _buildActivityCardSkeleton())
+        // Activity cards
+        else
+          ..._recommendedActivities.map(_buildActivityCard),
+
+        // Explore More button
+        if (!_activitiesLoading && _recommendedActivities.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          SizedBox(
+            width: double.infinity,
+            height: 48,
+            child: OutlinedButton.icon(
+              onPressed: () => _navigateToAllActivities(),
+              icon: const Icon(Icons.explore_rounded,
+                  size: 18, color: kPrimaryColor),
+              label: Text(
+                'Explore More Activities'.tr,
+                style: GoogleFonts.spaceGrotesk(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: kPrimaryColor,
+                ),
+              ),
+              style: OutlinedButton.styleFrom(
+                side: const BorderSide(color: kPrimaryColor, width: 1.5),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
               ),
             ),
-          ],
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildActivityCard(ActivityModel activity) {
+    // Price display: prefer converted, fallback to base
+    final price = activity.convertedPricePerPerson ?? activity.pricePerPerson;
+    final curr = activity.convertedCurrency ?? activity.currency ?? 'USD';
+    final priceText =
+        price != null ? '$curr ${price.toStringAsFixed(2)}' : 'N/A';
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xffE2E8F0)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: InkWell(
+        onTap: () => _navigateToAllActivities(),
+        borderRadius: BorderRadius.circular(14),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Row(
+            children: [
+              // Image
+              ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: Container(
+                  width: 80,
+                  height: 80,
+                  color: const Color(0xffF1F5F9),
+                  child:
+                      activity.imageUrl != null && activity.imageUrl!.isNotEmpty
+                          ? Image.network(
+                              activity.imageUrl!,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) => const Center(
+                                child: Icon(Icons.image_outlined,
+                                    color: Color(0xffCBD5E1), size: 28),
+                              ),
+                            )
+                          : const Center(
+                              child: Icon(Icons.image_outlined,
+                                  color: Color(0xffCBD5E1), size: 28),
+                            ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              // Details
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Title
+                    Text(
+                      activity.title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.spaceGrotesk(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                        height: 1.3,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    // Location
+                    if (activity.city != null)
+                      Text(
+                        [activity.city, activity.country]
+                            .where((s) => s != null && s.isNotEmpty)
+                            .join(', '),
+                        style: GoogleFonts.spaceGrotesk(
+                          fontSize: 11,
+                          color: const Color(0xff64748B),
+                        ),
+                      ),
+                    const SizedBox(height: 6),
+                    // Category + Duration row
+                    Row(
+                      children: [
+                        if (activity.category != null)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: kPrimaryColor.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              activity.category!,
+                              style: GoogleFonts.spaceGrotesk(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w600,
+                                color: kPrimaryColor,
+                              ),
+                            ),
+                          ),
+                        if (activity.category != null &&
+                            activity.duration != null)
+                          const SizedBox(width: 8),
+                        if (activity.duration != null) ...[
+                          const Icon(Icons.access_time_rounded,
+                              size: 12, color: Color(0xff94A3B8)),
+                          const SizedBox(width: 3),
+                          Text(
+                            activity.duration!,
+                            style: GoogleFonts.spaceGrotesk(
+                              fontSize: 11,
+                              color: const Color(0xff64748B),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    // Price + Book Now row
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'from',
+                              style: GoogleFonts.spaceGrotesk(
+                                fontSize: 10,
+                                color: const Color(0xff94A3B8),
+                              ),
+                            ),
+                            Text(
+                              priceText,
+                              style: GoogleFonts.spaceGrotesk(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: kPrimaryColor,
+                              ),
+                            ),
+                          ],
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 14, vertical: 6),
+                          decoration: BoxDecoration(
+                            border:
+                                Border.all(color: kPrimaryColor, width: 1.2),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            'Book Now'.tr,
+                            style: GoogleFonts.spaceGrotesk(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: kPrimaryColor,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActivityCardSkeleton() {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xffE2E8F0)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 80,
+            height: 80,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(10),
+              color: const Color(0xffF1F5F9),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                    width: double.infinity,
+                    height: 14,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(4),
+                      color: const Color(0xffF1F5F9),
+                    )),
+                const SizedBox(height: 8),
+                Container(
+                    width: 120,
+                    height: 10,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(4),
+                      color: const Color(0xffF1F5F9),
+                    )),
+                const SizedBox(height: 10),
+                Container(
+                    width: 80,
+                    height: 10,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(4),
+                      color: const Color(0xffF1F5F9),
+                    )),
+                const SizedBox(height: 10),
+                Container(
+                    width: 100,
+                    height: 14,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(4),
+                      color: const Color(0xffF1F5F9),
+                    )),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _navigateToAllActivities() {
+    final destination = widget.city ?? data.hotelName ?? 'Activities';
+    DateTime activityDate = DateTime.now().add(const Duration(days: 1));
+    if (data.checkOut != null && data.checkOut!.isNotEmpty) {
+      try {
+        activityDate = DateTime.parse(data.checkOut!);
+      } catch (_) {}
+    }
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ActivityResultsScreen(
+          destination: destination,
+          selectedDate: activityDate,
+          participants: (data.adults ?? 1) + (data.children ?? 0),
         ),
       ),
     );

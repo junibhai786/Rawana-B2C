@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:moonbnd/Provider/activity_provider.dart';
+import 'package:moonbnd/Provider/currency_provider.dart';
 import 'package:moonbnd/Provider/hotel_destination_provider.dart';
 import 'package:moonbnd/modals/hotel_destination_model.dart';
 import 'package:moonbnd/screens/activities/activity_results_screen.dart';
@@ -277,6 +278,8 @@ class _ActivitySearchWidgetState extends State<ActivitySearchWidget> {
                 log('[ActivitySearchWidget] Final API parameter: $destinationForApi');
 
                 final provider = context.read<ActivityProvider>();
+                final currency =
+                    context.read<CurrencyProvider>().selectedCurrency;
                 Navigator.of(context).push(
                   MaterialPageRoute(
                     builder: (_) => ActivityResultsScreen(
@@ -286,7 +289,8 @@ class _ActivitySearchWidgetState extends State<ActivitySearchWidget> {
                     ),
                   ),
                 );
-                await provider.searchActivities(destination: destinationForApi);
+                await provider.searchActivities(
+                    destination: destinationForApi, currency: currency);
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: kPrimaryColor,

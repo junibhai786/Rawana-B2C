@@ -11,6 +11,7 @@ import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:moonbnd/services/session_manager.dart';
 
 enum StepStatus { completed, active, future }
 
@@ -149,7 +150,7 @@ class _FlightCheckoutScreenState extends State<FlightCheckoutScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xffF8FAFC),
+      backgroundColor: kScaffoldBgColor,
       appBar: AppBar(
         title: Text(
           'Complete Your Booking'.tr,
@@ -200,7 +201,7 @@ class _FlightCheckoutScreenState extends State<FlightCheckoutScreen> {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFF05A8C7), Color(0xFF0489A1)],
+          colors: [kPrimaryColor, kSecondaryColor],
         ),
         boxShadow: [
           BoxShadow(
@@ -320,7 +321,7 @@ class _FlightCheckoutScreenState extends State<FlightCheckoutScreen> {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: const BoxDecoration(
-              color: Color(0xFFF0FDFD),
+              color: kPrimaryTintColor,
               borderRadius: BorderRadius.only(
                 topLeft: Radius.circular(16),
                 topRight: Radius.circular(16),
@@ -354,7 +355,7 @@ class _FlightCheckoutScreenState extends State<FlightCheckoutScreen> {
                         '${data['airline_name']} | ${data['flight_number']}',
                         style: GoogleFonts.spaceGrotesk(
                           fontSize: 12,
-                          color: Colors.blueGrey,
+                          color: kSubtitleColor,
                         ),
                       ),
                     ],
@@ -397,13 +398,13 @@ class _FlightCheckoutScreenState extends State<FlightCheckoutScreen> {
   Widget _buildSummaryRow(IconData icon, String label, String value) {
     return Row(
       children: [
-        Icon(icon, size: 18, color: Colors.blueGrey),
+        Icon(icon, size: 18, color: kSubtitleColor),
         const SizedBox(width: 12),
         Text(
           label,
           style: GoogleFonts.spaceGrotesk(
             fontSize: 14,
-            color: Colors.blueGrey,
+            color: kSubtitleColor,
           ),
         ),
         const Spacer(),
@@ -463,7 +464,7 @@ class _FlightCheckoutScreenState extends State<FlightCheckoutScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             decoration: const BoxDecoration(
-              border: Border(bottom: BorderSide(color: Color(0xffF1F5F9))),
+              border: Border(bottom: BorderSide(color: kBorderColor)),
             ),
             child: Row(
               children: [
@@ -495,7 +496,7 @@ class _FlightCheckoutScreenState extends State<FlightCheckoutScreen> {
                           ? 'Primary guest information for this booking'.tr
                           : '${form.passengerType} passenger'.tr,
                       style: GoogleFonts.spaceGrotesk(
-                          fontSize: 12, color: Colors.blueGrey),
+                          fontSize: 12, color: kSubtitleColor),
                     ),
                   ],
                 ),
@@ -512,15 +513,15 @@ class _FlightCheckoutScreenState extends State<FlightCheckoutScreen> {
                     (v) => setState(() => form.title = v!)),
                 const SizedBox(height: 16),
                 _buildLabel('First Name *'.tr),
-                _buildTextField(controllers[0], 'First name'.tr),
+                _buildTextField(controllers[0], 'First name'.tr, maxLength: 20),
                 const SizedBox(height: 16),
                 _buildLabel('Last Name *'.tr),
-                _buildTextField(controllers[1], 'Last name'.tr),
+                _buildTextField(controllers[1], 'Last name'.tr, maxLength: 20),
                 if (isFirstPassenger) ...[
                   const SizedBox(height: 16),
                   _buildLabel('Email Address *'.tr),
-                  _buildTextField(_emailController, 'customer@travolyo.com',
-                      keyboardType: TextInputType.emailAddress),
+                  _buildTextField(_emailController, 'Enter Your Email Address',
+                      keyboardType: TextInputType.emailAddress, maxLength: 20),
                   const SizedBox(height: 16),
                   _buildLabel('Phone Number *'.tr),
                   _buildPhoneField(),
@@ -595,7 +596,7 @@ class _FlightCheckoutScreenState extends State<FlightCheckoutScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             decoration: const BoxDecoration(
-              border: Border(bottom: BorderSide(color: Color(0xffF1F5F9))),
+              border: Border(bottom: BorderSide(color: kBorderColor)),
             ),
             child: Row(
               children: [
@@ -609,22 +610,26 @@ class _FlightCheckoutScreenState extends State<FlightCheckoutScreen> {
                       color: kPrimaryColor, size: 18),
                 ),
                 const SizedBox(width: 12),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Payment Method'.tr,
-                      style: GoogleFonts.spaceGrotesk(
-                          fontSize: 15,
-                          fontWeight: FontWeight.bold,
-                          color: kPrimaryColor),
-                    ),
-                    Text(
-                      'All transactions are secured and encrypted'.tr,
-                      style: GoogleFonts.spaceGrotesk(
-                          fontSize: 12, color: Colors.blueGrey),
-                    ),
-                  ],
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Payment Method'.tr,
+                        style: GoogleFonts.spaceGrotesk(
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                            color: kPrimaryColor),
+                      ),
+                      Text(
+                        'All transactions are secured and encrypted'.tr,
+                        style: GoogleFonts.spaceGrotesk(
+                            fontSize: 12, color: kSubtitleColor),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -665,7 +670,7 @@ class _FlightCheckoutScreenState extends State<FlightCheckoutScreen> {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected ? kPrimaryColor : Colors.grey.shade200,
+            color: isSelected ? kPrimaryColor : kBorderColor,
             width: isSelected ? 1.5 : 1,
           ),
           color: isSelected ? kPrimaryColor.withOpacity(0.05) : Colors.white,
@@ -679,7 +684,7 @@ class _FlightCheckoutScreenState extends State<FlightCheckoutScreen> {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: isSelected ? kPrimaryColor : Colors.grey.shade400,
+                  color: isSelected ? kPrimaryColor : kSubtitleColor,
                   width: 2,
                 ),
               ),
@@ -700,7 +705,7 @@ class _FlightCheckoutScreenState extends State<FlightCheckoutScreen> {
               width: 38,
               height: 28,
               decoration: BoxDecoration(
-                color: const Color(0xff1E293B),
+                color: kSheetHeadingColor,
                 borderRadius: BorderRadius.circular(6),
               ),
               child: Center(
@@ -731,7 +736,7 @@ class _FlightCheckoutScreenState extends State<FlightCheckoutScreen> {
                   Text(
                     subtitle.tr,
                     style: GoogleFonts.spaceGrotesk(
-                        fontSize: 11, color: Colors.blueGrey),
+                        fontSize: 11, color: kSubtitleColor),
                   ),
                 ],
               ),
@@ -813,7 +818,7 @@ class _FlightCheckoutScreenState extends State<FlightCheckoutScreen> {
         children: [
           Text(label.tr,
               style: GoogleFonts.spaceGrotesk(
-                  color: Colors.blueGrey, fontSize: 14)),
+                  color: kSubtitleColor, fontSize: 14)),
           Text(value,
               style: GoogleFonts.spaceGrotesk(
                   fontWeight: FontWeight.w500, fontSize: 14)),
@@ -849,7 +854,7 @@ class _FlightCheckoutScreenState extends State<FlightCheckoutScreen> {
                 'I have read and agree to the Terms & Conditions and Privacy Policy.'
                     .tr,
                 style: GoogleFonts.spaceGrotesk(
-                    fontSize: 12, color: Colors.blueGrey),
+                    fontSize: 12, color: kSubtitleColor),
               ),
             ),
           ],
@@ -863,7 +868,7 @@ class _FlightCheckoutScreenState extends State<FlightCheckoutScreen> {
                 ? () => _handleConfirmPay()
                 : null,
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF05A8C7),
+              backgroundColor: kSecondaryColor,
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12)),
@@ -1126,21 +1131,52 @@ class _FlightCheckoutScreenState extends State<FlightCheckoutScreen> {
     return '';
   }
 
+  bool _isValidEmail(String email) {
+    final emailRegex =
+        RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
+    return emailRegex.hasMatch(email);
+  }
+
+  bool _isValidPhone(String phone) {
+    // Accept phone numbers with at least 10 digits (can include + - spaces)
+    final phoneRegex = RegExp(r'^[\d\s\-\+]{10,}$');
+    return phoneRegex.hasMatch(phone);
+  }
+
   String? _validateFields() {
     final email = _emailController.text.trim();
     final phone = _phoneController.text.trim();
     log('[Validate] email="${email}" phone="${phone}"');
+
     if (email.isEmpty) return 'Email address is required';
-    if (!email.contains('@')) return 'Enter a valid email address';
+    if (email.length > 20) return 'Email address cannot exceed 20 characters';
+    if (!_isValidEmail(email)) return 'Please enter a valid email address';
+
     if (phone.isEmpty) return 'Phone number is required';
+    if (phone.length > 20) return 'Phone number cannot exceed 20 characters';
+    if (!_isValidPhone(phone)) return 'Please enter a valid phone number';
 
     for (int i = 0; i < _passengerForms.length; i++) {
       final form = _passengerForms[i];
       final ctrl = _passengerFormControllers[form.passengerNumber]!;
       final label = 'Passenger ${i + 1}';
-      log('[Validate] $label firstName="${ctrl[0].text.trim()}" lastName="${ctrl[1].text.trim()}" dob="${form.dateOfBirth}" nationality="${form.nationality}" passport="${ctrl[2].text.trim()}" expiry="${form.passportExpiry}"');
-      if (ctrl[0].text.trim().isEmpty) return '$label: first name is required';
-      if (ctrl[1].text.trim().isEmpty) return '$label: last name is required';
+      final firstName = ctrl[0].text.trim();
+      final lastName = ctrl[1].text.trim();
+
+      log('[Validate] $label firstName="${firstName}" lastName="${lastName}" dob="${form.dateOfBirth}" nationality="${form.nationality}" passport="${ctrl[2].text.trim()}" expiry="${form.passportExpiry}"');
+
+      if (firstName.isEmpty) return '$label: first name is required';
+      if (firstName.length < 2)
+        return '$label: first name must be at least 2 characters';
+      if (firstName.length > 20)
+        return '$label: first name cannot exceed 20 characters';
+
+      if (lastName.isEmpty) return '$label: last name is required';
+      if (lastName.length < 2)
+        return '$label: last name must be at least 2 characters';
+      if (lastName.length > 20)
+        return '$label: last name cannot exceed 20 characters';
+
       if (form.dateOfBirth.isEmpty) return '$label: date of birth is required';
       if (form.nationality.isEmpty) return '$label: nationality is required';
       if (ctrl[2].text.trim().isEmpty)
@@ -1267,6 +1303,20 @@ class _FlightCheckoutScreenState extends State<FlightCheckoutScreen> {
       log('[FlightCheckout] decoded keys: ${decoded.keys.toList()}');
       log('[FlightCheckout] success=${decoded['success']} url=${decoded['url'] ?? decoded['payment_url']}');
 
+      // ── Check for 401 Unauthorized / Session Expired ───────────────────────────────
+      if (response.statusCode == 401 ||
+          SessionManager.isUnauthorized(
+            statusCode: response.statusCode,
+            message: decoded['message']?.toString(),
+          )) {
+        log('[FlightCheckout] ❌ 401 Unauthorized — session expired');
+        if (!mounted) return;
+        await SessionManager.clearSession();
+        if (!mounted) return;
+        SessionManager.showSessionExpiredDialog(context);
+        return;
+      }
+
       if (decoded['success'] == true) {
         final paymentUrl =
             (decoded['url'] ?? decoded['payment_url'] ?? '').toString();
@@ -1316,6 +1366,16 @@ class _FlightCheckoutScreenState extends State<FlightCheckoutScreen> {
           ));
         }
       } else {
+        // ── Check status code for 401 before showing error ───────────────────────
+        if (response.statusCode == 401) {
+          log('[FlightCheckout] ❌ 401 Unauthorized in error response');
+          if (!mounted) return;
+          await SessionManager.clearSession();
+          if (!mounted) return;
+          SessionManager.showSessionExpiredDialog(context);
+          return;
+        }
+
         // ── Parse field-level validation errors (422) ────────────────────
         final errors = decoded['errors'];
         if (errors is Map<String, dynamic>) {
@@ -1379,7 +1439,7 @@ class _FlightCheckoutScreenState extends State<FlightCheckoutScreen> {
               Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                      color: Colors.grey.shade50, shape: BoxShape.circle),
+                      color: kScaffoldBgColor, shape: BoxShape.circle),
                   child: Icon(icon, color: kPrimaryColor, size: 18)),
               const SizedBox(width: 12),
               Expanded(
@@ -1391,7 +1451,7 @@ class _FlightCheckoutScreenState extends State<FlightCheckoutScreen> {
                               fontWeight: FontWeight.bold, fontSize: 16)),
                       Text(subtitle,
                           style: GoogleFonts.spaceGrotesk(
-                              fontSize: 12, color: Colors.blueGrey)),
+                              fontSize: 12, color: kSubtitleColor)),
                     ]),
               ),
             ],
@@ -1410,32 +1470,33 @@ class _FlightCheckoutScreenState extends State<FlightCheckoutScreen> {
             style: GoogleFonts.spaceGrotesk(
                 fontSize: 13,
                 fontWeight: FontWeight.w500,
-                color: Colors.blueGrey)));
+                color: kSubtitleColor)));
   }
 
   Widget _buildTextField(TextEditingController controller, String hint,
-      {TextInputType keyboardType = TextInputType.text}) {
+      {TextInputType keyboardType = TextInputType.text, int? maxLength}) {
     return TextFormField(
       controller: controller,
       keyboardType: keyboardType,
-      style: GoogleFonts.spaceGrotesk(fontSize: 14),
+      maxLength: maxLength,
+      style: GoogleFonts.spaceGrotesk(fontSize: 14, color: kHeadingColor),
       decoration: InputDecoration(
         hintText: hint,
         hintStyle:
-            GoogleFonts.spaceGrotesk(color: Colors.grey.shade400, fontSize: 14),
+            GoogleFonts.spaceGrotesk(color: kSubtitleColor, fontSize: 14),
         filled: true,
-        fillColor: Colors.grey.shade50,
+        fillColor: kScaffoldBgColor,
         contentPadding:
             const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(10),
-            borderSide: BorderSide(color: Colors.grey.shade200)),
+            borderSide: const BorderSide(color: kBorderColor)),
         enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(10),
-            borderSide: BorderSide(color: Colors.grey.shade200)),
+            borderSide: const BorderSide(color: kBorderColor)),
         focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(10),
-            borderSide: const BorderSide(color: kPrimaryColor, width: 1.5)),
+            borderSide: const BorderSide(color: kSecondaryColor, width: 1.5)),
       ),
     );
   }
@@ -1447,30 +1508,31 @@ class _FlightCheckoutScreenState extends State<FlightCheckoutScreen> {
     return TextFormField(
       controller: _phoneController,
       keyboardType: TextInputType.phone,
-      style: GoogleFonts.spaceGrotesk(fontSize: 14),
+      maxLength: 20,
+      style: GoogleFonts.spaceGrotesk(fontSize: 14, color: kHeadingColor),
       onChanged: (_) {
         if (_phoneError != null) setState(() => _phoneError = null);
       },
       decoration: InputDecoration(
         hintText: '+971501234567',
         hintStyle:
-            GoogleFonts.spaceGrotesk(color: Colors.grey.shade400, fontSize: 14),
+            GoogleFonts.spaceGrotesk(color: kSubtitleColor, fontSize: 14),
         filled: true,
-        fillColor: hasError ? Colors.red.shade50 : Colors.grey.shade50,
+        fillColor: hasError ? Colors.red.shade50 : kScaffoldBgColor,
         contentPadding:
             const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(10),
-            borderSide: BorderSide(
-                color: hasError ? Colors.red : Colors.grey.shade200)),
+            borderSide:
+                BorderSide(color: hasError ? Colors.red : kBorderColor)),
         enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(10),
-            borderSide: BorderSide(
-                color: hasError ? Colors.red : Colors.grey.shade200)),
+            borderSide:
+                BorderSide(color: hasError ? Colors.red : kBorderColor)),
         focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(10),
             borderSide: BorderSide(
-                color: hasError ? Colors.red : kPrimaryColor, width: 1.5)),
+                color: hasError ? Colors.red : kSecondaryColor, width: 1.5)),
         suffixIcon: hasError
             ? const Icon(Icons.error_rounded, color: Colors.red, size: 20)
             : null,
@@ -1482,9 +1544,9 @@ class _FlightCheckoutScreenState extends State<FlightCheckoutScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
-          color: Colors.grey.shade50,
+          color: kScaffoldBgColor,
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: Colors.grey.shade200)),
+          border: Border.all(color: kBorderColor)),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           value: items.first,
@@ -1706,16 +1768,16 @@ class _FlightCheckoutScreenState extends State<FlightCheckoutScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
-          color: Colors.grey.shade50,
+          color: kScaffoldBgColor,
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: Colors.grey.shade200)),
+          border: Border.all(color: kBorderColor)),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           value: selected,
           hint: Text(
             'Select country'.tr,
-            style: GoogleFonts.spaceGrotesk(
-                fontSize: 14, color: Colors.grey.shade400),
+            style:
+                GoogleFonts.spaceGrotesk(fontSize: 14, color: kSubtitleColor),
           ),
           items: _countries
               .map((e) => DropdownMenuItem(
@@ -1750,9 +1812,9 @@ class _FlightCheckoutScreenState extends State<FlightCheckoutScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-            color: Colors.grey.shade50,
+            color: kScaffoldBgColor,
             borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: Colors.grey.shade200)),
+            border: Border.all(color: kBorderColor)),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -1763,10 +1825,10 @@ class _FlightCheckoutScreenState extends State<FlightCheckoutScreen> {
                 style: GoogleFonts.spaceGrotesk(
                     fontSize: 14,
                     color: form.passportExpiry.isEmpty
-                        ? Colors.grey.shade400
-                        : Colors.black87)),
+                        ? kSubtitleColor
+                        : kHeadingColor)),
             Icon(Icons.calendar_today_outlined,
-                size: 16, color: Colors.grey.shade400),
+                size: 16, color: kSubtitleColor),
           ],
         ),
       ),
@@ -1789,9 +1851,9 @@ class _FlightCheckoutScreenState extends State<FlightCheckoutScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-            color: Colors.grey.shade50,
+            color: kScaffoldBgColor,
             borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: Colors.grey.shade200)),
+            border: Border.all(color: kBorderColor)),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -1799,10 +1861,10 @@ class _FlightCheckoutScreenState extends State<FlightCheckoutScreen> {
                 style: GoogleFonts.spaceGrotesk(
                     fontSize: 14,
                     color: form.dateOfBirth.isEmpty
-                        ? Colors.grey.shade400
-                        : Colors.black87)),
+                        ? kSubtitleColor
+                        : kHeadingColor)),
             Icon(Icons.calendar_today_outlined,
-                size: 16, color: Colors.grey.shade400),
+                size: 16, color: kSubtitleColor),
           ],
         ),
       ),

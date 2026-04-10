@@ -8,14 +8,15 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:get/get.dart';
 import 'package:provider/provider.dart';
+import 'package:moonbnd/services/session_manager.dart';
 
 class ActivityCheckoutScreen extends StatefulWidget {
   final Map<String, dynamic> activityData;
 
   const ActivityCheckoutScreen({
-    Key? key,
+    super.key,
     required this.activityData,
-  }) : super(key: key);
+  });
 
   @override
   State<ActivityCheckoutScreen> createState() => _ActivityCheckoutScreenState();
@@ -47,8 +48,15 @@ class _ActivityCheckoutScreenState extends State<ActivityCheckoutScreen> {
   // Shows full-screen overlay while polling for order confirmation
   bool _isConfirmingBooking = false;
 
-  // Inline field errors from server 422 response
+  // Field error tracking
   String? _phoneError;
+  String? _emailError;
+  String? _firstNameError;
+  String? _lastNameError;
+  String? _dateOfBirthError;
+  String? _nationalityError;
+  String? _passportNumberError;
+  String? _passportExpiryError;
 
   @override
   void initState() {
@@ -57,6 +65,78 @@ class _ActivityCheckoutScreenState extends State<ActivityCheckoutScreen> {
     log('[ActivityCheckout] activityData keys  : ${widget.activityData.keys.toList()}');
     log('[ActivityCheckout] token value        : ${widget.activityData['checkout_token']}');
     log('[ActivityCheckout] checkout_url value : ${widget.activityData['checkout_url']}');
+  }
+
+  /// Validation helpers
+  bool _isValidEmail(String email) {
+    return RegExp(r'^[^@]+@[^@]+\.[^@]+$').hasMatch(email);
+  }
+
+  bool _isValidPhone(String phone) {
+    final cleanedPhone = phone.replaceAll(RegExp(r'[^0-9+]'), '');
+    return cleanedPhone.length >= 7 && cleanedPhone.length <= 20;
+  }
+
+  bool _isValidPassportNumber(String passport) {
+    return passport.length >= 5 && passport.length <= 20;
+  }
+
+  String? _validateEmail(String value) {
+    final email = value.trim();
+    if (email.isEmpty) return 'Email is required'.tr;
+    if (email.length > 120) return 'Email cannot exceed 120 characters'.tr;
+    if (!_isValidEmail(email)) return 'Enter a valid email address'.tr;
+    return null;
+  }
+
+  String? _validatePhone(String value) {
+    final phone = value.trim();
+    if (phone.isEmpty) return 'Phone number is required'.tr;
+    if (phone.length > 20) return 'Phone number is too long'.tr;
+    if (!_isValidPhone(phone)) return 'Enter a valid phone number'.tr;
+    return null;
+  }
+
+  String? _validateFirstName(String value) {
+    final name = value.trim();
+    if (name.isEmpty) return 'First name is required'.tr;
+    if (name.length < 2) return 'First name must be at least 2 characters'.tr;
+    if (name.length > 50) return 'First name cannot exceed 50 characters'.tr;
+    return null;
+  }
+
+  String? _validateLastName(String value) {
+    final name = value.trim();
+    if (name.isEmpty) return 'Last name is required'.tr;
+    if (name.length < 2) return 'Last name must be at least 2 characters'.tr;
+    if (name.length > 50) return 'Last name cannot exceed 50 characters'.tr;
+    return null;
+  }
+
+  String? _validateDateOfBirth(String value) {
+    if (value.trim().isEmpty) return 'Date of birth is required'.tr;
+    return null;
+  }
+
+  String? _validateNationality(String value) {
+    final nat = value.trim();
+    if (nat.isEmpty) return 'Nationality is required'.tr;
+    if (nat.length > 50) return 'Nationality is too long'.tr;
+    return null;
+  }
+
+  String? _validatePassportNumber(String value) {
+    final passport = value.trim();
+    if (passport.isEmpty) return 'Passport number is required'.tr;
+    if (!_isValidPassportNumber(passport)) {
+      return 'Passport number must be 5-20 characters'.tr;
+    }
+    return null;
+  }
+
+  String? _validatePassportExpiry(String value) {
+    if (value.trim().isEmpty) return 'Passport expiry is required'.tr;
+    return null;
   }
 
   String _extractToken() {
@@ -73,38 +153,140 @@ class _ActivityCheckoutScreenState extends State<ActivityCheckoutScreen> {
     }
   }
 
-  String? _validateFields() {
-    if (_emailController.text.trim().isEmpty) {
-      return 'Email address is required'.tr;
-    }
-    if (!RegExp(r'^[^@]+@[^@]+\.[^@]+$')
-        .hasMatch(_emailController.text.trim())) {
-      return 'Please enter a valid email address'.tr;
-    }
-    if (_phoneController.text.trim().isEmpty) {
-      return 'Phone number is required'.tr;
-    }
-    if (_firstNameController.text.trim().isEmpty) {
-      return 'First name is required'.tr;
-    }
-    if (_lastNameController.text.trim().isEmpty) {
-      return 'Last name is required'.tr;
-    }
-    if (_dateOfBirthController.text.trim().isEmpty) {
-      return 'Date of birth is required'.tr;
-    }
-    if (_nationalityController.text.trim().isEmpty) {
-      return 'Nationality is required'.tr;
-    }
-    if (_passportNumberController.text.trim().isEmpty) {
-      return 'Passport number is required'.tr;
-    }
-    if (_passportExpiryController.text.trim().isEmpty) {
-      return 'Passport expiry date is required'.tr;
-    }
+  /// Helper to build consistent text field decoration
+  InputDecoration _buildTextFieldDecoration({
+    required String hintText,
+    String? labelText,
+    Widget? prefixIcon,
+    Widget? suffixIcon,
+    String? errorText,
+    bool hasError = false,
+  }) {
+    return InputDecoration(
+      labelText: labelText,
+      hintText: hintText,
+      prefixIcon: prefixIcon,
+      suffixIcon: suffixIcon,
+      errorText: errorText,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: BorderSide(
+          color: hasError ? Colors.red.shade700 : kBorderColor,
+        ),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: BorderSide(
+          color: hasError ? Colors.red.shade700 : kBorderColor,
+        ),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: const BorderSide(color: kPrimaryColor, width: 2),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: BorderSide(color: Colors.red.shade700, width: 2),
+      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+    );
+  }
+
+  /// Helper to build section header with icon
+  Widget _buildSectionHeader(String title, IconData icon, {String? subtitle}) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: const BoxDecoration(
+        border: Border(bottom: BorderSide(color: kCardDividerColor)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: kPrimaryColor.withOpacity(0.08),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: kPrimaryColor, size: 18),
+          ),
+          const SizedBox(width: 12),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: GoogleFonts.spaceGrotesk(
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                  color: kPrimaryColor,
+                ),
+              ),
+              if (subtitle != null)
+                Text(
+                  subtitle,
+                  style: GoogleFonts.spaceGrotesk(
+                    fontSize: 12,
+                    color: kMutedColor,
+                  ),
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Helper to build field label
+  Widget _buildFieldLabel(String label) {
+    return Text(
+      label,
+      style: GoogleFonts.spaceGrotesk(
+        fontSize: 12,
+        fontWeight: FontWeight.w600,
+        color: kMutedColor,
+      ),
+    );
+  }
+
+  String? _validateAllFields() {
+    // Validate and set individual field errors
+    final emailError = _validateEmail(_emailController.text);
+    final phoneError = _validatePhone(_phoneController.text);
+    final firstNameError = _validateFirstName(_firstNameController.text);
+    final lastNameError = _validateLastName(_lastNameController.text);
+    final dobError = _validateDateOfBirth(_dateOfBirthController.text);
+    final nationalityError = _validateNationality(_nationalityController.text);
+    final passportError =
+        _validatePassportNumber(_passportNumberController.text);
+    final passportExpiryError =
+        _validatePassportExpiry(_passportExpiryController.text);
+
+    // Update state with errors
+    setState(() {
+      _emailError = emailError;
+      _phoneError = phoneError;
+      _firstNameError = firstNameError;
+      _lastNameError = lastNameError;
+      _dateOfBirthError = dobError;
+      _nationalityError = nationalityError;
+      _passportNumberError = passportError;
+      _passportExpiryError = passportExpiryError;
+    });
+
+    // Return first error found
+    if (emailError != null) return emailError;
+    if (phoneError != null) return phoneError;
+    if (firstNameError != null) return firstNameError;
+    if (lastNameError != null) return lastNameError;
+    if (dobError != null) return dobError;
+    if (nationalityError != null) return nationalityError;
+    if (passportError != null) return passportError;
+    if (passportExpiryError != null) return passportExpiryError;
+
     if (!_agreedToTerms) {
       return 'Please accept the Terms & Conditions'.tr;
     }
+
     return null;
   }
 
@@ -112,8 +294,8 @@ class _ActivityCheckoutScreenState extends State<ActivityCheckoutScreen> {
     log('[ActivityConfirmPay] button tapped — agreedToTerms=$_agreedToTerms isProcessing=$_isProcessing');
     if (_isProcessing) return;
 
-    // Validate fields
-    final error = _validateFields();
+    // Validate all fields
+    final error = _validateAllFields();
     log('[ActivityConfirmPay] validation result: ${error ?? "OK"}');
     if (error != null) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -259,6 +441,16 @@ class _ActivityCheckoutScreenState extends State<ActivityCheckoutScreen> {
           ));
         }
       } else {
+        // ── Check for 401 Unauthorized before showing generic error ──────────────────────────────────────
+        if (provider.isSessionExpired) {
+          if (!mounted) return;
+          await SessionManager.clearSession();
+          if (!mounted) return;
+          SessionManager.showSessionExpiredDialog(context);
+          return;
+        }
+
+        // ── Show generic error ──────────────────────────────────────────────────────────────────────────
         final msg =
             provider.checkoutError ?? 'Booking failed. Please try again.'.tr;
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -302,13 +494,13 @@ class _ActivityCheckoutScreenState extends State<ActivityCheckoutScreen> {
     return Stack(
       children: [
         Scaffold(
-          backgroundColor: const Color(0xffF8F9FA),
+          backgroundColor: kScaffoldBgColor,
           appBar: AppBar(
-            backgroundColor: Colors.white,
+            backgroundColor: kBackgroundColor,
             elevation: 0,
             leading: IconButton(
               icon: const Icon(Icons.arrow_back_ios_new,
-                  size: 20, color: Color(0xff1D2025)),
+                  size: 20, color: kHeadingColor),
               onPressed: () => Navigator.of(context).pop(),
             ),
             title: Text(
@@ -316,7 +508,7 @@ class _ActivityCheckoutScreenState extends State<ActivityCheckoutScreen> {
               style: GoogleFonts.spaceGrotesk(
                 fontSize: 17,
                 fontWeight: FontWeight.w600,
-                color: const Color(0xff1D2025),
+                color: kHeadingColor,
               ),
             ),
           ),
@@ -366,7 +558,7 @@ class _ActivityCheckoutScreenState extends State<ActivityCheckoutScreen> {
     return Positioned.fill(
       child: AbsorbPointer(
         child: Container(
-          color: const Color(0xffF8FAFC),
+          color: kScaffoldBgColor,
           child: Center(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -387,7 +579,7 @@ class _ActivityCheckoutScreenState extends State<ActivityCheckoutScreen> {
                   'Please wait a moment'.tr,
                   style: GoogleFonts.spaceGrotesk(
                     fontSize: 13,
-                    color: const Color(0xff64748B),
+                    color: kSubtitleColor,
                   ),
                 ),
               ],
@@ -402,7 +594,7 @@ class _ActivityCheckoutScreenState extends State<ActivityCheckoutScreen> {
     final data = widget.activityData;
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: kBackgroundColor,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -417,7 +609,7 @@ class _ActivityCheckoutScreenState extends State<ActivityCheckoutScreen> {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: const BoxDecoration(
-              color: Color(0xFFF0FDFD),
+              color: kPrimaryTintColor,
               borderRadius: BorderRadius.only(
                 topLeft: Radius.circular(16),
                 topRight: Radius.circular(16),
@@ -455,7 +647,7 @@ class _ActivityCheckoutScreenState extends State<ActivityCheckoutScreen> {
                           '${data['city']}, ${data['country'] ?? ""}',
                           style: GoogleFonts.spaceGrotesk(
                             fontSize: 12,
-                            color: Colors.blueGrey,
+                            color: kSubtitleColor,
                           ),
                         ),
                     ],
@@ -495,13 +687,13 @@ class _ActivityCheckoutScreenState extends State<ActivityCheckoutScreen> {
   Widget _buildSummaryRow(IconData icon, String label, String value) {
     return Row(
       children: [
-        Icon(icon, size: 18, color: Colors.blueGrey),
+        Icon(icon, size: 18, color: kMutedColor),
         const SizedBox(width: 12),
         Text(
           label,
           style: GoogleFonts.spaceGrotesk(
             fontSize: 14,
-            color: Colors.blueGrey,
+            color: kMutedColor,
           ),
         ),
         const Spacer(),
@@ -510,7 +702,7 @@ class _ActivityCheckoutScreenState extends State<ActivityCheckoutScreen> {
           style: GoogleFonts.spaceGrotesk(
             fontSize: 14,
             fontWeight: FontWeight.bold,
-            color: Colors.black87,
+            color: kHeadingColor,
           ),
         ),
       ],
@@ -520,7 +712,7 @@ class _ActivityCheckoutScreenState extends State<ActivityCheckoutScreen> {
   Widget _buildBookingDetailsSection() {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: kBackgroundColor,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -533,66 +725,38 @@ class _ActivityCheckoutScreenState extends State<ActivityCheckoutScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            decoration: const BoxDecoration(
-              border: Border(bottom: BorderSide(color: Color(0xffF1F5F9))),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: kPrimaryColor.withOpacity(0.08),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.info_outline_rounded,
-                      color: kPrimaryColor, size: 18),
-                ),
-                const SizedBox(width: 12),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Contact Information'.tr,
-                      style: GoogleFonts.spaceGrotesk(
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
-                        color: kPrimaryColor,
-                      ),
-                    ),
-                    Text(
-                      'Email and phone for the booking'.tr,
-                      style: GoogleFonts.spaceGrotesk(
-                        fontSize: 12,
-                        color: Colors.blueGrey,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
+          _buildSectionHeader(
+              'Contact Information'.tr, Icons.info_outline_rounded,
+              subtitle: 'Email and phone for the booking'.tr),
           Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
               children: [
-                // Email field
-                TextField(
-                  controller: _emailController,
-                  keyboardType: TextInputType.emailAddress,
-                  decoration: InputDecoration(
-                    labelText: 'Email Address'.tr,
-                    hintText: 'your@email.com',
-                    prefixIcon: const Icon(Icons.email_outlined,
-                        size: 18, color: kPrimaryColor),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
+                // Email field with error handling
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    TextField(
+                      controller: _emailController,
+                      keyboardType: TextInputType.emailAddress,
+                      onChanged: (value) {
+                        final error = _validateEmail(value);
+                        if (error != (_emailError)) {
+                          setState(() => _emailError = error);
+                        }
+                      },
+                      decoration: _buildTextFieldDecoration(
+                        hintText: 'your@email.com',
+                        labelText: 'Email Address'.tr,
+                        prefixIcon: const Icon(Icons.email_outlined,
+                            size: 18, color: kPrimaryColor),
+                        errorText: _emailError,
+                        hasError: _emailError != null,
+                      ),
+                      style: GoogleFonts.spaceGrotesk(
+                          fontSize: 14, color: kHeadingColor),
                     ),
-                    contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 14),
-                  ),
-                  style: GoogleFonts.spaceGrotesk(fontSize: 14),
+                  ],
                 ),
                 const SizedBox(height: 16),
 
@@ -604,55 +768,26 @@ class _ActivityCheckoutScreenState extends State<ActivityCheckoutScreen> {
                       controller: _phoneController,
                       keyboardType: TextInputType.phone,
                       onChanged: (value) {
-                        if (_phoneError != null) {
-                          setState(() => _phoneError = null);
+                        final error = _validatePhone(value);
+                        if (error != (_phoneError)) {
+                          setState(() => _phoneError = error);
                         }
                       },
-                      decoration: InputDecoration(
-                        labelText: 'Phone Number'.tr,
+                      decoration: _buildTextFieldDecoration(
                         hintText: '+971 123 456 7890',
+                        labelText: 'Phone Number'.tr,
                         prefixIcon: const Icon(Icons.phone_outlined,
                             size: 18, color: kPrimaryColor),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: BorderSide(
-                            color: _phoneError != null
-                                ? Colors.red.shade700
-                                : const Color(0xffE2E8F0),
-                          ),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: BorderSide(
-                            color: _phoneError != null
-                                ? Colors.red.shade700
-                                : const Color(0xffE2E8F0),
-                          ),
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 14),
-                        errorBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide:
-                              BorderSide(color: Colors.red.shade700, width: 2),
-                        ),
+                        errorText: _phoneError,
+                        hasError: _phoneError != null,
                         suffixIcon: _phoneError != null
                             ? Icon(Icons.error_outline_rounded,
                                 color: Colors.red.shade700, size: 18)
                             : null,
                       ),
-                      style: GoogleFonts.spaceGrotesk(fontSize: 14),
+                      style: GoogleFonts.spaceGrotesk(
+                          fontSize: 14, color: kHeadingColor),
                     ),
-                    if (_phoneError != null) ...[
-                      const SizedBox(height: 6),
-                      Text(
-                        _phoneError!,
-                        style: GoogleFonts.spaceGrotesk(
-                          fontSize: 12,
-                          color: Colors.red.shade700,
-                        ),
-                      ),
-                    ],
                   ],
                 ),
               ],
@@ -666,7 +801,7 @@ class _ActivityCheckoutScreenState extends State<ActivityCheckoutScreen> {
   Widget _buildGuestDetailsSection() {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: kBackgroundColor,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -679,46 +814,9 @@ class _ActivityCheckoutScreenState extends State<ActivityCheckoutScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            decoration: const BoxDecoration(
-              border: Border(bottom: BorderSide(color: Color(0xffF1F5F9))),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: kPrimaryColor.withOpacity(0.08),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.person_outline_rounded,
-                      color: kPrimaryColor, size: 18),
-                ),
-                const SizedBox(width: 12),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Passenger Details'.tr,
-                      style: GoogleFonts.spaceGrotesk(
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
-                        color: kPrimaryColor,
-                      ),
-                    ),
-                    Text(
-                      'Passenger information for this booking'.tr,
-                      style: GoogleFonts.spaceGrotesk(
-                        fontSize: 12,
-                        color: Colors.blueGrey,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
+          _buildSectionHeader(
+              'Passenger Details'.tr, Icons.person_outline_rounded,
+              subtitle: 'Passenger information for this booking'.tr),
           Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
@@ -728,22 +826,25 @@ class _ActivityCheckoutScreenState extends State<ActivityCheckoutScreen> {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Title'.tr,
-                      style: GoogleFonts.spaceGrotesk(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: const Color(0xff6B7280),
-                      ),
-                    ),
+                    _buildFieldLabel('Title'.tr),
                     const SizedBox(height: 6),
                     SizedBox(
                       width: double.infinity,
                       child: DropdownButtonFormField<String>(
-                        value: _selectedTitle,
+                        initialValue: _selectedTitle,
                         decoration: InputDecoration(
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(10),
+                            borderSide: const BorderSide(color: kBorderColor),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: const BorderSide(color: kBorderColor),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: const BorderSide(
+                                color: kPrimaryColor, width: 2),
                           ),
                           contentPadding: const EdgeInsets.symmetric(
                               horizontal: 12, vertical: 12),
@@ -766,76 +867,65 @@ class _ActivityCheckoutScreenState extends State<ActivityCheckoutScreen> {
                 ),
                 const SizedBox(height: 16),
 
-                // First Name
+                // First Name with validation
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'First Name'.tr,
-                      style: GoogleFonts.spaceGrotesk(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: const Color(0xff6B7280),
-                      ),
-                    ),
+                    _buildFieldLabel('First Name'.tr),
                     const SizedBox(height: 6),
                     TextField(
                       controller: _firstNameController,
-                      decoration: InputDecoration(
+                      onChanged: (value) {
+                        final error = _validateFirstName(value);
+                        if (error != (_firstNameError)) {
+                          setState(() => _firstNameError = error);
+                        }
+                      },
+                      maxLength: 50,
+                      decoration: _buildTextFieldDecoration(
                         hintText: 'Enter first name'.tr,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 12),
+                        errorText: _firstNameError,
+                        hasError: _firstNameError != null,
                       ),
-                      style: GoogleFonts.spaceGrotesk(fontSize: 13),
+                      style: GoogleFonts.spaceGrotesk(
+                          fontSize: 13, color: kHeadingColor),
                     ),
                   ],
                 ),
                 const SizedBox(height: 16),
 
-                // Last Name
+                // Last Name with validation
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Last Name'.tr,
-                      style: GoogleFonts.spaceGrotesk(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: const Color(0xff6B7280),
-                      ),
-                    ),
+                    _buildFieldLabel('Last Name'.tr),
                     const SizedBox(height: 6),
                     TextField(
                       controller: _lastNameController,
-                      decoration: InputDecoration(
+                      onChanged: (value) {
+                        final error = _validateLastName(value);
+                        if (error != (_lastNameError)) {
+                          setState(() => _lastNameError = error);
+                        }
+                      },
+                      maxLength: 50,
+                      decoration: _buildTextFieldDecoration(
                         hintText: 'Enter last name'.tr,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 12),
+                        errorText: _lastNameError,
+                        hasError: _lastNameError != null,
                       ),
-                      style: GoogleFonts.spaceGrotesk(fontSize: 13),
+                      style: GoogleFonts.spaceGrotesk(
+                          fontSize: 13, color: kHeadingColor),
                     ),
                   ],
                 ),
                 const SizedBox(height: 16),
 
-                // Date of Birth
+                // Date of Birth with validation
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Date of Birth'.tr,
-                      style: GoogleFonts.spaceGrotesk(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: const Color(0xff6B7280),
-                      ),
-                    ),
+                    _buildFieldLabel('Date of Birth'.tr),
                     const SizedBox(height: 6),
                     TextField(
                       controller: _dateOfBirthController,
@@ -848,50 +938,48 @@ class _ActivityCheckoutScreenState extends State<ActivityCheckoutScreen> {
                           lastDate: DateTime.now(),
                         );
                         if (picked != null) {
-                          _dateOfBirthController.text =
+                          final formatted =
                               '${picked.month.toString().padLeft(2, '0')}/${picked.day.toString().padLeft(2, '0')}/${picked.year}';
+                          _dateOfBirthController.text = formatted;
+                          setState(() => _dateOfBirthError = null);
                         }
                       },
-                      decoration: InputDecoration(
+                      decoration: _buildTextFieldDecoration(
                         hintText: 'mm/dd/yyyy'.tr,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 12),
                         suffixIcon: const Icon(Icons.calendar_today,
                             size: 18, color: kPrimaryColor),
+                        errorText: _dateOfBirthError,
+                        hasError: _dateOfBirthError != null,
                       ),
-                      style: GoogleFonts.spaceGrotesk(fontSize: 13),
+                      style: GoogleFonts.spaceGrotesk(
+                          fontSize: 13, color: kHeadingColor),
                     ),
                   ],
                 ),
                 const SizedBox(height: 16),
 
-                // Nationality
+                // Nationality with validation
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Nationality'.tr,
-                      style: GoogleFonts.spaceGrotesk(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: const Color(0xff6B7280),
-                      ),
-                    ),
+                    _buildFieldLabel('Nationality'.tr),
                     const SizedBox(height: 6),
                     TextField(
                       controller: _nationalityController,
-                      decoration: InputDecoration(
+                      onChanged: (value) {
+                        final error = _validateNationality(value);
+                        if (error != (_nationalityError)) {
+                          setState(() => _nationalityError = error);
+                        }
+                      },
+                      maxLength: 50,
+                      decoration: _buildTextFieldDecoration(
                         hintText: 'PK, AE, US'.tr,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 12),
+                        errorText: _nationalityError,
+                        hasError: _nationalityError != null,
                       ),
-                      style: GoogleFonts.spaceGrotesk(fontSize: 13),
+                      style: GoogleFonts.spaceGrotesk(
+                          fontSize: 13, color: kHeadingColor),
                     ),
                   ],
                 ),
@@ -901,22 +989,25 @@ class _ActivityCheckoutScreenState extends State<ActivityCheckoutScreen> {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Gender'.tr,
-                      style: GoogleFonts.spaceGrotesk(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: const Color(0xff6B7280),
-                      ),
-                    ),
+                    _buildFieldLabel('Gender'.tr),
                     const SizedBox(height: 6),
                     SizedBox(
                       width: double.infinity,
                       child: DropdownButtonFormField<String>(
-                        value: _selectedGender,
+                        initialValue: _selectedGender,
                         decoration: InputDecoration(
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(10),
+                            borderSide: const BorderSide(color: kBorderColor),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: const BorderSide(color: kBorderColor),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: const BorderSide(
+                                color: kPrimaryColor, width: 2),
                           ),
                           contentPadding: const EdgeInsets.symmetric(
                               horizontal: 12, vertical: 12),
@@ -938,47 +1029,38 @@ class _ActivityCheckoutScreenState extends State<ActivityCheckoutScreen> {
                 ),
                 const SizedBox(height: 16),
 
-                // Passport Number
+                // Passport Number with validation
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Passport Number'.tr,
-                      style: GoogleFonts.spaceGrotesk(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: const Color(0xff6B7280),
-                      ),
-                    ),
+                    _buildFieldLabel('Passport Number'.tr),
                     const SizedBox(height: 6),
                     TextField(
                       controller: _passportNumberController,
-                      decoration: InputDecoration(
+                      onChanged: (value) {
+                        final error = _validatePassportNumber(value);
+                        if (error != (_passportNumberError)) {
+                          setState(() => _passportNumberError = error);
+                        }
+                      },
+                      maxLength: 20,
+                      decoration: _buildTextFieldDecoration(
                         hintText: 'Enter passport number'.tr,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 12),
+                        errorText: _passportNumberError,
+                        hasError: _passportNumberError != null,
                       ),
-                      style: GoogleFonts.spaceGrotesk(fontSize: 13),
+                      style: GoogleFonts.spaceGrotesk(
+                          fontSize: 13, color: kHeadingColor),
                     ),
                   ],
                 ),
                 const SizedBox(height: 16),
 
-                // Passport Expiry
+                // Passport Expiry with validation
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Passport Expiry'.tr,
-                      style: GoogleFonts.spaceGrotesk(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: const Color(0xff6B7280),
-                      ),
-                    ),
+                    _buildFieldLabel('Passport Expiry'.tr),
                     const SizedBox(height: 6),
                     TextField(
                       controller: _passportExpiryController,
@@ -993,21 +1075,21 @@ class _ActivityCheckoutScreenState extends State<ActivityCheckoutScreen> {
                               DateTime.now().add(const Duration(days: 3650)),
                         );
                         if (picked != null) {
-                          _passportExpiryController.text =
+                          final formatted =
                               '${picked.month.toString().padLeft(2, '0')}/${picked.day.toString().padLeft(2, '0')}/${picked.year}';
+                          _passportExpiryController.text = formatted;
+                          setState(() => _passportExpiryError = null);
                         }
                       },
-                      decoration: InputDecoration(
+                      decoration: _buildTextFieldDecoration(
                         hintText: 'mm/dd/yyyy'.tr,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 12),
                         suffixIcon: const Icon(Icons.calendar_today,
                             size: 18, color: kPrimaryColor),
+                        errorText: _passportExpiryError,
+                        hasError: _passportExpiryError != null,
                       ),
-                      style: GoogleFonts.spaceGrotesk(fontSize: 13),
+                      style: GoogleFonts.spaceGrotesk(
+                          fontSize: 13, color: kHeadingColor),
                     ),
                   ],
                 ),
@@ -1022,7 +1104,7 @@ class _ActivityCheckoutScreenState extends State<ActivityCheckoutScreen> {
   Widget _buildPaymentMethodSection() {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: kBackgroundColor,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -1035,46 +1117,8 @@ class _ActivityCheckoutScreenState extends State<ActivityCheckoutScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            decoration: const BoxDecoration(
-              border: Border(bottom: BorderSide(color: Color(0xffF1F5F9))),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: kPrimaryColor.withOpacity(0.08),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.credit_card_outlined,
-                      color: kPrimaryColor, size: 18),
-                ),
-                const SizedBox(width: 12),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Payment Method'.tr,
-                      style: GoogleFonts.spaceGrotesk(
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
-                        color: kPrimaryColor,
-                      ),
-                    ),
-                    Text(
-                      'Select your preferred payment option'.tr,
-                      style: GoogleFonts.spaceGrotesk(
-                        fontSize: 12,
-                        color: Colors.blueGrey,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
+          _buildSectionHeader('Payment Method'.tr, Icons.credit_card_outlined,
+              subtitle: 'Select your preferred payment option'.tr),
           Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
@@ -1101,7 +1145,7 @@ class _ActivityCheckoutScreenState extends State<ActivityCheckoutScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
           border: Border.all(
-            color: isSelected ? kPrimaryColor : const Color(0xffE2E8F0),
+            color: isSelected ? kPrimaryColor : kBorderColor,
             width: isSelected ? 2 : 1,
           ),
           borderRadius: BorderRadius.circular(10),
@@ -1116,18 +1160,20 @@ class _ActivityCheckoutScreenState extends State<ActivityCheckoutScreen> {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: isSelected ? kPrimaryColor : Colors.grey.shade400,
+                  color: isSelected ? kPrimaryColor : kMutedColor,
                   width: 2,
                 ),
               ),
               child: isSelected
-                  ? Center(
-                      child: Container(
+                  ? const Center(
+                      child: SizedBox(
                         width: 10,
                         height: 10,
-                        decoration: const BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: kPrimaryColor,
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: kPrimaryColor,
+                          ),
                         ),
                       ),
                     )
@@ -1144,16 +1190,14 @@ class _ActivityCheckoutScreenState extends State<ActivityCheckoutScreen> {
                       fontSize: 14,
                       fontWeight:
                           isSelected ? FontWeight.bold : FontWeight.w600,
-                      color: isSelected
-                          ? const Color(0xff1D2025)
-                          : Colors.grey.shade700,
+                      color: isSelected ? kHeadingColor : kMutedColor,
                     ),
                   ),
                   Text(
                     subtitle,
                     style: GoogleFonts.spaceGrotesk(
                       fontSize: 11,
-                      color: Colors.blueGrey,
+                      color: kSubtitleColor,
                     ),
                   ),
                 ],
@@ -1168,7 +1212,7 @@ class _ActivityCheckoutScreenState extends State<ActivityCheckoutScreen> {
   Widget _buildSpecialRequestsSection() {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: kBackgroundColor,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -1188,22 +1232,18 @@ class _ActivityCheckoutScreenState extends State<ActivityCheckoutScreen> {
               style: GoogleFonts.spaceGrotesk(
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
-                color: const Color(0xff1D2025),
+                color: kHeadingColor,
               ),
             ),
             const SizedBox(height: 12),
             TextField(
               controller: _specialRequestsController,
               maxLines: 4,
-              decoration: InputDecoration(
+              decoration: _buildTextFieldDecoration(
                 hintText: 'Any special requests or notes?'.tr,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               ),
-              style: GoogleFonts.spaceGrotesk(fontSize: 14),
+              style:
+                  GoogleFonts.spaceGrotesk(fontSize: 14, color: kHeadingColor),
             ),
           ],
         ),
@@ -1220,7 +1260,7 @@ class _ActivityCheckoutScreenState extends State<ActivityCheckoutScreen> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: kBackgroundColor,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -1240,20 +1280,24 @@ class _ActivityCheckoutScreenState extends State<ActivityCheckoutScreen> {
               const SizedBox(width: 8),
               Text('Price Summary'.tr,
                   style: GoogleFonts.spaceGrotesk(
-                      fontWeight: FontWeight.bold, fontSize: 16)),
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color: kHeadingColor)),
             ],
           ),
           const SizedBox(height: 16),
           _buildPriceRow('Unit Price × ${data['participants']}',
               '$currency ${unitPrice.toStringAsFixed(2)}'),
           _buildPriceRow('Taxes & fees', 'Included'.tr),
-          const Divider(height: 32),
+          Divider(height: 32, color: kCardDividerColor),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text('Total'.tr,
                   style: GoogleFonts.spaceGrotesk(
-                      fontWeight: FontWeight.bold, fontSize: 18)),
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                      color: kHeadingColor)),
               Text(
                 '$currency ${totalPrice.toStringAsFixed(2)}',
                 style: GoogleFonts.spaceGrotesk(
@@ -1278,7 +1322,7 @@ class _ActivityCheckoutScreenState extends State<ActivityCheckoutScreen> {
             label,
             style: GoogleFonts.spaceGrotesk(
               fontSize: 14,
-              color: Colors.blueGrey,
+              color: kSubtitleColor,
             ),
           ),
           Text(
@@ -1286,7 +1330,7 @@ class _ActivityCheckoutScreenState extends State<ActivityCheckoutScreen> {
             style: GoogleFonts.spaceGrotesk(
               fontSize: 14,
               fontWeight: FontWeight.w600,
-              color: Colors.black87,
+              color: kHeadingColor,
             ),
           ),
         ],
@@ -1313,7 +1357,7 @@ class _ActivityCheckoutScreenState extends State<ActivityCheckoutScreen> {
                 'I have read and agree to the Terms & Conditions and Privacy Policy.'
                     .tr,
                 style: GoogleFonts.spaceGrotesk(
-                    fontSize: 12, color: Colors.blueGrey),
+                    fontSize: 12, color: kSubtitleColor),
               ),
             ),
           ],
@@ -1327,8 +1371,8 @@ class _ActivityCheckoutScreenState extends State<ActivityCheckoutScreen> {
                 ? () => _handleConfirmPay()
                 : null,
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF05A8C7),
-              foregroundColor: Colors.white,
+              backgroundColor: kPrimaryColor,
+              disabledBackgroundColor: kMutedColor,
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12)),
               elevation: 0,

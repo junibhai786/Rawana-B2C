@@ -12,6 +12,7 @@ import 'package:moonbnd/modals/hotel_room_model.dart';
 import 'package:moonbnd/modals/hotel_prebook_response_model.dart';
 import 'package:moonbnd/modals/hotel_booking_confirmation_model.dart';
 import 'package:moonbnd/constants.dart';
+import 'package:moonbnd/services/session_manager.dart';
 
 enum StepStatus { completed, active, future }
 
@@ -85,7 +86,7 @@ class _HotelCheckoutScreenState extends State<HotelCheckoutScreen> {
     return Stack(
       children: [
         Scaffold(
-          backgroundColor: const Color(0xffF8FAFC),
+          backgroundColor: kScaffoldBgColor,
           appBar: AppBar(
             title: Text(
               'Checkout'.tr,
@@ -140,7 +141,7 @@ class _HotelCheckoutScreenState extends State<HotelCheckoutScreen> {
     return Positioned.fill(
       child: AbsorbPointer(
         child: Container(
-          color: const Color(0xffF8FAFC),
+          color: kScaffoldBgColor,
           child: Center(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -161,7 +162,7 @@ class _HotelCheckoutScreenState extends State<HotelCheckoutScreen> {
                   'Please wait a moment'.tr,
                   style: GoogleFonts.spaceGrotesk(
                     fontSize: 13,
-                    color: const Color(0xff64748B),
+                    color: kSubtitleColor,
                   ),
                 ),
               ],
@@ -404,26 +405,30 @@ class _HotelCheckoutScreenState extends State<HotelCheckoutScreen> {
             child: Icon(icon, size: 18, color: kPrimaryColor),
           ),
           const SizedBox(width: 16),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: GoogleFonts.spaceGrotesk(
-                  fontSize: 12,
-                  color: const Color(0xff64748B),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: GoogleFonts.spaceGrotesk(
+                    fontSize: 12,
+                    color: kSubtitleColor,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                value,
-                style: GoogleFonts.spaceGrotesk(
-                  fontSize: 15,
-                  fontWeight: FontWeight.bold,
-                  color: kPrimaryColor,
+                const SizedBox(height: 2),
+                Text(
+                  value,
+                  style: GoogleFonts.spaceGrotesk(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                    color: kHeadingColor,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ],
       ),
@@ -433,7 +438,7 @@ class _HotelCheckoutScreenState extends State<HotelCheckoutScreen> {
   Widget _buildDivider() {
     return const Padding(
       padding: EdgeInsets.only(left: 50), // Align with text start
-      child: Divider(color: Color(0xffF1F5F9), height: 1),
+      child: Divider(color: kBorderColor, height: 1),
     );
   }
 
@@ -477,14 +482,14 @@ class _HotelCheckoutScreenState extends State<HotelCheckoutScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             decoration: const BoxDecoration(
-              border: Border(bottom: BorderSide(color: Color(0xffF1F5F9))),
+              border: Border(bottom: BorderSide(color: kBorderColor)),
             ),
             child: Row(
               children: [
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: kPrimaryColor.withOpacity(0.08),
+                    color: kPrimaryTintColor,
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(Icons.person_outline_rounded,
@@ -510,7 +515,7 @@ class _HotelCheckoutScreenState extends State<HotelCheckoutScreen> {
                           : 'Additional guest'.tr,
                       style: GoogleFonts.spaceGrotesk(
                         fontSize: 12,
-                        color: const Color(0xff64748B),
+                        color: kSubtitleColor,
                       ),
                     ),
                   ],
@@ -527,19 +532,22 @@ class _HotelCheckoutScreenState extends State<HotelCheckoutScreen> {
                 _buildTextField(
                   label: 'First Name *',
                   hint: 'Customer',
+                  maxLength: 20,
                   onChanged: (val) => _guestForms[index].firstName = val,
                 ),
                 const SizedBox(height: 16),
                 _buildTextField(
                   label: 'Last Name *',
                   hint: 'Last name',
+                  maxLength: 20,
                   onChanged: (val) => _guestForms[index].lastName = val,
                 ),
                 if (isFirstGuest) ...[
                   const SizedBox(height: 16),
                   _buildTextField(
                     label: 'Email Address *',
-                    hint: 'customer@travolyo.com',
+                    hint: 'abc@travolyo.com',
+                    maxLength: 30,
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
                     onChanged: (val) => _guestForms[index].email = val,
@@ -548,6 +556,7 @@ class _HotelCheckoutScreenState extends State<HotelCheckoutScreen> {
                   _buildTextField(
                     label: 'Phone Number *',
                     hint: '+971501234567',
+                    maxLength: 20,
                     controller: _phoneController,
                     keyboardType: TextInputType.phone,
                     onChanged: (val) => _guestForms[index].phone = val,
@@ -581,7 +590,7 @@ class _HotelCheckoutScreenState extends State<HotelCheckoutScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             decoration: const BoxDecoration(
-              border: Border(bottom: BorderSide(color: Color(0xffF1F5F9))),
+              border: Border(bottom: BorderSide(color: kBorderColor)),
             ),
             child: Row(
               children: [
@@ -609,7 +618,7 @@ class _HotelCheckoutScreenState extends State<HotelCheckoutScreen> {
                       Text(
                         'All transactions are secured and encrypted'.tr,
                         style: GoogleFonts.spaceGrotesk(
-                            fontSize: 12, color: const Color(0xff64748B)),
+                            fontSize: 12, color: kSubtitleColor),
                       ),
                     ],
                   ),
@@ -653,7 +662,7 @@ class _HotelCheckoutScreenState extends State<HotelCheckoutScreen> {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected ? kPrimaryColor : const Color(0xffE2E8F0),
+            color: isSelected ? kPrimaryColor : kBorderColor,
             width: isSelected ? 1.5 : 1,
           ),
           color: isSelected ? kPrimaryColor.withOpacity(0.05) : Colors.white,
@@ -667,7 +676,7 @@ class _HotelCheckoutScreenState extends State<HotelCheckoutScreen> {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: isSelected ? kPrimaryColor : const Color(0xffCBD5E1),
+                  color: isSelected ? kPrimaryColor : kBorderColor,
                   width: 2,
                 ),
               ),
@@ -688,7 +697,7 @@ class _HotelCheckoutScreenState extends State<HotelCheckoutScreen> {
               width: 38,
               height: 28,
               decoration: BoxDecoration(
-                color: const Color(0xff1E293B),
+                color: kSheetHeadingColor,
                 borderRadius: BorderRadius.circular(6),
               ),
               child: Center(
@@ -697,9 +706,10 @@ class _HotelCheckoutScreenState extends State<HotelCheckoutScreen> {
                     : Text(
                         badge ?? '',
                         style: GoogleFonts.spaceGrotesk(
-                            color: Colors.white,
-                            fontSize: 9,
-                            fontWeight: FontWeight.bold),
+                          color: Colors.white,
+                          fontSize: 9,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
               ),
             ),
@@ -719,7 +729,9 @@ class _HotelCheckoutScreenState extends State<HotelCheckoutScreen> {
                   Text(
                     subtitle.tr,
                     style: GoogleFonts.spaceGrotesk(
-                        fontSize: 11, color: const Color(0xff64748B)),
+                      fontSize: 11,
+                      color: kSubtitleColor,
+                    ),
                   ),
                 ],
               ),
@@ -744,7 +756,7 @@ class _HotelCheckoutScreenState extends State<HotelCheckoutScreen> {
           _buildPriceRow('Taxes & Fees'.tr, "$currency 0.00"),
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 12),
-            child: Divider(color: Color(0xffF1F5F9)),
+            child: Divider(color: kBorderColor),
           ),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -780,7 +792,7 @@ class _HotelCheckoutScreenState extends State<HotelCheckoutScreen> {
           label,
           style: GoogleFonts.spaceGrotesk(
             fontSize: 14,
-            color: const Color(0xff64748B),
+            color: kSubtitleColor,
           ),
         ),
         Text(
@@ -816,7 +828,7 @@ class _HotelCheckoutScreenState extends State<HotelCheckoutScreen> {
             text: TextSpan(
               style: GoogleFonts.spaceGrotesk(
                 fontSize: 13,
-                color: const Color(0xff64748B),
+                color: kSubtitleColor,
                 height: 1.4,
               ),
               children: [
@@ -854,16 +866,48 @@ class _HotelCheckoutScreenState extends State<HotelCheckoutScreen> {
       _showError('Please enter first name');
       return;
     }
+    if (firstName.length < 2) {
+      _showError('First name must be at least 2 characters');
+      return;
+    }
+    if (firstName.length > 20) {
+      _showError('First name cannot exceed 20 characters');
+      return;
+    }
     if (lastName.isEmpty) {
       _showError('Please enter last name');
+      return;
+    }
+    if (lastName.length < 2) {
+      _showError('Last name must be at least 2 characters');
+      return;
+    }
+    if (lastName.length > 20) {
+      _showError('Last name cannot exceed 20 characters');
       return;
     }
     if (email.isEmpty) {
       _showError('Please enter email address');
       return;
     }
+    if (email.length > 30) {
+      _showError('Email address cannot exceed 30 characters');
+      return;
+    }
+    if (!_isValidEmail(email)) {
+      _showError('Please enter a valid email address');
+      return;
+    }
     if (phone.isEmpty) {
       _showError('Please enter phone number');
+      return;
+    }
+    if (phone.length > 20) {
+      _showError('Phone number cannot exceed 20 characters');
+      return;
+    }
+    if (!_isValidPhone(phone)) {
+      _showError('Please enter a valid phone number');
       return;
     }
     if (!_agreedToTerms) {
@@ -989,8 +1033,10 @@ class _HotelCheckoutScreenState extends State<HotelCheckoutScreen> {
 
               Navigator.of(context).pushReplacement(
                 MaterialPageRoute(
-                  builder: (_) =>
-                      HotelBookingConfirmedScreen(data: provider.orderData!),
+                  builder: (_) => HotelBookingConfirmedScreen(
+                    data: provider.orderData!,
+                    city: widget.city,
+                  ),
                 ),
               );
             } else {
@@ -1054,6 +1100,16 @@ class _HotelCheckoutScreenState extends State<HotelCheckoutScreen> {
         ),
       );
     } else {
+      // ── Check for session expiration (401) before showing generic error ──
+      if (provider.isSessionExpired) {
+        if (!mounted) return;
+        await SessionManager.clearSession();
+        if (!mounted) return;
+        SessionManager.showSessionExpiredDialog(context);
+        return;
+      }
+
+      // ── Show generic error for other failures ──
       _showError(provider.error ?? 'Checkout failed. Please try again.');
     }
   }
@@ -1081,7 +1137,7 @@ class _HotelCheckoutScreenState extends State<HotelCheckoutScreen> {
             onPressed: canSubmit ? _handleCheckout : null,
             style: ElevatedButton.styleFrom(
               backgroundColor: kSecondaryColor,
-              disabledBackgroundColor: const Color(0xffE2E8F0),
+              disabledBackgroundColor: kBorderColor,
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12)),
               elevation: 0,
@@ -1150,6 +1206,7 @@ class _HotelCheckoutScreenState extends State<HotelCheckoutScreen> {
     TextInputType? keyboardType,
     Function(String)? onChanged,
     String? helperText,
+    int? maxLength,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1159,7 +1216,7 @@ class _HotelCheckoutScreenState extends State<HotelCheckoutScreen> {
           style: GoogleFonts.spaceGrotesk(
             fontSize: 13,
             fontWeight: FontWeight.w500,
-            color: const Color(0xff475569),
+            color: kHeadingColor,
           ),
         ),
         const SizedBox(height: 6),
@@ -1167,22 +1224,23 @@ class _HotelCheckoutScreenState extends State<HotelCheckoutScreen> {
           controller: controller,
           keyboardType: keyboardType,
           onChanged: onChanged,
-          style: GoogleFonts.spaceGrotesk(fontSize: 14, color: kPrimaryColor),
+          maxLength: maxLength,
+          style: GoogleFonts.spaceGrotesk(fontSize: 14, color: kHeadingColor),
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle: GoogleFonts.spaceGrotesk(
-                color: const Color(0xff94A3B8), fontSize: 14),
+            hintStyle:
+                GoogleFonts.spaceGrotesk(color: kSubtitleColor, fontSize: 14),
             contentPadding:
                 const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             filled: true,
-            fillColor: const Color(0xffF8FAFC),
+            fillColor: kScaffoldBgColor,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
               borderSide: BorderSide.none,
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(color: Color(0xffE2E8F0)),
+              borderSide: const BorderSide(color: kBorderColor),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
@@ -1202,5 +1260,17 @@ class _HotelCheckoutScreenState extends State<HotelCheckoutScreen> {
         ],
       ],
     );
+  }
+
+  bool _isValidEmail(String email) {
+    final emailRegex =
+        RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
+    return emailRegex.hasMatch(email);
+  }
+
+  bool _isValidPhone(String phone) {
+    // Accept phone numbers with at least 10 digits (can include + - spaces)
+    final phoneRegex = RegExp(r'^[\d\s\-\+]{10,}$');
+    return phoneRegex.hasMatch(phone);
   }
 }

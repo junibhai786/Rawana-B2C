@@ -23,6 +23,7 @@ import 'package:moonbnd/modals/boat_list_model.dart';
 import 'package:moonbnd/modals/car_list_model.dart';
 import 'package:moonbnd/modals/event_list_model.dart';
 import 'package:moonbnd/modals/flight_list_model.dart';
+import 'package:moonbnd/modals/flight_airport_model.dart';
 import 'package:moonbnd/modals/home_item.dart' as home_item;
 import 'package:moonbnd/modals/hotel_list_model.dart';
 import 'package:moonbnd/modals/space_list_model.dart';
@@ -73,6 +74,7 @@ import '../hotel/room_detail_screen.dart';
 
 import '../notification/notifications_screen.dart';
 import '../../Provider/currency_provider.dart';
+import '../../services/location_service.dart';
 
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 
@@ -118,6 +120,8 @@ class _HomeScreenState extends State<HomeScreen>
   // Store ONLY IATA codes - no location IDs
   String? _departureIataCode;
   String? _destinationIataCode;
+  // Track if auto-detection has been done for the Flight tab
+  bool _flightLocationAutoDetected = false;
   // Flight search loading state
   bool _isFlightSearchLoading = false;
   // Hotel search loading state
@@ -344,8 +348,12 @@ class _HomeScreenState extends State<HomeScreen>
           break;
 
         case 6:
-          // Flight - no auto-load (user must enter search params)
-          log('[_fetchDataForTab] case 6: Flight (skip auto-load)');
+          // Flight - auto-detect departure airport silently in background
+          log('[_fetchDataForTab] case 6: Flight (starting background auto-detect)');
+          if (!_flightLocationAutoDetected) {
+            // Fire and forget: don't await, let it run in background
+            _autoDetectDepartureAirport();
+          }
           break;
 
         case 7:
@@ -1232,6 +1240,80 @@ class _HomeScreenState extends State<HomeScreen>
     });
   }
 
+  /// Auto-detect departure airport silently in the background
+  /// Does NOT block UI or show any loading indicators
+  Future<void> _autoDetectDepartureAirport() async {
+    // Prevent multiple auto-detection attempts
+    if (_flightLocationAutoDetected) {
+      log('[Flight AutoDetect] Already auto-detected, skipping');
+      return;
+    }
+
+    log('[Flight AutoDetect] Starting silent background auto-detection...');
+
+    // Mark as attempted to prevent duplicate calls
+    if (mounted) {
+      setState(() {
+        _flightLocationAutoDetected = true;
+      });
+    }
+
+    // Schedule auto-detection to run after the current frame
+    // This ensures the UI remains interactive while detection runs
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      try {
+        // Get flight airports from provider
+        final airportProvider =
+            Provider.of<FlightAirportProvider>(context, listen: false);
+
+        // Ensure airports are fetched
+        if (airportProvider.airports.isEmpty) {
+          log('[Flight AutoDetect] Fetching airports...');
+          await airportProvider.fetchAirports();
+        }
+
+        if (airportProvider.airports.isEmpty) {
+          log('[Flight AutoDetect] No airports available');
+          return;
+        }
+
+        // Detect nearest airport based on current location
+        final detectedIataCode = await LocationService.detectNearestAirportCode(
+          airportProvider.airports,
+        );
+
+        if (detectedIataCode != null) {
+          // Find the airport model for display
+          FlightAirportModel? detectedAirport;
+          try {
+            detectedAirport = airportProvider.airports.firstWhere(
+              (airport) => airport.iataCode == detectedIataCode,
+            );
+          } catch (e) {
+            log('[Flight AutoDetect] Airport not found: $detectedIataCode');
+            detectedAirport = null;
+          }
+
+          if (detectedAirport != null && mounted) {
+            setState(() {
+              final displayText =
+                  '${detectedAirport!.city} (${detectedAirport.iataCode})';
+              _departureCity = displayText;
+              _departureIataCode = detectedAirport.iataCode;
+              _fromCityController.text = displayText;
+            });
+
+            log('[Flight AutoDetect] ✓ Auto-detected: ${detectedAirport.iataCode} (${detectedAirport.city})');
+          }
+        } else {
+          log('[Flight AutoDetect] Could not detect location (permission denied or unavailable)');
+        }
+      } catch (e) {
+        log('[Flight AutoDetect] Error: $e');
+      }
+    });
+  }
+
   Widget _buildFlightSearchSection(BuildContext context) {
     String departureDateText = _flightDepartureDate != null
         ? '${_flightDepartureDate!.day}/${_flightDepartureDate!.month}/${_flightDepartureDate!.year}'
@@ -1349,32 +1431,14 @@ class _HomeScreenState extends State<HomeScreen>
                           ),
                           contentPadding: EdgeInsets.symmetric(
                               horizontal: 16, vertical: 14),
-                          prefixIcon: Consumer<FlightAirportProvider>(
-                            builder: (context, airportProvider, _) =>
-                                airportProvider.isLoading
-                                    ? const SizedBox(
-                                        width: 48,
-                                        height: 48,
-                                        child: Center(
-                                          child: SizedBox(
-                                            width: 16,
-                                            height: 16,
-                                            child: CircularProgressIndicator(
-                                              strokeWidth: 2,
-                                              color: kPrimaryColor,
-                                            ),
-                                          ),
-                                        ),
-                                      )
-                                    : Padding(
-                                        padding: const EdgeInsets.all(12.0),
-                                        child: SvgPicture.asset(
-                                          'assets/icons/location.svg',
-                                          width: 20,
-                                          height: 20,
-                                          color: kMutedColor,
-                                        ),
-                                      ),
+                          prefixIcon: Padding(
+                            padding: const EdgeInsets.all(12.0),
+                            child: SvgPicture.asset(
+                              'assets/icons/location.svg',
+                              width: 20,
+                              height: 20,
+                              color: kMutedColor,
+                            ),
                           ),
                           hintStyle: GoogleFonts.spaceGrotesk(
                             fontSize: 14,
@@ -1458,32 +1522,14 @@ class _HomeScreenState extends State<HomeScreen>
                           ),
                           contentPadding: EdgeInsets.symmetric(
                               horizontal: 16, vertical: 14),
-                          prefixIcon: Consumer<FlightAirportProvider>(
-                            builder: (context, airportProvider, _) =>
-                                airportProvider.isLoading
-                                    ? const SizedBox(
-                                        width: 48,
-                                        height: 48,
-                                        child: Center(
-                                          child: SizedBox(
-                                            width: 16,
-                                            height: 16,
-                                            child: CircularProgressIndicator(
-                                              strokeWidth: 2,
-                                              color: kPrimaryColor,
-                                            ),
-                                          ),
-                                        ),
-                                      )
-                                    : Padding(
-                                        padding: const EdgeInsets.all(12.0),
-                                        child: SvgPicture.asset(
-                                          'assets/icons/location.svg',
-                                          width: 20,
-                                          height: 20,
-                                          color: kMutedColor,
-                                        ),
-                                      ),
+                          prefixIcon: Padding(
+                            padding: const EdgeInsets.all(12.0),
+                            child: SvgPicture.asset(
+                              'assets/icons/location.svg',
+                              width: 20,
+                              height: 20,
+                              color: kMutedColor,
+                            ),
                           ),
                           hintStyle: GoogleFonts.spaceGrotesk(
                             fontSize: 14,

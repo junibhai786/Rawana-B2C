@@ -107,7 +107,7 @@ class _ActivityResultsScreenState extends State<ActivityResultsScreen> {
 
     // 1. Filter
     var result = source.where((a) {
-      final price = a.pricePerPerson ?? 0.0;
+      final price = a.convertedPricePerPerson ?? a.pricePerPerson ?? 0.0;
       final actCat = (a.category ?? '').trim().toLowerCase();
       final pricePass = price >= _filter.minPrice && price <= _filter.maxPrice;
       final catPass = !filterByCategory || actCat == selectedCat;
@@ -120,11 +120,13 @@ class _ActivityResultsScreenState extends State<ActivityResultsScreen> {
     switch (_sortOption) {
       case _SortOption.priceLow:
         result.sort(
-          (a, b) => (a.pricePerPerson ?? 0).compareTo(b.pricePerPerson ?? 0),
+          (a, b) => (a.convertedPricePerPerson ?? a.pricePerPerson ?? 0)
+              .compareTo(b.convertedPricePerPerson ?? b.pricePerPerson ?? 0),
         );
       case _SortOption.priceHigh:
         result.sort(
-          (a, b) => (b.pricePerPerson ?? 0).compareTo(a.pricePerPerson ?? 0),
+          (a, b) => (b.convertedPricePerPerson ?? b.pricePerPerson ?? 0)
+              .compareTo(a.convertedPricePerPerson ?? a.pricePerPerson ?? 0),
         );
       case _SortOption.recommended:
         break; // preserve original API order
@@ -784,9 +786,10 @@ class _ActivityCard extends StatelessWidget {
                             color: kVeryMutedColor,
                           ),
                         ),
-                        if (activity.pricePerPerson != null)
+                        if (activity.convertedPricePerPerson != null ||
+                            activity.pricePerPerson != null)
                           Text(
-                            '${activity.currency ?? ''} ${activity.pricePerPerson!.toStringAsFixed(0)}',
+                            '${activity.convertedCurrency ?? activity.currency ?? ''} ${(activity.convertedPricePerPerson ?? activity.pricePerPerson)!.toStringAsFixed(2)}',
                             style: GoogleFonts.spaceGrotesk(
                               fontSize: 18,
                               fontWeight: FontWeight.w700,

@@ -168,7 +168,7 @@ class _HotelDestinationSelectionSheetState
 
                 final destinations = provider.hotelDestinationSuggestions;
 
-                // Empty search state
+                // Empty search state (no API results AND no fuzzy matches)
                 if (destinations.isEmpty &&
                     provider.hotelDestinationInput.trim().isNotEmpty) {
                   return Center(
@@ -222,123 +222,214 @@ class _HotelDestinationSelectionSheetState
                 }
 
                 // Destination list
-                return ListView.separated(
-                  itemCount: destinations.length,
-                  separatorBuilder: (_, __) =>
-                      const Divider(height: 1, indent: 56),
-                  itemBuilder: (context, index) {
-                    final destination = destinations[index];
-                    final isCity = destination.type?.toUpperCase() == 'CITY';
-                    final destType = destination.type?.toUpperCase() ?? '';
-
-                    return InkWell(
-                      onTap: () {
-                        log('[HotelDestinationProvider] Selected destination = ${destination.displayName}');
-                        Navigator.pop(context);
-                        provider.selectHotelDestination(destination);
-                        widget.onDestinationSelected(destination);
-                      },
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 12),
-                        child: Row(
-                          children: [
-                            // Icon container
-                            Container(
-                              width: 40,
-                              height: 40,
-                              decoration: BoxDecoration(
-                                color: const Color(0xffE0F7FA),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Icon(
-                                isCity ? Icons.location_on : Icons.public,
-                                color: const Color(0xFF05A8C7),
-                                size: 20,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-
-                            // Destination info
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  // Display name / City name
-                                  Text(
-                                    destination.displayName ?? '',
+                return Column(
+                  children: [
+                    // ── "Did you mean …?" banner ──────────────────────────
+                    if (provider.isFuzzyResult &&
+                        provider.fuzzyDidYouMean != null)
+                      GestureDetector(
+                        onTap: () {
+                          // Re-search with corrected spelling
+                          _searchController.text =
+                              destinations.first.destination ??
+                                  destinations.first.displayName ??
+                                  '';
+                          _searchController.selection =
+                              TextSelection.fromPosition(
+                            TextPosition(offset: _searchController.text.length),
+                          );
+                          provider.acceptFuzzySuggestion(destinations.first);
+                        },
+                        child: Container(
+                          width: double.infinity,
+                          margin: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 8),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 14, vertical: 10),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFFF8E1),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                                color: const Color(0xFFFFD54F), width: 0.8),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.lightbulb_outline,
+                                  size: 18, color: Color(0xFFF9A825)),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: RichText(
+                                  text: TextSpan(
                                     style: GoogleFonts.spaceGrotesk(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w600,
+                                      fontSize: 13,
                                       color: const Color(0xff1D2025),
                                     ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                  // Region / Country info
-                                  Padding(
-                                    padding: const EdgeInsets.only(top: 4),
-                                    child: Text(
-                                      _buildRegionText(destination),
-                                      style: GoogleFonts.spaceGrotesk(
-                                        fontSize: 12,
-                                        color: const Color(0xff6B7280),
+                                    children: [
+                                      TextSpan(text: 'Did you mean '.tr),
+                                      TextSpan(
+                                        text: '${provider.fuzzyDidYouMean}',
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w700,
+                                          color: Color(0xFF05A8C7),
+                                        ),
                                       ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
+                                      const TextSpan(text: '?'),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              const Icon(Icons.arrow_forward_ios,
+                                  size: 12, color: Color(0xFF05A8C7)),
+                            ],
+                          ),
+                        ),
+                      ),
+
+                    // ── Suggestion list ───────────────────────────────────
+                    Expanded(
+                      child: ListView.separated(
+                        itemCount: destinations.length,
+                        separatorBuilder: (_, __) =>
+                            const Divider(height: 1, indent: 56),
+                        itemBuilder: (context, index) {
+                          final destination = destinations[index];
+                          final isCity =
+                              destination.type?.toUpperCase() == 'CITY';
+                          final destType =
+                              destination.type?.toUpperCase() ?? '';
+
+                          return InkWell(
+                            onTap: () {
+                              log('[HotelDestinationProvider] Selected destination = ${destination.displayName}');
+                              if (provider.isFuzzyResult) {
+                                // User tapped a fuzzy suggestion — re-search via API
+                                _searchController.text =
+                                    destination.destination ??
+                                        destination.displayName ??
+                                        '';
+                                _searchController.selection =
+                                    TextSelection.fromPosition(
+                                  TextPosition(
+                                      offset: _searchController.text.length),
+                                );
+                                provider.acceptFuzzySuggestion(destination);
+                                return;
+                              }
+                              Navigator.pop(context);
+                              provider.selectHotelDestination(destination);
+                              widget.onDestinationSelected(destination);
+                            },
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 12),
+                              child: Row(
+                                children: [
+                                  // Icon container
+                                  Container(
+                                    width: 40,
+                                    height: 40,
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xffE0F7FA),
+                                      borderRadius: BorderRadius.circular(8),
                                     ),
+                                    child: Icon(
+                                      isCity ? Icons.location_on : Icons.public,
+                                      color: const Color(0xFF05A8C7),
+                                      size: 20,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+
+                                  // Destination info
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        // Display name / City name
+                                        Text(
+                                          destination.displayName ?? '',
+                                          style: GoogleFonts.spaceGrotesk(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w600,
+                                            color: const Color(0xff1D2025),
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                        // Region / Country info
+                                        Padding(
+                                          padding:
+                                              const EdgeInsets.only(top: 4),
+                                          child: Text(
+                                            _buildRegionText(destination),
+                                            style: GoogleFonts.spaceGrotesk(
+                                              fontSize: 12,
+                                              color: const Color(0xff6B7280),
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+
+                                  // Type badge and country code on same line
+                                  Column(
+                                    crossAxisAlignment: CrossAxisAlignment.end,
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(
+                                                horizontal: 8, vertical: 4),
+                                            decoration: BoxDecoration(
+                                              color: const Color(0xffF3F4F6),
+                                              borderRadius:
+                                                  BorderRadius.circular(4),
+                                            ),
+                                            child: Text(
+                                              destType,
+                                              style: GoogleFonts.spaceGrotesk(
+                                                fontSize: 11,
+                                                fontWeight: FontWeight.w600,
+                                                color: const Color(0xff05A8C7),
+                                                letterSpacing: 0.5,
+                                              ),
+                                            ),
+                                          ),
+                                          if (destination.countryCode != null &&
+                                              destination
+                                                  .countryCode!.isNotEmpty)
+                                            Padding(
+                                              padding: const EdgeInsets.only(
+                                                  left: 8),
+                                              child: Text(
+                                                destination.countryCode!,
+                                                style: GoogleFonts.spaceGrotesk(
+                                                  fontSize: 11,
+                                                  fontWeight: FontWeight.w600,
+                                                  color:
+                                                      const Color(0xff6B7280),
+                                                ),
+                                              ),
+                                            ),
+                                        ],
+                                      ),
+                                    ],
                                   ),
                                 ],
                               ),
                             ),
-                            const SizedBox(width: 12),
-
-                            // Type badge and country code on same line
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.end,
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Row(
-                                  children: [
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 8, vertical: 4),
-                                      decoration: BoxDecoration(
-                                        color: const Color(0xffF3F4F6),
-                                        borderRadius: BorderRadius.circular(4),
-                                      ),
-                                      child: Text(
-                                        destType,
-                                        style: GoogleFonts.spaceGrotesk(
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.w600,
-                                          color: const Color(0xff05A8C7),
-                                          letterSpacing: 0.5,
-                                        ),
-                                      ),
-                                    ),
-                                    if (destination.countryCode != null &&
-                                        destination.countryCode!.isNotEmpty)
-                                      Padding(
-                                        padding: const EdgeInsets.only(left: 8),
-                                        child: Text(
-                                          destination.countryCode!,
-                                          style: GoogleFonts.spaceGrotesk(
-                                            fontSize: 11,
-                                            fontWeight: FontWeight.w600,
-                                            color: const Color(0xff6B7280),
-                                          ),
-                                        ),
-                                      ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
+                          );
+                        },
                       ),
-                    );
-                  },
+                    ),
+                  ],
                 );
               },
             ),

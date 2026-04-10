@@ -13,6 +13,8 @@ class ActivityModel {
   final String? description;
   final double? pricePerPerson;
   final String? currency;
+  final double? convertedPricePerPerson;
+  final String? convertedCurrency;
   final int? maxParticipants;
   final String? duration;
   final bool instantConfirmation;
@@ -33,6 +35,8 @@ class ActivityModel {
     this.description,
     this.pricePerPerson,
     this.currency,
+    this.convertedPricePerPerson,
+    this.convertedCurrency,
     this.maxParticipants,
     this.duration,
     required this.instantConfirmation,
@@ -55,6 +59,9 @@ class ActivityModel {
       description: json['description']?.toString(),
       pricePerPerson: (json['price_per_person'] as num?)?.toDouble(),
       currency: json['currency']?.toString(),
+      convertedPricePerPerson:
+          (json['converted_price_per_person'] as num?)?.toDouble(),
+      convertedCurrency: json['converted_currency']?.toString(),
       maxParticipants: json['max_participants'] as int?,
       duration: json['duration']?.toString(),
       instantConfirmation: json['instant_confirmation'] == true,

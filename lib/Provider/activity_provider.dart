@@ -12,6 +12,7 @@ import 'package:moonbnd/modals/activity_model.dart';
 import 'package:moonbnd/modals/activity_order_model.dart';
 import 'package:moonbnd/modals/activity_prebook_response_model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:moonbnd/services/session_manager.dart';
 
 class ActivityProvider with ChangeNotifier {
   List<ActivityModel> _activities = [];
@@ -25,6 +26,7 @@ class ActivityProvider with ChangeNotifier {
   String? _checkoutError;
   String? _checkoutStripeUrl;
   String? _checkoutBookingCode;
+  bool _isSessionExpired = false;
 
   // ── Activity order state ───────────────────────────────────────────────────
   bool _isFetchingOrder = false;
@@ -40,6 +42,7 @@ class ActivityProvider with ChangeNotifier {
   String? get checkoutError => _checkoutError;
   String? get checkoutStripeUrl => _checkoutStripeUrl;
   String? get checkoutBookingCode => _checkoutBookingCode;
+  bool get isSessionExpired => _isSessionExpired;
 
   bool get isFetchingOrder => _isFetchingOrder;
   String? get orderError => _orderError;
@@ -54,10 +57,12 @@ class ActivityProvider with ChangeNotifier {
     _token = prefs.getString('userToken');
   }
 
-  Future<bool> searchActivities({required String destination}) async {
+  Future<bool> searchActivities(
+      {required String destination, String? currency}) async {
     log('[ActivityProvider] ═══════════════════════════════════════════');
     log('[ActivityProvider] 🔍 Searching activities');
     log('[ActivityProvider] Destination parameter: "$destination"');
+    log('[ActivityProvider] Currency parameter: "${currency ?? 'not specified'}"');
     log('[ActivityProvider] ═══════════════════════════════════════════');
 
     if (_token == null) {
@@ -69,7 +74,7 @@ class ActivityProvider with ChangeNotifier {
     notifyListeners();
 
     final url =
-        '${ApiUrls.baseUrl}${ApiUrls.activitiesSearch}?destination=${Uri.encodeComponent(destination)}';
+        '${ApiUrls.baseUrl}${ApiUrls.activitiesSearch}?destination=${Uri.encodeComponent(destination)}${currency != null ? '&currency=${Uri.encodeComponent(currency)}' : ''}';
     log('[ActivityProvider] 📡 Full URL: $url');
 
     try {
@@ -254,6 +259,7 @@ class ActivityProvider with ChangeNotifier {
   }) async {
     _isCheckingOut = true;
     _checkoutError = null;
+    _isSessionExpired = false;
     _checkoutStripeUrl = null;
     _checkoutBookingCode = null;
     notifyListeners();
@@ -267,8 +273,9 @@ class ActivityProvider with ChangeNotifier {
       log('[ActivityCheckout] AUTH TOKEN     : ${token.isNotEmpty ? "present (${token.length} chars)" : "MISSING"}');
 
       if (token.isEmpty) {
-        _checkoutError = 'User not authenticated. Please log in again.';
-        log('[ActivityCheckout] ERROR: auth token is empty');
+        _isSessionExpired = true;
+        _checkoutError = 'session_expired';
+        log('[ActivityCheckout] ERROR: auth token is empty — session expired');
         _isCheckingOut = false;
         notifyListeners();
         return false;
@@ -340,6 +347,18 @@ class ActivityProvider with ChangeNotifier {
             errorMsg = errData['message'].toString();
           }
         } catch (_) {}
+
+        // ── Detect 401 Unauthorized / Session Expired ──────────────────────
+        if (SessionManager.isUnauthorized(
+            statusCode: statusCode, message: errorMsg)) {
+          _isSessionExpired = true;
+          _checkoutError = 'session_expired';
+          log('[ActivityCheckout] ❌ 401 Unauthorized — session expired');
+          _isCheckingOut = false;
+          notifyListeners();
+          return false;
+        }
+
         _checkoutError = errorMsg;
         log('[ActivityCheckout] ERROR: $errorMsg');
         _isCheckingOut = false;
