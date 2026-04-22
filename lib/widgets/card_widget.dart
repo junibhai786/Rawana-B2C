@@ -1,6 +1,7 @@
 // Professional Card Design for All Property Types
 
 import 'package:flutter/material.dart';
+import 'package:moonbnd/app_colors.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -161,7 +162,7 @@ String? duration,
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: status == 'publish' ? Colors.green : Colors.grey,
+                      color: status == 'publish' ? AppColors.secondary : Colors.grey,
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Text(

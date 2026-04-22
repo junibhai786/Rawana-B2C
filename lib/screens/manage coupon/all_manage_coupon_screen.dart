@@ -4,6 +4,7 @@ import 'package:moonbnd/modals/manage_coupon_model.dart';
 import 'package:moonbnd/screens/manage%20coupon/manage_add_coupon_screen.dart';
 import 'package:moonbnd/screens/manage%20coupon/manage_edit_coupon_screen%20copy.dart';
 import 'package:flutter/material.dart';
+import 'package:moonbnd/app_colors.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -177,7 +178,7 @@ class BookingCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
               // decoration: BoxDecoration(
-              //   color: Colors.blue[50],
+              //   color: AppColors.primary.withOpacity(0.50),
               //   borderRadius: BorderRadius.circular(16),
               // ),
               child: Text(

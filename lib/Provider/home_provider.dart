@@ -1,5 +1,6 @@
 // ignore_for_file: prefer_final_fields
 
+import 'package:moonbnd/data_models/home_screen_data.dart';
 import 'dart:convert';
 import 'dart:developer';
 import 'dart:io';
@@ -30,6 +31,7 @@ import 'package:http/http.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:moonbnd/modals/hotel_prebook_response_model.dart';
 import 'package:http/http.dart' as http;
 
 import '../modals/country_modal.dart';
@@ -40,6 +42,11 @@ class HomeProvider with ChangeNotifier {
   Map<int, home_item.HomeList> homeListPerCategory = {};
   String paymentMethod = "offline";
   HotelDetail? hotelDetail;
+
+  // Hotel detail loading/error state
+  bool hotelDetailLoading = false;
+  String? hotelDetailError;
+
   BookingResponse? bookingResponse;
   CountryResponse? countryResponse;
 
@@ -169,7 +176,7 @@ class HomeProvider with ChangeNotifier {
   int currentPage = 1;
   bool hasMore = true;
   ////end
-  int _selectedHomeTab = 0;
+  int _selectedHomeTab = 1; // Hotels is the first active tab (id: 1)
   TabController? tabController;
   int index = 1;
 
@@ -180,9 +187,15 @@ class HomeProvider with ChangeNotifier {
 
   int get selectedHomeTab => _selectedHomeTab;
 
-  void setSelectedHomeTab(int index) {
-    _selectedHomeTab = index;
-    tabController?.animateTo(index);
+  void setSelectedHomeTab(int categoryId, {bool animate = true}) {
+    _selectedHomeTab = categoryId;
+    if (animate) {
+      // Convert category ID to tab position for animateTo
+      final tabIndex = categoryDatas.indexWhere((c) => c.id == categoryId);
+      if (tabIndex >= 0 && tabController != null) {
+        tabController!.animateTo(tabIndex);
+      }
+    }
     notifyListeners();
   }
 
@@ -839,41 +852,80 @@ class HomeProvider with ChangeNotifier {
       {String? sortBy,
       String? searchQuery,
       required Map<String, Object?> searchParams}) async {
+    // GUARD: Prevents invalid API call with empty parameters
+    // Initial tab load or navigation shouldn't trigger a search with {}
+    if (searchParams.isEmpty && searchQuery == null) {
+      log("[HOTEL_LIST_API] ❌ Skipping API call: No search parameters or query provided");
+      return false;
+    }
+
     log("check here");
     try {
       log("Hotel List API Call for category index $index ===>");
 
-      // Convert searchParams to query parameters
-      final queryParams = <String, String>{
-        if (searchParams['city'] != null)
-          'location_id': searchParams['city'].toString(),
-        if (searchParams['check_in'] != null)
-          'start_date': formatDate(searchParams['check_in']),
-        if (searchParams['check_out'] != null)
-          'end_date': formatDate(searchParams['check_out']),
-        if (searchParams['guests'] != null)
-          'adults': searchParams['guests'].toString(),
-        if (searchParams['children'] != null)
-          'children': searchParams['children'].toString(),
-        if (searchParams['rooms'] != null)
-          'rooms': searchParams['rooms'].toString(),
-        if (sortBy != null) 'orderby': sortBy,
-      };
+      // Build request body with search parameters
+      final requestBody = <String, dynamic>{};
 
-      final queryString = Uri(queryParameters: queryParams).query;
-      final uri = Uri.parse(
-        '${ApiUrls.baseUrl}${ApiUrls.hotelSearch}',
-      ).replace(queryParameters: queryParams);
+      // Add search parameters - map field names to API contract
+      if (searchParams['city'] != null) {
+        requestBody['city'] = searchParams['city'].toString();
+      }
+      if (searchParams['check_in'] != null) {
+        requestBody['check_in'] = formatDate(searchParams['check_in']);
+      }
+      if (searchParams['check_out'] != null) {
+        requestBody['check_out'] = formatDate(searchParams['check_out']);
+      }
+      if (searchParams['guests'] != null) {
+        requestBody['adults'] = searchParams['guests'].toString();
+      }
+      if (searchParams['children'] != null) {
+        requestBody['children'] = searchParams['children'].toString();
+      }
+      if (searchParams['rooms'] != null) {
+        requestBody['rooms'] = searchParams['rooms'].toString();
+      }
 
-      final url = uri.toString();
-      log('API URL: $url');
+      final url = '${ApiUrls.baseUrl}${ApiUrls.hotelSearch}';
 
-      final result =
-          await makeRequest(url, 'GET', {}, _token ?? '', requiresAuth: true);
+      log('═══════════════════════════════════════════════════════════════');
+      log('[HOTEL_LIST_API] ✓ POST REQUEST');
+      log('[HOTEL_LIST_API] Request Method: POST');
+      log('[HOTEL_LIST_API] URL: $url');
+      log('[HOTEL_LIST_API] Request Body: $requestBody');
+      log('═══════════════════════════════════════════════════════════════');
+
+      final result = await makeRequest(
+        url,
+        'POST',
+        requestBody,
+        _token ?? '',
+        requiresAuth: true,
+      );
+
+      log('[HOTEL_LIST_API] Response Status: ${result['success']}');
+      log('[HOTEL_LIST_API] Wrapper Type: ${result.runtimeType}');
+      log('[HOTEL_LIST_API] Raw Wrapper: ${result}');
 
       if (result['success']) {
+        // Extract the actual API response from the wrapper
+        // makeRequest() wraps backend response in 'data' key
+        final apiResponse = result['data'];
+
+        log('[HOTEL_LIST_API] ✓ API Response (Unwrapped)');
+        log('[HOTEL_LIST_API] API Response Type: ${apiResponse.runtimeType}');
+        log('[HOTEL_LIST_API] API Response: $apiResponse');
+
+        // Defensive check: ensure apiResponse is a Map before parsing
+        if (apiResponse is! Map<String, dynamic>) {
+          log('[HOTEL_LIST_API] ✗ ERROR: API response is not a Map. Got: ${apiResponse.runtimeType}');
+          EasyLoading.dismiss();
+          return false;
+        }
+
         log("Hotel List Response for index $index ===> ${result['data']}");
-        HotelList newHotelList = HotelList.fromJson(result['data']);
+        HotelList newHotelList =
+            HotelList.fromJson(apiResponse as Map<String, dynamic>);
 
         // Replace data (No Pagination)
         hotelListPerCategory[index] = newHotelList;
@@ -888,7 +940,7 @@ class HomeProvider with ChangeNotifier {
         return false;
       }
     } catch (e) {
-      print('Error fetching hotel list: $e');
+      log('Error fetching hotel list: $e');
       return false;
     }
   }
@@ -1096,22 +1148,44 @@ class HomeProvider with ChangeNotifier {
   //   }
   // }
 
-  Future fetchHotelDetails(int hotelId) async {
-    log("Fetching Hotel Details for ID: $hotelId");
-    await loadToken();
+  Future<HotelDetail?> fetchHotelDetails(String hotelId,
+      {String? provider, String? currency}) async {
+    log("Fetching Hotel Details for ID: $hotelId, provider: ${provider ?? 'not specified'}, currency: ${currency ?? 'not specified'}");
+    hotelDetailLoading = true;
+    hotelDetailError = null;
+    hotelDetail = null;
+    // Don't call notifyListeners() here — the caller manages loading state
+    // to avoid "setState() called during build" errors.
 
-    final result = await makeRequest(
-        '${ApiUrls.baseUrl}${ApiUrls.hotelDetailsEndPoint}/$hotelId',
-        'GET',
-        {},
-        _token ?? '',
-        requiresAuth: true);
-    if (result['success']) {
-      log("Hotel Details Response: ${result['data']}");
-      hotelDetail = HotelDetail.fromJson(result['data']);
-      notifyListeners();
+    await loadToken();
+    log("Token for hotel detail: ${_token != null ? 'present' : 'NULL'}");
+
+    final url =
+        ApiUrls.hotelDetailUrl(hotelId, provider: provider, currency: currency);
+
+    final result =
+        await makeRequest(url, 'GET', {}, _token ?? '', requiresAuth: true);
+
+    hotelDetailLoading = false;
+
+    if (result['success'] == true && result['data'] != null) {
+      try {
+        log("Hotel Details Response: ${result['data']}");
+        hotelDetail = HotelDetail.fromJson(result['data']);
+        hotelDetailError = null;
+        notifyListeners();
+        return hotelDetail;
+      } catch (e) {
+        log("Failed to parse hotel details: $e");
+        hotelDetailError = 'Failed to parse hotel data';
+        notifyListeners();
+        return null;
+      }
     } else {
-      log("Failed to fetch hotel details (1). Error: ${result['message']}");
+      final msg = result['message']?.toString() ?? 'Unknown error';
+      log("Failed to fetch hotel details (1). Error: $msg");
+      hotelDetailError = msg;
+      notifyListeners();
       return null;
     }
   }
@@ -1401,6 +1475,62 @@ class HomeProvider with ChangeNotifier {
       return result['data'];
     } else {
       log("Failed to check hotel availability. Error: ${result['message']}");
+      return null;
+    }
+  }
+
+  Future<HotelPreBookResponse?> preBookHotel({
+    required String offerId,
+    required String roomId,
+    required String checkIn,
+    required String checkOut,
+    required int adults,
+    required String provider,
+    required String hotelName,
+    required String roomName,
+    required String city,
+    required String country,
+  }) async {
+    await loadToken();
+
+    final body = {
+      'offer_id': offerId,
+      'room_id': roomId,
+      'check_in': checkIn,
+      'check_out': checkOut,
+      'adults': adults,
+      'provider': provider,
+      'hotel_name': hotelName,
+      'room_name': roomName,
+      'city': city,
+      'country': country,
+    };
+    log("Hotel Pre-book Payload: $body");
+    log("Hotel Pre-book Endpoint: ${ApiUrls.baseUrl}${ApiUrls.hotelPreBook}");
+
+    final result = await makeRequest(
+      '${ApiUrls.baseUrl}${ApiUrls.hotelPreBook}',
+      'POST',
+      body,
+      _token ?? '',
+      requiresAuth: true,
+    );
+
+    if (result['success']) {
+      log("Hotel Pre-book Success Response: ${result['data']}");
+      final prebookResp = HotelPreBookResponse.fromJson(result['data']);
+
+      log('');
+      log('[PREBOOK CHECKOUT URL]       : ${prebookResp.checkoutUrl}');
+      log('[EXTRACTED CHECKOUT TOKEN]   : ${prebookResp.checkoutToken}');
+      log('[TOKEN IS NULL]              : ${prebookResp.checkoutToken == null || prebookResp.checkoutToken!.isEmpty}');
+      log('[TOKEN LENGTH]               : ${prebookResp.checkoutToken?.length ?? 0}');
+
+      return prebookResp;
+    } else {
+      log("Hotel Pre-book FAILED: ${result['message']}");
+      EasyLoading.showToast(result['message'] ?? 'Failed to pre-book hotel',
+          maskType: EasyLoadingMaskType.black);
       return null;
     }
   }

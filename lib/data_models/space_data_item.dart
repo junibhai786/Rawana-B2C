@@ -4,6 +4,7 @@ import 'package:moonbnd/Provider/space_provider.dart';
 import 'package:moonbnd/screens/auth/signin_screen.dart';
 import 'package:moonbnd/widgets/popup_login.dart';
 import 'package:flutter/material.dart';
+import 'package:moonbnd/app_colors.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:provider/provider.dart';
@@ -115,7 +116,7 @@ class _SpaceItemState extends State<SpaceItem> {
       type: 'space',
       id: widget.dataSrc.id.toString(),
       badgeText: 'SPACE',
-      badgeColor: Colors.teal,
+      badgeColor: AppColors.secondary,
       priceSuffix: '/day',
       features: features,
     );

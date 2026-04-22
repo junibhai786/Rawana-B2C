@@ -6,6 +6,7 @@ import 'package:moonbnd/constants.dart';
 import 'package:moonbnd/screens/hotel/hotel_booking_history_screen.dart';
 import 'package:moonbnd/widgets/bottom_navigation.dart';
 import 'package:flutter/material.dart';
+import 'package:moonbnd/app_colors.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
@@ -78,7 +79,7 @@ class _FlightConfirmScreenState extends State<FlightConfirmScreen> {
                     style: GoogleFonts.spaceGrotesk(
                       fontSize: 22,
                       fontWeight: FontWeight.w600,
-                      color: Colors.green[700],
+                      color: AppColors.secondary.withOpacity(0.700),
                     ),
                   ),
                   const SizedBox(height: 6),

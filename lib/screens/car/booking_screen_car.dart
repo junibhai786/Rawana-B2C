@@ -174,7 +174,7 @@ class _BookingScreenState extends State<BookingScreenForCar> {
             (value) {
               log("check in to $value");
               log("----------------------------");
-              if (value.contains("https://travolyo.com/api/booking/confirm/")) {
+              if (value.contains("https://rawana.com/api/booking/confirm/")) {
                 log("going to success screen");
                 Navigator.push(
                   context,

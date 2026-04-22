@@ -1,6 +1,7 @@
 // ignore_for_file: prefer_const_constructors, prefer_const_literals_to_create_immutables, sort_child_properties_last
 
 import 'package:flutter/material.dart';
+import 'package:moonbnd/app_colors.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
@@ -90,7 +91,7 @@ class _BookingConfirmedScreenForCarState
                     style: GoogleFonts.spaceGrotesk(
                       fontSize: 24,
                       fontWeight: FontWeight.w700,
-                      color: Colors.green,
+                      color: AppColors.secondary,
                     ),
                   ),
                   SizedBox(height: 6),

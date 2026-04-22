@@ -3,6 +3,7 @@ import 'dart:developer';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:moonbnd/widgets/bottom_navigation.dart';
 import 'package:flutter/material.dart';
+import 'package:moonbnd/app_colors.dart';
 import 'package:get/get.dart';
 import 'package:provider/provider.dart';
 import 'package:moonbnd/Provider/auth_provider.dart';
@@ -68,7 +69,7 @@ class ResetPasswordScreenState extends State<ResetPasswordScreen> {
                   onPressed: resetpassowod,
                   style: ElevatedButton.styleFrom(
                     foregroundColor: Colors.white,
-                    backgroundColor: Colors.blue,
+                    backgroundColor: AppColors.primary,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),

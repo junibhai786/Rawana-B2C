@@ -3,6 +3,7 @@ import 'package:moonbnd/vendor/car/edit/edit_Car_one_screen.dart';
 import 'package:moonbnd/vendor/hotel/hotel_detail_webview.dart';
 import 'package:moonbnd/widgets/popup_login.dart';
 import 'package:flutter/material.dart';
+import 'package:moonbnd/app_colors.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'dart:developer';
 import 'package:flutter_svg/svg.dart';
@@ -73,7 +74,7 @@ class _CarDataItemState extends State<CarDataItem> {
       type: 'car',
       id: widget.dataSrc.id.toString(),
       badgeText: 'CAR',
-      badgeColor: Colors.green,
+      badgeColor: AppColors.secondary,
       priceSuffix: '/day',
       features: features,
       status: widget.dataSrc.status,
@@ -360,7 +361,7 @@ class _CarDataItemState extends State<CarDataItem> {
 //                                   decoration: BoxDecoration(
 //                                       borderRadius: BorderRadius.circular(5),
 //                                       color: widget.dataSrc.status == 'publish'
-//                                           ? Colors.green
+//                                           ? AppColors.secondary
 //                                           : Colors.grey),
 //                                   child: Icon(
 //                                       widget.dataSrc.status == 'publish'
@@ -660,7 +661,7 @@ class _CarDataItemState extends State<CarDataItem> {
 //                                           },
 //                                           child: Text('View'.tr),
 //                                           style: TextButton.styleFrom(
-//                                             backgroundColor: Color(0xFF17A2B8),
+//                                             backgroundColor: AppColors.secondary,
 //                                             foregroundColor: Colors.white,
 //                                             padding: EdgeInsets.symmetric(
 //                                                 horizontal: 25, vertical: 10),
@@ -696,7 +697,7 @@ class _CarDataItemState extends State<CarDataItem> {
 //                                           },
 //                                           child: Text('Clone'.tr),
 //                                           style: TextButton.styleFrom(
-//                                             backgroundColor: Color(0xFF1A2B47),
+//                                             backgroundColor: AppColors.accent,
 //                                             foregroundColor: Colors.white,
 //                                             padding: EdgeInsets.symmetric(
 //                                                 horizontal: 25, vertical: 10),
@@ -848,7 +849,7 @@ class _CarDataItemState extends State<CarDataItem> {
 //                                                 "valur of${homeProvider.vendorcarDetail?.data?.price}");
 //                                           },
 //                                           style: TextButton.styleFrom(
-//                                             backgroundColor: Color(0xFFFFC107),
+//                                             backgroundColor: AppColors.accent,
 //                                             foregroundColor: Colors.black,
 //                                             padding: EdgeInsets.symmetric(
 //                                                 horizontal: 24, vertical: 10),
@@ -1078,7 +1079,7 @@ class _CarDataItemState extends State<CarDataItem> {
 //                           await launch(widget.dataSrc.availability_url ?? "");
 //                         },
 //                         style: TextButton.styleFrom(
-//                           backgroundColor: Color(0xFF1A2B47),
+//                           backgroundColor: AppColors.accent,
 //                           foregroundColor: Colors.white,
 //                           padding: EdgeInsets.symmetric(
 //                               horizontal: 41, vertical: 10),

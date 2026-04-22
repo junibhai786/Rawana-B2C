@@ -12,6 +12,7 @@ import 'package:moonbnd/screens/hotel/room_detail_screen.dart';
 import 'package:moonbnd/widgets/popup_login.dart';
 import 'package:moonbnd/widgets/tertiary_button.dart';
 import 'package:flutter/material.dart';
+import 'package:moonbnd/app_colors.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
@@ -125,7 +126,7 @@ class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
     log("${item.carDetail?.data?.terms?.length} lengthhhhh");
     return Scaffold(
       appBar: AppBar(
-        leading:  InkWell(
+        leading: InkWell(
           onTap: () {
             Navigator.pop(context);
           },
@@ -135,9 +136,7 @@ class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
               height: 32,
               width: 32,
               decoration: BoxDecoration(
-                color: Color(0xffF1F5F9),
-               shape: BoxShape.circle
-              ),
+                  color: Color(0xffF1F5F9), shape: BoxShape.circle),
               child: Icon(
                 Icons.arrow_back_ios_new_outlined,
                 color: Colors.black,
@@ -150,7 +149,7 @@ class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
       body: loading
           ? Center(child: CircularProgressIndicator(color: kSecondaryColor))
           : SafeArea(
-            child: SingleChildScrollView(
+              child: SingleChildScrollView(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -159,11 +158,13 @@ class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
                       child: Align(
                         alignment: Alignment.centerLeft,
                         child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start, // Make sure text aligns left
+                          crossAxisAlignment: CrossAxisAlignment
+                              .start, // Make sure text aligns left
                           children: [
                             Text(
                               item.carDetail?.data?.title ?? "",
-                              style: GoogleFonts.spaceGrotesk(fontSize: 24, fontWeight: FontWeight.bold),
+                              style: GoogleFonts.spaceGrotesk(
+                                  fontSize: 24, fontWeight: FontWeight.bold),
                             ),
                             SizedBox(height: 10),
                             Row(
@@ -176,8 +177,11 @@ class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
                                 ),
                                 SizedBox(width: 8),
                                 Expanded(
-                                  child:  Text(item.carDetail?.data?.location?.name ?? "",
-                                      style: GoogleFonts.spaceGrotesk(color: Colors.grey)),
+                                  child: Text(
+                                      item.carDetail?.data?.location?.name ??
+                                          "",
+                                      style: GoogleFonts.spaceGrotesk(
+                                          color: Colors.grey)),
                                 ),
                               ],
                             ),
@@ -206,7 +210,8 @@ class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
                                 currentPage = value;
                               });
                             },
-                            itemCount: item.carDetail?.data?.gallery?.length ?? 0,
+                            itemCount:
+                                item.carDetail?.data?.gallery?.length ?? 0,
                             itemBuilder: (context, index) => SliderContent(
                               imageUrl:
                                   item.carDetail?.data?.gallery?[index] ?? '',
@@ -315,7 +320,7 @@ class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
                             // ),
                           ),
                         ),
-            
+
                         //slider navigation
                         Positioned(
                           bottom: 12,
@@ -337,7 +342,6 @@ class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
                                 color: Colors.white,
                                 fontWeight: FontWeight.w500,
                                 fontSize: 12,
-
                               ),
                             ),
                           ),
@@ -375,7 +379,6 @@ class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
                                       color: Colors.white,
                                       fontWeight: FontWeight.w500,
                                       fontSize: 12,
-
                                     ),
                                   ),
                                 ],
@@ -398,7 +401,7 @@ class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
                           // Text(
                           //   item.carDetail?.data?.location?.name ?? "",
                           // ),
-            
+
                           // Divider(
                           //   thickness: 1,
                           // ),
@@ -475,7 +478,6 @@ class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
                                   style: GoogleFonts.spaceGrotesk(
                                     color: Colors.black,
                                     fontSize: 18,
-
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),
@@ -492,7 +494,8 @@ class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
                                 // SizedBox(height: 8),
                                 SizedBox(height: 8),
                                 ExpandableHtmlContent(
-                                  content: item.carDetail?.data?.content ?? "".tr,
+                                  content:
+                                      item.carDetail?.data?.content ?? "".tr,
                                   primaryColor: kPrimaryColor,
                                   textStyle: GoogleFonts.spaceGrotesk(
                                     fontWeight: FontWeight.w400, // Regular
@@ -513,10 +516,12 @@ class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
                             Text(
                               'Car Features'.tr,
                               style: GoogleFonts.spaceGrotesk(
-                                  fontSize: 18, fontWeight: FontWeight.bold,color: Colors.black),
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black),
                             ),
                           SizedBox(height: 14),
-            
+
                           if (item.carDetail?.data?.terms?.length != 0)
                             ...(item.carDetail?.data?.terms?[0].child ?? [])
                                 .map((element) {
@@ -527,9 +532,11 @@ class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
                           if (item.carDetail?.data?.faqs?.length != 0)
                             Text('FAQ\'s'.tr,
                                 style: GoogleFonts.spaceGrotesk(
-                                    fontSize: 18, fontWeight: FontWeight.bold,color: Colors.black)),
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black)),
                           SizedBox(height: 20),
-            
+
                           ...(item.carDetail?.data?.faqs ?? []).map((element) {
                             {
                               return _buildFAQItem(
@@ -580,17 +587,17 @@ class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
                           SizedBox(height: 12),
                           ...(item.carDetail?.data?.reviewLists?.data ?? [])
                               .map((review) => _buildReviewItem(review)),
-            
+
                           SizedBox(
                             height: 5,
                           ),
                           // ...(hotelDetail.data?.reviewLists?.data ?? [])
                           //     .map((review) => _buildReviewItem(review)),
-            
+
                           SizedBox(
                             height: 5,
                           ),
-            
+
                           Padding(
                             padding: EdgeInsets.symmetric(horizontal: 20),
                             child: Text("Write a Review".tr,
@@ -599,13 +606,13 @@ class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
                                     fontSize: 18,
                                     fontWeight: FontWeight.w600)),
                           ),
-            
+
                           SizedBox(
                             height: 5,
                           ),
                           _buildReviewWidget(item.carDetail!),
                           SizedBox(height: 20),
-            
+
                           SizedBox(
                             height: 20,
                           ),
@@ -618,7 +625,7 @@ class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
                   ],
                 ),
               ),
-          ),
+            ),
       bottomNavigationBar: BottomAppBar(
         child: Padding(
           padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -631,15 +638,15 @@ class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
                 children: [
                   Text(
                       "\$${item.carDetail?.data?.salePrice == 0 ? item.carDetail?.data?.price : item.carDetail?.data?.salePrice}",
-                      style:
-                      GoogleFonts.spaceGrotesk(fontSize: 20, fontWeight: FontWeight.bold)),
+                      style: GoogleFonts.spaceGrotesk(
+                          fontSize: 20, fontWeight: FontWeight.bold)),
                   if (item.carDetail?.data?.salePrice != 0)
                     Text(
                         item.carDetail?.data?.salePrice == 0
                             ? "\$${item.carDetail?.data?.salePrice}"
                             : "\$${item.carDetail?.data?.price}",
-                        style:
-                        GoogleFonts.spaceGrotesk(decoration: TextDecoration.lineThrough)),
+                        style: GoogleFonts.spaceGrotesk(
+                            decoration: TextDecoration.lineThrough)),
                 ],
               ),
               ElevatedButton(
@@ -678,7 +685,7 @@ class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
                       context, item.carDetail); // Call the modal sheet method
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue,
+                  backgroundColor: AppColors.primary,
                   padding: EdgeInsets.symmetric(horizontal: 32, vertical: 16),
                 ),
                 child: Text('Book Now'.tr),
@@ -866,22 +873,19 @@ class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
                                       alignment: Alignment.centerLeft,
                                       child: Row(
                                         children: [
+                                          Text('From '.tr,
+                                              style: GoogleFonts.spaceGrotesk(
+                                                fontWeight: FontWeight.w400,
+                                                fontSize: 24,
+                                                color: Colors.black,
+                                              )),
                                           Text(
-                                            'From '.tr,
-                                            style: GoogleFonts.spaceGrotesk(
-                                              fontWeight: FontWeight.w400,
-                                              fontSize: 24,
-                                              color: Colors.black,
-                                            )
-                                          ),
-                                          Text(
-                                            '\$${txCarDetail?.data?.salePrice == 0 ? txCarDetail?.data?.price : txCarDetail?.data?.salePrice}',
-                                            style: GoogleFonts.spaceGrotesk(
-                                              fontWeight: FontWeight.w400,
-                                              fontSize: 24,
-                                              color: Colors.black,
-                                            )
-                                          ),
+                                              '\$${txCarDetail?.data?.salePrice == 0 ? txCarDetail?.data?.price : txCarDetail?.data?.salePrice}',
+                                              style: GoogleFonts.spaceGrotesk(
+                                                fontWeight: FontWeight.w400,
+                                                fontSize: 24,
+                                                color: Colors.black,
+                                              )),
                                         ],
                                       )),
                                 ),
@@ -933,14 +937,13 @@ class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
                                                   crossAxisAlignment:
                                                       CrossAxisAlignment.start,
                                                   children: [
-                                                    Text(
-                                                      "From".tr,
-                                                      style: GoogleFonts.spaceGrotesk(
-                                                        fontWeight: FontWeight.w600,
-                                                        fontSize: 12,
-
-                                                      )
-                                                    ),
+                                                    Text("From".tr,
+                                                        style: GoogleFonts
+                                                            .spaceGrotesk(
+                                                          fontWeight:
+                                                              FontWeight.w600,
+                                                          fontSize: 12,
+                                                        )),
                                                     SizedBox(height: 5),
                                                     Container(
                                                       padding:
@@ -1024,11 +1027,12 @@ class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
                                                       CrossAxisAlignment.center,
                                                   children: [
                                                     Text("To".tr,
-                                                        style: GoogleFonts.spaceGrotesk(
-                                                          fontWeight: FontWeight.w600,
+                                                        style: GoogleFonts
+                                                            .spaceGrotesk(
+                                                          fontWeight:
+                                                              FontWeight.w600,
                                                           fontSize: 12,
-                                                        )
-                                                    ),
+                                                        )),
                                                     SizedBox(height: 5),
                                                     Container(
                                                       padding:
@@ -1080,14 +1084,12 @@ class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
                                             crossAxisAlignment:
                                                 CrossAxisAlignment.start,
                                             children: [
-                                              Text(
-                                                "Passengers".tr,
-                                                style: GoogleFonts.spaceGrotesk(
-                                                  fontWeight: FontWeight.w600,
-                                                  fontSize: 12,
-
-                                                )
-                                              ),
+                                              Text("Passengers".tr,
+                                                  style:
+                                                      GoogleFonts.spaceGrotesk(
+                                                    fontWeight: FontWeight.w600,
+                                                    fontSize: 12,
+                                                  )),
                                               SizedBox(height: 10),
                                               Container(
                                                 child: DropdownButtonFormField<
@@ -1098,7 +1100,6 @@ class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
                                                   decoration: InputDecoration(
                                                       labelText:
                                                           "Select Passenger".tr,
-
                                                       border:
                                                           OutlineInputBorder(),
                                                       contentPadding:
@@ -1109,47 +1110,67 @@ class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
                                                     DropdownMenuItem<String>(
                                                       value: "1 Passenger",
                                                       child: Text(
-                                                          "1 Passenger".tr,style: GoogleFonts.spaceGrotesk(
-                                                        fontWeight: FontWeight.w400,
-                                                        fontSize: 16,
-                                                        color: Colors.black54,
-                                                      ),),
+                                                        "1 Passenger".tr,
+                                                        style: GoogleFonts
+                                                            .spaceGrotesk(
+                                                          fontWeight:
+                                                              FontWeight.w400,
+                                                          fontSize: 16,
+                                                          color: Colors.black54,
+                                                        ),
+                                                      ),
                                                     ),
                                                     DropdownMenuItem<String>(
                                                       value: "2 Passenger",
                                                       child: Text(
-                                                          "2 Passenger".tr,style: GoogleFonts.spaceGrotesk(
-                                                        fontWeight: FontWeight.w400,
-                                                        fontSize: 16,
-                                                        color: Colors.black54,
-                                                      )),
+                                                          "2 Passenger".tr,
+                                                          style: GoogleFonts
+                                                              .spaceGrotesk(
+                                                            fontWeight:
+                                                                FontWeight.w400,
+                                                            fontSize: 16,
+                                                            color:
+                                                                Colors.black54,
+                                                          )),
                                                     ),
                                                     DropdownMenuItem<String>(
                                                       value: "3 Passenger",
                                                       child: Text(
-                                                          "3 Passenger".tr,style: GoogleFonts.spaceGrotesk(
-                                                        fontWeight: FontWeight.w400,
-                                                        fontSize: 16,
-                                                        color: Colors.black54,
-                                                      )),
+                                                          "3 Passenger".tr,
+                                                          style: GoogleFonts
+                                                              .spaceGrotesk(
+                                                            fontWeight:
+                                                                FontWeight.w400,
+                                                            fontSize: 16,
+                                                            color:
+                                                                Colors.black54,
+                                                          )),
                                                     ),
                                                     DropdownMenuItem<String>(
                                                       value: "4 Passenger",
                                                       child: Text(
-                                                          "4 Passenger".tr,style: GoogleFonts.spaceGrotesk(
-                                                        fontWeight: FontWeight.w400,
-                                                        fontSize: 16,
-                                                        color: Colors.black54,
-                                                      )),
+                                                          "4 Passenger".tr,
+                                                          style: GoogleFonts
+                                                              .spaceGrotesk(
+                                                            fontWeight:
+                                                                FontWeight.w400,
+                                                            fontSize: 16,
+                                                            color:
+                                                                Colors.black54,
+                                                          )),
                                                     ),
                                                     DropdownMenuItem<String>(
                                                       value: "5 Passenger",
                                                       child: Text(
-                                                          "5 Passenger".tr,style: GoogleFonts.spaceGrotesk(
-                                                        fontWeight: FontWeight.w400,
-                                                        fontSize: 16,
-                                                        color: Colors.black54,
-                                                      )),
+                                                          "5 Passenger".tr,
+                                                          style: GoogleFonts
+                                                              .spaceGrotesk(
+                                                            fontWeight:
+                                                                FontWeight.w400,
+                                                            fontSize: 16,
+                                                            color:
+                                                                Colors.black54,
+                                                          )),
                                                     ),
                                                   ],
                                                   onChanged: (value) {
@@ -1177,9 +1198,7 @@ class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
                                       style: GoogleFonts.spaceGrotesk(
                                         fontWeight: FontWeight.w700,
                                         fontSize: 16,
-
-                                      )
-                                  ),
+                                      )),
                                 ),
 
                                 ...((txCarDetail?.data?.extraPrice) ?? [])
@@ -1212,20 +1231,18 @@ class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
 
                                               setState1(() {});
                                             }),
-                                        Text(element.name ?? "",style: GoogleFonts.spaceGrotesk(
-                                          fontWeight: FontWeight.w400,
-                                          fontSize: 16,
-                                          color: Colors.black54,
-                                        )),
+                                        Text(element.name ?? "",
+                                            style: GoogleFonts.spaceGrotesk(
+                                              fontWeight: FontWeight.w400,
+                                              fontSize: 16,
+                                              color: Colors.black54,
+                                            )),
                                         Spacer(),
-                                        Text(
-                                          "\$${element.price}",
-                                          style:GoogleFonts.spaceGrotesk(
-                                          fontWeight: FontWeight.w400,
-                                          fontSize: 16,
-
-                                        )
-                                        ),
+                                        Text("\$${element.price}",
+                                            style: GoogleFonts.spaceGrotesk(
+                                              fontWeight: FontWeight.w400,
+                                              fontSize: 16,
+                                            )),
                                       ],
                                     ),
                                   );
@@ -1242,23 +1259,18 @@ class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
                                         bottom: 10, left: 15, right: 15),
                                     child: Row(
                                       children: [
-                                        Text(
-                                          element.name ?? "",
+                                        Text(element.name ?? "",
                                             style: GoogleFonts.spaceGrotesk(
                                               fontWeight: FontWeight.w400,
                                               fontSize: 16,
                                               color: Colors.black54,
-                                            )
-                                        ),
+                                            )),
                                         Spacer(),
-                                        Text(
-                                          "\$${element.price}",
-                                            style:GoogleFonts.spaceGrotesk(
+                                        Text("\$${element.price}",
+                                            style: GoogleFonts.spaceGrotesk(
                                               fontWeight: FontWeight.w400,
                                               fontSize: 16,
-
-                                            )
-                                        ),
+                                            )),
                                       ],
                                     ),
                                   );
@@ -1275,23 +1287,18 @@ class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
                                   child: Row(
                                     children: [
                                       Text("Total".tr,
-                                          style:GoogleFonts.spaceGrotesk(
+                                          style: GoogleFonts.spaceGrotesk(
                                             fontWeight: FontWeight.w700,
                                             fontSize: 18,
-
-                                          )
-                                      ),
+                                          )),
                                       Spacer(),
 
                                       Text(
                                           "\$${(txCarDetail?.data?.salePrice == 0 ? txCarDetail?.data?.price ?? 0 : txCarDetail?.data?.salePrice ?? 0) * (days + 1) + total + extraPriceValue}",
-                                          style:GoogleFonts.spaceGrotesk(
+                                          style: GoogleFonts.spaceGrotesk(
                                             fontWeight: FontWeight.w700,
                                             fontSize: 18,
-
-                                          )
-
-                                      ),
+                                          )),
                                       // Text(
                                       //     "\$${(txCarDetail?.data?.salePrice ?? 0) + total + extraPriceValue}",
                                       //     style: TextStyle(
@@ -1391,7 +1398,9 @@ class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
                               if (isBookTab == false) ...[
                                 Container(
                                   padding: EdgeInsets.only(
-                                    bottom: MediaQuery.of(context).viewInsets.bottom,
+                                    bottom: MediaQuery.of(context)
+                                        .viewInsets
+                                        .bottom,
                                     left: 16,
                                     right: 16,
                                     top: 16,
@@ -1402,10 +1411,12 @@ class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
                                       key: formKey,
                                       child: Column(
                                         mainAxisSize: MainAxisSize.min,
-                                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.stretch,
                                         children: [
                                           Row(
-                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceBetween,
                                             children: [
                                               Text(
                                                 'Enquiry'.tr,
@@ -1415,7 +1426,6 @@ class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
                                                   color: Colors.black,
                                                 ),
                                               ),
-
                                             ],
                                           ),
 
@@ -1427,8 +1437,10 @@ class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
                                             controller: nameController,
                                             label: 'Name*'.tr,
                                             validator: (value) {
-                                              if (value == null || value.isEmpty) {
-                                                return 'Please enter your name'.tr;
+                                              if (value == null ||
+                                                  value.isEmpty) {
+                                                return 'Please enter your name'
+                                                    .tr;
                                               }
                                               return null;
                                             },
@@ -1440,13 +1452,16 @@ class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
                                           _enquiryField(
                                             controller: emailController,
                                             label: 'Email*'.tr,
-                                            keyboardType: TextInputType.emailAddress,
+                                            keyboardType:
+                                                TextInputType.emailAddress,
                                             validator: (value) {
-                                              if (value == null || value.isEmpty) {
-                                                return 'Please enter your email'.tr;
+                                              if (value == null ||
+                                                  value.isEmpty) {
+                                                return 'Please enter your email'
+                                                    .tr;
                                               }
                                               if (!RegExp(
-                                                  r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
+                                                      r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
                                                   .hasMatch(value)) {
                                                 return 'Please enter a valid email address';
                                               }
@@ -1462,8 +1477,10 @@ class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
                                             label: 'Phone*'.tr,
                                             keyboardType: TextInputType.phone,
                                             validator: (value) {
-                                              if (value == null || value.isEmpty) {
-                                                return 'Please enter your phone number'.tr;
+                                              if (value == null ||
+                                                  value.isEmpty) {
+                                                return 'Please enter your phone number'
+                                                    .tr;
                                               }
                                               if (!RegExp(r'^\+?[\d\s-]{10,}$')
                                                   .hasMatch(value)) {
@@ -1481,7 +1498,8 @@ class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
                                             label: 'Note*'.tr,
                                             maxLines: 3,
                                             validator: (value) {
-                                              if (value == null || value.isEmpty) {
+                                              if (value == null ||
+                                                  value.isEmpty) {
                                                 return 'Please enter a note'.tr;
                                               }
                                               return null;
@@ -1490,18 +1508,22 @@ class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
 
                                           const SizedBox(height: 24),
 
-
                                           SizedBox(
                                             width: 150,
                                             child: ElevatedButton(
                                               onPressed: () async {
-                                                if (formKey.currentState!.validate()) {
+                                                if (formKey.currentState!
+                                                    .validate()) {
                                                   final homeProvider =
-                                                  Provider.of<HomeProvider>(context, listen: false);
+                                                      Provider.of<HomeProvider>(
+                                                          context,
+                                                          listen: false);
 
                                                   final result =
-                                                  await homeProvider.sendEnquiry(
-                                                    serviceId: "${txCarDetail?.data?.id}",
+                                                      await homeProvider
+                                                          .sendEnquiry(
+                                                    serviceId:
+                                                        "${txCarDetail?.data?.id}",
                                                     serviceType: "car",
                                                     name: nameController.text,
                                                     email: emailController.text,
@@ -1509,23 +1531,31 @@ class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
                                                     note: noteController.text,
                                                   );
 
-                                                  if (result != null && result['status'] == 1) {
+                                                  if (result != null &&
+                                                      result['status'] == 1) {
                                                     Navigator.pop(context);
-                                                    ScaffoldMessenger.of(context).showSnackBar(
+                                                    ScaffoldMessenger.of(
+                                                            context)
+                                                        .showSnackBar(
                                                       SnackBar(
                                                         content: Text(
                                                           result['message'] ??
-                                                              'Enquiry submitted successfully'.tr,
-                                                          style: GoogleFonts.spaceGrotesk(),
+                                                              'Enquiry submitted successfully'
+                                                                  .tr,
+                                                          style: GoogleFonts
+                                                              .spaceGrotesk(),
                                                         ),
                                                       ),
                                                     );
                                                   } else {
-                                                    ScaffoldMessenger.of(context).showSnackBar(
+                                                    ScaffoldMessenger.of(
+                                                            context)
+                                                        .showSnackBar(
                                                       SnackBar(
                                                         content: Text(
                                                           'Error: ${result?['message'] ?? ''}',
-                                                          style: GoogleFonts.spaceGrotesk(),
+                                                          style: GoogleFonts
+                                                              .spaceGrotesk(),
                                                         ),
                                                       ),
                                                     );
@@ -1533,11 +1563,13 @@ class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
                                                 }
                                               },
                                               style: ElevatedButton.styleFrom(
-                                                backgroundColor: kSecondaryColor,
+                                                backgroundColor:
+                                                    kSecondaryColor,
                                                 foregroundColor: Colors.white,
                                                 minimumSize: const Size(0, 55),
                                                 shape: RoundedRectangleBorder(
-                                                  borderRadius: BorderRadius.circular(5),
+                                                  borderRadius:
+                                                      BorderRadius.circular(5),
                                                 ),
                                               ),
                                               child: Text(
@@ -1550,15 +1582,12 @@ class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
                                               ),
                                             ),
                                           ),
-
-
                                         ],
                                       ),
                                     ),
                                   ),
                                 ),
                               ],
-
                             ],
                           ),
                         ),
@@ -1592,6 +1621,7 @@ class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
           );
         });
   }
+
   Widget _enquiryField({
     required TextEditingController controller,
     required String label,
@@ -1616,7 +1646,7 @@ class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
         errorBorder: InputBorder.none,
         focusedErrorBorder: InputBorder.none,
         contentPadding:
-        const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+            const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
       ),
     );
   }
@@ -1624,7 +1654,7 @@ class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
   Widget _buildHighlightItem(String text) {
     return Row(
       children: [
-        Icon(Icons.check_circle, color: Colors.green),
+        Icon(Icons.check_circle, color: AppColors.secondary),
         SizedBox(width: 8),
         Expanded(child: Text(text)),
       ],
@@ -1642,7 +1672,10 @@ class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
           SizedBox(
             width: 8,
           ),
-          Text(text,style: GoogleFonts.spaceGrotesk(color: Colors.black38),),
+          Text(
+            text,
+            style: GoogleFonts.spaceGrotesk(color: Colors.black38),
+          ),
         ],
       ),
     );
@@ -1650,11 +1683,15 @@ class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
 
   Widget _buildFAQItem(String question, String answer) {
     return ExpansionTile(
-      title: Text(question,style: GoogleFonts.spaceGrotesk(),),
+      title: Text(
+        question,
+        style: GoogleFonts.spaceGrotesk(),
+      ),
       children: [
         Padding(
           padding: EdgeInsets.all(16.0),
-          child: Text(answer,style: GoogleFonts.spaceGrotesk(color: Colors.black38)),
+          child: Text(answer,
+              style: GoogleFonts.spaceGrotesk(color: Colors.black38)),
         ),
       ],
     );
@@ -1663,80 +1700,81 @@ class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
   Widget _buildRatingSection(CarDetailModal carDetail) {
     const Color textColor = Colors.white;
 
-    return Column(
+    return Column(children: [
+      Column(
         children: [
-          Column(
-            children: [
-              // Guest Review Text above the container (centered)
-              Padding(
-                padding: const EdgeInsets.only(right: 210),
-                child: Text(
-                  'Guest Review'.tr,
-                  style: GoogleFonts.spaceGrotesk(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 18,
-                    color: Color(0xff1D2025),
-                  ),
-                ),
+          // Guest Review Text above the container (centered)
+          Padding(
+            padding: const EdgeInsets.only(right: 210),
+            child: Text(
+              'Guest Review'.tr,
+              style: GoogleFonts.spaceGrotesk(
+                fontWeight: FontWeight.w700,
+                fontSize: 18,
+                color: Color(0xff1D2025),
               ),
-              const SizedBox(height: 8),
-              Center(
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF05A8C7),
-                    borderRadius: BorderRadius.circular(10.0), // Rounded corners
-                  ),
-                  padding: const EdgeInsets.symmetric(horizontal: 100.0,vertical: 6),
-
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    mainAxisSize: MainAxisSize.min,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Center(
+            child: Container(
+              decoration: BoxDecoration(
+                color: AppColors.primary,
+                borderRadius: BorderRadius.circular(10.0), // Rounded corners
+              ),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 100.0, vertical: 6),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Column(
                     children: [
-                      Column(
-                        children: [
-                          Text(
-                            '${carDetail.data?.reviewScore?.scoreTotal ?? '0'}/5',
-                            style: GoogleFonts.spaceGrotesk(
-                              fontWeight: FontWeight.w700, // Bold
-                              fontSize: 36,
-                              height: 40 / 36, // line-height
-                              letterSpacing: 0,
-                              color: textColor,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-
-                          const SizedBox(height: 4),
-                          Text(
-                            (carDetail.data?.reviewScore?.scoreText ?? 'Very Good').tr,
-                            textAlign: TextAlign.center,
-                            style: GoogleFonts.spaceGrotesk(
-                              fontWeight: FontWeight.w400, // Regular
-                              fontSize: 14,
-                              height: 20 / 14,
-                              letterSpacing: 0,
-                              color: textColor,
-                            ),
-                          ),
-                          Text(
-                            'Based on ${carDetail.data?.reviewScore?.totalReview ?? 0} reviews'
-                                .tr,
-                            textAlign: TextAlign.center,
-                            style: GoogleFonts.spaceGrotesk( fontWeight: FontWeight.w400, // Regular
-                              fontSize: 14,
-                              height: 20 / 14,
-                              letterSpacing: 0,
-                              color: textColor,),
-                          ),
-
-                        ],
+                      Text(
+                        '${carDetail.data?.reviewScore?.scoreTotal ?? '0'}/5',
+                        style: GoogleFonts.spaceGrotesk(
+                          fontWeight: FontWeight.w700, // Bold
+                          fontSize: 36,
+                          height: 40 / 36, // line-height
+                          letterSpacing: 0,
+                          color: textColor,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        (carDetail.data?.reviewScore?.scoreText ?? 'Very Good')
+                            .tr,
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.spaceGrotesk(
+                          fontWeight: FontWeight.w400, // Regular
+                          fontSize: 14,
+                          height: 20 / 14,
+                          letterSpacing: 0,
+                          color: textColor,
+                        ),
+                      ),
+                      Text(
+                        'Based on ${carDetail.data?.reviewScore?.totalReview ?? 0} reviews'
+                            .tr,
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.spaceGrotesk(
+                          fontWeight: FontWeight.w400, // Regular
+                          fontSize: 14,
+                          height: 20 / 14,
+                          letterSpacing: 0,
+                          color: textColor,
+                        ),
                       ),
                     ],
                   ),
-                ),
+                ],
               ),
-            ],
-          )]);
+            ),
+          ),
+        ],
+      )
+    ]);
   }
 
   // Widget _buildRatingSection(CarDetailModal carDetail) {
@@ -1838,7 +1876,8 @@ class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
           Expanded(
             flex: 2,
             child: Text(title,
-                style: GoogleFonts.spaceGrotesk( fontSize: 14,color: Color(0xff65758B))),
+                style: GoogleFonts.spaceGrotesk(
+                    fontSize: 14, color: Color(0xff65758B))),
           ),
           Expanded(
             flex: 5,
@@ -1866,12 +1905,14 @@ class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
           ),
           SizedBox(width: 8),
           Text('$totalScore',
-              style: GoogleFonts.spaceGrotesk( fontSize: 14,  color: Color(0xff65758B),)),
+              style: GoogleFonts.spaceGrotesk(
+                fontSize: 14,
+                color: Color(0xff65758B),
+              )),
         ],
       ),
     );
   }
-
 
   // Widget _buildRatingBar(String title, double ratio, int totalScore) {
   //   return Padding(
@@ -1950,7 +1991,6 @@ class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-
                       /// NAME + DATE ROW FIXED
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1958,14 +1998,13 @@ class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
                           Flexible(
                             child: Text(
                               review.author?.name ?? '',
-                              style:  GoogleFonts.spaceGrotesk(
-
-                                  fontWeight: FontWeight.w500, // "Medium" in Figma = w500
+                              style: GoogleFonts.spaceGrotesk(
+                                  fontWeight: FontWeight
+                                      .w500, // "Medium" in Figma = w500
                                   fontSize: 14,
                                   height: 20 / 14, // line-height = 20px
                                   letterSpacing: 0,
-                                  color: Color(0xff1D2025)
-                              ),
+                                  color: Color(0xff1D2025)),
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
@@ -1975,8 +2014,7 @@ class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
                                 review.createdAt ?? DateTime.now().toString(),
                               ),
                             ),
-                            style:  GoogleFonts.spaceGrotesk(
-
+                            style: GoogleFonts.spaceGrotesk(
                               fontWeight: FontWeight.w400, // Regular
                               fontSize: 12,
                               height: 16 / 12, // exact line-height from Figma
@@ -1992,10 +2030,11 @@ class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
                       Row(
                         children: List.generate(
                           5,
-                              (index) => Icon(
+                          (index) => Icon(
                             Icons.star,
                             color: index < (review.rateNumber ?? 0)
-                                ? Colors.yellow // Changed from kPrimaryColor to yellow for stars
+                                ? Colors
+                                    .yellow // Changed from kPrimaryColor to yellow for stars
                                 : Colors.grey,
                             size: 18,
                           ),
@@ -2006,13 +2045,10 @@ class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
                 ),
               ],
             ),
-
             const SizedBox(height: 8),
-
             Text(
               review.content ?? '',
               style: GoogleFonts.spaceGrotesk(
-
                 fontWeight: FontWeight.w400, // Regular
                 fontSize: 14,
                 height: 21 / 14, // Figma line-height (21px)
@@ -2020,7 +2056,6 @@ class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
                 color: Color(0xff65758B),
               ),
             )
-
           ],
         ),
       ),
@@ -2266,8 +2301,9 @@ class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
                           });
 
                           // Refresh hotel details
-                          final updatedHotelDetail = await homeProvider
-                              .fetchHotelDetails(carDetail.data?.id ?? 0);
+                          final updatedHotelDetail =
+                              await homeProvider.fetchHotelDetails(
+                                  (carDetail.data?.id ?? 0).toString());
                           if (updatedHotelDetail != null) {
                             // Update the state of the parent widget
                             (context as Element).markNeedsBuild();

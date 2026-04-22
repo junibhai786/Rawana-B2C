@@ -5,6 +5,7 @@ import 'package:moonbnd/constants.dart';
 import 'package:moonbnd/data_models/all_space_item_screen.dart';
 import 'package:moonbnd/screens/auth/signin_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:moonbnd/app_colors.dart';
 import 'package:get/get.dart';
 import 'package:provider/provider.dart';
 import 'package:moonbnd/Provider/auth_provider.dart';
@@ -116,7 +117,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                               child: Text('Update'.tr,style: GoogleFonts.spaceGrotesk(color: Colors.white,fontWeight: FontWeight.w500)),
                               style: ElevatedButton.styleFrom(
                                 foregroundColor: Colors.white,
-                                backgroundColor: Colors.blue,
+                                backgroundColor: AppColors.primary,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(8),
                                 ),

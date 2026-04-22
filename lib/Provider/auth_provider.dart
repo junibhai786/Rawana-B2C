@@ -5,6 +5,7 @@ import 'package:http/http.dart';
 import 'package:moonbnd/Provider/api_interface.dart';
 import 'package:moonbnd/Urls/url_holder_loan.dart';
 import 'package:moonbnd/modals/my_profile.dart';
+import 'package:moonbnd/widgets/app_snackbar.dart';
 import 'package:get/get.dart' as gettt;
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -13,6 +14,23 @@ class AuthProvider with ChangeNotifier {
   MyProfile? _userProfile;
   // Getter for user profile
   MyProfile? get myProfile => _userProfile;
+
+  /// Build a MyProfile from login/signup response user data
+  void _buildProfileFromResponse(Map<String, dynamic> responseData) {
+    final user = responseData['user'];
+    if (user != null && user is Map<String, dynamic>) {
+      _userProfile = MyProfile(
+        success: true,
+        data: Data(
+          id: user['id'],
+          name: user['name'],
+          email: user['email'],
+          createdAt: user['created_at'],
+        ),
+        status: 1,
+      );
+    }
+  }
 
   // Authentication methods
   Future<bool> login(String email, String password, bool checked) async {
@@ -24,21 +42,71 @@ class AuthProvider with ChangeNotifier {
         {
           'email': email.trim(),
           'password': password.trim(),
-          'device_name': 'mobile',
         },
         _token ?? '');
-    if (checked) {
-      prefs.setBool('remember_me', checked);
-      prefs.setString('email', email);
-      prefs.setString('password', password);
-    }
 
     if (result['success']) {
-      _token = result['data']['access_token'];
-      await saveToken(_token ?? '');
+      // ── [LOGIN API RESPONSE] ─────────────────────────────────────────────
+      log('');
+      log('[LOGIN API RESPONSE]');
+      log('RAW RESPONSE: ${result['data']}');
+
+      // ── [LOGIN TOKEN PARSE] ──────────────────────────────────────────────
+      _token = result['data']['token']?.toString();
+      log('');
+      log('[LOGIN TOKEN PARSE]');
+      log('PARSED TOKEN : $_token');
+      log('TOKEN IS NULL: ${_token == null}');
+      log('TOKEN LENGTH : ${_token?.length ?? 0}');
+
+      // Always save token to SharedPreferences so downstream API calls
+      // (e.g. hotel checkout) can read it via setToken().
+      // Remember Me only controls whether to persist email for next login.
+      bool tokenSaveSuccess = false;
+      try {
+        await saveToken(_token ?? '');
+        tokenSaveSuccess = true;
+      } catch (e) {
+        log('[TOKEN SAVE DEBUG] SAVE EXCEPTION: $e');
+      }
+
+      if (checked) {
+        await prefs.setBool('remember_me', true);
+        await prefs.setString('email', email);
+      } else {
+        await prefs.setBool('remember_me', false);
+        await prefs.remove('email');
+        await prefs.remove('password');
+      }
+
+      // ── [LOGIN TOKEN SAVE DEBUG] ─────────────────────────────────────────
+      log('');
+      log('[LOGIN TOKEN SAVE DEBUG]');
+      log('TOKEN KEY    : userToken');
+      log('TOKEN VALUE  : $_token');
+      log('TOKEN IS NULL: ${_token == null || _token!.isEmpty}');
+      log('TOKEN LENGTH : ${_token?.length ?? 0}');
+      log('SAVE SUCCESS : $tokenSaveSuccess');
+
+      // Build profile from login response user data
+      _buildProfileFromResponse(result['data']);
+
+      final user = result['data']['user'];
+      debugPrint('════════════════════════════════════════');
+      debugPrint('✅ LOGIN SUCCESS');
+      debugPrint('Token    : $_token');
+      debugPrint('Message  : ${result['data']['message']}');
+      debugPrint('User ID  : ${user?['id']}');
+      debugPrint('Name     : ${user?['name']}');
+      debugPrint('Email    : ${user?['email']}');
+      debugPrint('Type     : ${user?['user_type']}');
+      debugPrint('Created  : ${user?['created_at']}');
+      debugPrint('════════════════════════════════════════');
+
       notifyListeners();
       return true;
     } else {
+      log('❌ LOGIN FAILED: ${result['message']}');
       showErrorToast(result['message']);
       return false;
     }
@@ -47,33 +115,73 @@ class AuthProvider with ChangeNotifier {
   Future<bool> signup(
       {String? email,
       String? password,
+      String? passwordConfirmation,
       String? firstName,
       String? lastName,
       String? phoneNo}) async {
+    // Combine first + last name into single 'name' field for new API
+    final name = '${firstName ?? ''} ${lastName ?? ''}'.trim();
     Map<String, dynamic> userData = {
-      'first_name': firstName ?? '',
-      'last_name': lastName ?? '',
+      'name': name,
       'email': email ?? '',
-      'phone': phoneNo ?? '',
       'password': password ?? '',
-      // 'term': 1,
+      'password_confirmation': passwordConfirmation ?? password ?? '',
     };
+
+    print("══════════════════════════════════════");
+    print("📤 SIGNUP API REQUEST");
+    print("URL      : /api/auth/register");
+    print("BODY     : {");
+    print("  name: $firstName");
+    print("  email: $email");
+    print("  password: $password");
+    print("  password_confirmation: $passwordConfirmation");
+    print("}");
+    print("══════════════════════════════════════");
+
     final result = await makeRequest(
         '${ApiUrls.baseUrl}${ApiUrls.signup}', 'POST', userData, _token ?? '');
 
     log("message===result['success']===${result['success']}");
     if (result['success']) {
-      _token = result['data']['access_token'];
+      _token = result['data']['token'];
       await saveToken(_token ?? '');
-      showSuccessToast(result['data']['message']);
+      AppSnackbar.success('Account created successfully');
+      // Build profile from signup response user data
+      _buildProfileFromResponse(result['data']);
+
+      final user = result['data']['user'];
+      debugPrint('════════════════════════════════════════');
+      debugPrint('✅ SIGNUP SUCCESS');
+      debugPrint('Token    : $_token');
+      debugPrint('Message  : ${result['data']['message']}');
+      debugPrint('User ID  : ${user?['id']}');
+      debugPrint('Name     : ${user?['name']}');
+      debugPrint('Email    : ${user?['email']}');
+      debugPrint('Type     : ${user?['user_type']}');
+      debugPrint('Created  : ${user?['created_at']}');
+      debugPrint('════════════════════════════════════════');
+
       notifyListeners();
       return true;
     } else {
-      showErrorToast(result['message']);
+      print("══════════════════════════════════════");
+      print("❌ SIGNUP API FAILED");
+      print("STATUS   : ${result['statusCode']}");
+      print("MESSAGE  : ${result['message']}");
+      print("RESPONSE : ${result['data']}");
+      print("══════════════════════════════════════");
+
+      debugPrint('════════════════════════════════════════');
+      debugPrint('❌ SIGNUP FAILED (Debug logs above)');
+      debugPrint('════════════════════════════════════════');
+      AppSnackbar.error(
+          result['message'] ?? 'Registration failed. Please try again.');
       return false;
     }
   }
 
+  // OTP verification — currently not used in signup flow, kept for forgot-password flow
   Future<bool> verifyOtp(String email, String otp) async {
     _token = await setToken();
     final result = await makeRequest('${ApiUrls.baseUrl}${ApiUrls.verifyOtp}',
@@ -81,9 +189,8 @@ class AuthProvider with ChangeNotifier {
         requiresAuth: true);
 
     if (result['success']) {
-      _token = result['data']['access_token'];
+      _token = result['data']['token'];
       await saveToken(_token ?? '');
-      // Fetch user profile from backend after successful verification
       await getMe();
       notifyListeners();
       return true;
@@ -118,7 +225,15 @@ class AuthProvider with ChangeNotifier {
         '${ApiUrls.baseUrl}${ApiUrls.getMe}', 'GET', {}, _token ?? '',
         requiresAuth: true);
 
-    _userProfile = MyProfile.fromJson(result['data']);
+    if (result['success'] && result['data'] != null) {
+      try {
+        _userProfile = MyProfile.fromJson(result['data']);
+      } catch (e) {
+        log('[getMe] Failed to parse profile: $e');
+      }
+    } else {
+      log('[getMe] API failed or returned null data');
+    }
 
     notifyListeners();
   }
@@ -169,6 +284,7 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
+  // OTP resend — currently not used in signup flow, kept for forgot-password flow
   Future<bool> resendOtp(String email) async {
     _token = await setToken();
     final result = await makeRequest('${ApiUrls.baseUrl}${ApiUrls.resendOtp}',
@@ -238,7 +354,12 @@ class AuthProvider with ChangeNotifier {
     _token = null;
     _userProfile = null;
     final prefs = await SharedPreferences.getInstance();
-    await prefs.clear();
+    // Remove only token-related and remember me data
+    await prefs.remove('userToken');
+    await prefs.remove('remember_me');
+    await prefs.remove('email');
+    // Password is never stored, so no need to remove it
+    // DO NOT clear 'has_launched_before' - user should not see splash again after logout
     notifyListeners();
   }
 

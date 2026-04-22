@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:moonbnd/app_colors.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:moonbnd/screens/auth/login_secuirty_screen.dart';
 import 'package:moonbnd/screens/auth/signin_screen.dart';
 
@@ -20,19 +22,19 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       image: 'assets/images/explore.png',
       title: 'Explore the World',
       description:
-      'Discover amazing destinations and create unforgettable memories with our curated travel experiences',
+          'Discover amazing destinations and create unforgettable memories with our curated travel experiences',
     ),
     OnboardingContent(
       image: 'assets/images/hotel.png',
       title: 'Book Best Hotels',
       description:
-      'Find and book luxurious hotels, cozy apartments, and unique stays at the best prices worldwide',
+          'Find and book luxurious hotels, cozy apartments, and unique stays at the best prices worldwide',
     ),
     OnboardingContent(
       image: 'assets/images/flight.png',
       title: 'Easy Flight Booking',
       description:
-      'Search, compare and book flights to any destination with just a few taps. Your journey starts here',
+          'Search, compare and book flights to any destination with just a few taps. Your journey starts here',
     ),
   ];
 
@@ -45,7 +47,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   @override
   Widget build(BuildContext context) {
     // Define the custom Teal color from the design
-    const Color primaryColor = Color(0xFF05A8C7);
+    const Color primaryColor = AppColors.primary;
 
     return Scaffold(
       body: Container(
@@ -72,7 +74,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 child: Align(
                   alignment: Alignment.topRight,
                   child: TextButton(
-                    onPressed: () {
+                    onPressed: () async {
+                      // Set flag that onboarding has been shown/skipped
+                      final prefs = await SharedPreferences.getInstance();
+                      await prefs.setBool('has_launched_before', true);
+
+                      // ignore: use_build_context_synchronously
                       Navigator.pushReplacement(
                         context,
                         MaterialPageRoute(
@@ -86,7 +93,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         color: primaryColor,
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
-
                       ),
                     ),
                   ),
@@ -132,7 +138,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                   _contents[index].title,
                                   textAlign: TextAlign.center,
                                   style: GoogleFonts.spaceGrotesk(
-
                                     fontWeight: FontWeight.w500, // Medium
                                     fontSize: 28,
                                     height: 42 / 28, // line-height: 42px
@@ -146,7 +151,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                   _contents[index].description,
                                   textAlign: TextAlign.center,
                                   style: GoogleFonts.spaceGrotesk(
-
                                     fontWeight: FontWeight.w400, // Regular
                                     fontSize: 15,
                                     height: 1.5,
@@ -173,7 +177,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: List.generate(
                         _contents.length,
-                            (index) => buildDot(index, context, primaryColor),
+                        (index) => buildDot(index, context, primaryColor),
                       ),
                     ),
                     const SizedBox(height: 30),
@@ -183,8 +187,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       width: double.infinity,
                       height: 55,
                       child: ElevatedButton(
-                        onPressed: () {
+                        onPressed: () async {
                           if (_currentIndex == _contents.length - 1) {
+                            // Set flag that onboarding has been completed
+                            final prefs = await SharedPreferences.getInstance();
+                            await prefs.setBool('has_launched_before', true);
+
+                            // ignore: use_build_context_synchronously
                             Navigator.pushReplacement(
                               context,
                               MaterialPageRoute(
@@ -208,11 +217,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         ),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
-                          children:  [
+                          children: [
                             Text(
                               'Next',
                               style: GoogleFonts.spaceGrotesk(
-
                                 fontWeight: FontWeight.w600,
                                 color: Colors.white,
                                 fontSize: 18,

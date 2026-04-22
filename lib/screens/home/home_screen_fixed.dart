@@ -42,7 +42,7 @@ class _HomeScreenFixedState extends State<HomeScreenFixed> {
     }
 
     return Scaffold(
-      appBar: AppBar(title: Text('Travolyo')),
+      appBar: AppBar(title: Text('Rawana')),
       body: ListView.builder(
         itemCount: apiResponse.length,
         itemBuilder: (context, blockIndex) {

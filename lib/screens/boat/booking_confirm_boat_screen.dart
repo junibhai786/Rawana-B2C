@@ -1,6 +1,7 @@
 // ignore_for_file: prefer_const_constructors, prefer_const_literals_to_create_immutables
 
 import 'package:flutter/material.dart';
+import 'package:moonbnd/app_colors.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
@@ -102,7 +103,7 @@ class _BookingConfirmedScreenForBoatState
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
       decoration: BoxDecoration(
-        color: Colors.green.withOpacity(.1),
+        color: AppColors.secondary.withOpacity(.1),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(
@@ -110,7 +111,7 @@ class _BookingConfirmedScreenForBoatState
         style: sg(
           size: 13,
           weight: FontWeight.w600,
-          color: Colors.green,
+          color: AppColors.secondary,
         ),
       ),
     );

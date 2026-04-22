@@ -12,6 +12,7 @@ import 'package:moonbnd/screens/space/space_booking_screen.dart';
 import 'package:moonbnd/widgets/popup_login.dart';
 import 'package:moonbnd/widgets/tertiary_button.dart';
 import 'package:flutter/material.dart';
+import 'package:moonbnd/app_colors.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
@@ -707,7 +708,7 @@ class _SpacePageState extends State<SpacePage> {
               Center(
                 child: Container(
                   decoration: BoxDecoration(
-                    color: const Color(0xFF05A8C7),
+                    color: AppColors.primary,
                     borderRadius: BorderRadius.circular(10.0), // Rounded corners
                   ),
                   padding: const EdgeInsets.symmetric(horizontal: 115.0,vertical: 6),
@@ -1022,7 +1023,7 @@ class _SpacePageState extends State<SpacePage> {
                               (index) => Icon(
                             Icons.star,
                             color: index < (review.rateNumber ?? 0)
-                                ? Colors.yellow // Changed from kPrimaryColor to yellow for stars
+                                ? AppColors.accent // Changed from kPrimaryColor to yellow for stars
                                 : Colors.grey,
                             size: 18,
                           ),

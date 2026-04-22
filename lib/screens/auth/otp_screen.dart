@@ -2,6 +2,7 @@ import 'dart:developer';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:moonbnd/screens/auth/newpassword.dart';
 import 'package:flutter/material.dart';
+import 'package:moonbnd/app_colors.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:get/get.dart';
@@ -93,7 +94,7 @@ class _OtpScreenState extends State<OtpScreen> {
                               selectedFillColor: Colors.grey.withOpacity(0.1),
                               inactiveColor: Colors.transparent,
                               activeColor: Colors.transparent,
-                              selectedColor: Colors.blue.withOpacity(0.3)
+                              selectedColor: AppColors.primary.withOpacity(0.3)
                           ),
                           animationDuration: Duration(milliseconds: 300),
                           enableActiveFill: true,

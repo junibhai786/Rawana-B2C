@@ -1,15 +1,29 @@
 // ignore_for_file: prefer_const_constructors, prefer_const_literals_to_create_immutables
 
 import 'package:flutter/material.dart';
+import 'package:moonbnd/app_colors.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:moonbnd/constants.dart';
 import 'package:get/get.dart';
 
 void showGuestBottomSheet(BuildContext context,
     {required int initialAdults,
     required int initialChildren,
-    required Function(int adults, int children) onSave}) {
+    required List<int> initialChildrenAges,
+    required Function(int adults, int children, List<int> childrenAges)
+        onSave}) {
   int adults = initialAdults;
   int children = initialChildren;
+  List<int> childrenAges = List<int>.from(initialChildrenAges);
+
+  // Sync childrenAges with children count
+  if (childrenAges.length < children) {
+    while (childrenAges.length < children) {
+      childrenAges.add(8);
+    }
+  } else if (childrenAges.length > children) {
+    childrenAges = childrenAges.sublist(0, children);
+  }
 
   showModalBottomSheet(
     backgroundColor: Colors.white, // Background color changed to white
@@ -22,57 +36,195 @@ void showGuestBottomSheet(BuildContext context,
       return StatefulBuilder(
         builder: (BuildContext context, StateSetter setState) {
           return Padding(
-            padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      "Guests".tr,
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
+            padding: EdgeInsets.only(
+              left: 20,
+              right: 20,
+              top: 12,
+              bottom: MediaQuery.of(context).viewInsets.bottom + 12,
+            ),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        "Guests".tr,
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                    ),
-                    IconButton(
-                      icon: Icon(Icons.close),
-                      onPressed: () => Navigator.pop(context),
-                    ),
+                      IconButton(
+                        icon: Icon(Icons.close),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                    ],
+                  ),
+                  Divider(),
+                  SizedBox(height: 10),
+                  _buildAdultsSelector(
+                    adults,
+                    (value) => setState(() => adults = value),
+                  ),
+                  Divider(),
+                  SizedBox(height: 10),
+                  _buildChildrenSelector(
+                    children,
+                    (value) {
+                      setState(() {
+                        children = value;
+                        // Sync childrenAges list with children count
+                        if (childrenAges.length < children) {
+                          while (childrenAges.length < children) {
+                            childrenAges.add(8);
+                          }
+                        } else if (childrenAges.length > children) {
+                          childrenAges = childrenAges.sublist(0, children);
+                        }
+                      });
+                    },
+                  ),
+                  // Dynamic child age rows
+                  if (children > 0) ...[
+                    Divider(),
+                    ..._buildChildAgeRows(childrenAges, setState),
                   ],
-                ),
-                Divider(),
-                SizedBox(height: 10),
-                _buildAdultsSelector(
-                  adults,
-                  (value) => setState(() => adults = value),
-                ),
-                Divider(),
-                SizedBox(height: 10),
-                _buildChildrenSelector(
-                  children,
-                  (value) => setState(() => children = value),
-                ),
-                SizedBox(height: 24),
-                Divider(),
-                _buildBottomBar(
-                  context,
-                  () {
-                    setState(() {
-                      adults = 0;
-                      children = 0;
-                    });
-                  },
-                  () {
-                    onSave(adults, children);
-                    Navigator.pop(context);
-                  },
-                ),
-              ],
+                  SizedBox(height: 24),
+                  Divider(),
+                  _buildBottomBar(
+                    context,
+                    () {
+                      setState(() {
+                        adults = 1;
+                        children = 0;
+                        childrenAges.clear();
+                      });
+                    },
+                    () {
+                      onSave(adults, children, childrenAges);
+                      Navigator.pop(context);
+                    },
+                  ),
+                ],
+              ),
             ),
           );
         },
+      );
+    },
+  );
+}
+
+// Build child age rows
+List<Widget> _buildChildAgeRows(List<int> childrenAges, StateSetter setState) {
+  return List.generate(
+    childrenAges.length,
+    (index) {
+      return Column(
+        children: [
+          Padding(
+            padding: EdgeInsets.symmetric(vertical: 10),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Child ${index + 1} Age'.tr,
+                      style: GoogleFonts.spaceGrotesk(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 15,
+                        color: const Color(0xff1D2025),
+                      ),
+                    ),
+                    Text(
+                      'Years'.tr,
+                      style: GoogleFonts.spaceGrotesk(
+                        fontSize: 12,
+                        color: const Color(0xff6B7280),
+                      ),
+                    ),
+                  ],
+                ),
+                Row(
+                  children: [
+                    // Minus button
+                    InkWell(
+                      onTap: childrenAges[index] > 0
+                          ? () {
+                              setState(() {
+                                childrenAges[index]--;
+                              });
+                            }
+                          : null,
+                      borderRadius: BorderRadius.circular(20),
+                      child: Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: childrenAges[index] > 0
+                                ? AppColors.primary
+                                : const Color(0xffE5E7EB),
+                          ),
+                        ),
+                        child: Icon(
+                          Icons.remove,
+                          size: 16,
+                          color: childrenAges[index] > 0
+                              ? AppColors.primary
+                              : const Color(0xffD1D5DB),
+                        ),
+                      ),
+                    ),
+                    // Age value
+                    SizedBox(
+                      width: 36,
+                      child: Text(
+                        '${childrenAges[index]}',
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.spaceGrotesk(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 16,
+                          color: const Color(0xff1D2025),
+                        ),
+                      ),
+                    ),
+                    // Plus button
+                    InkWell(
+                      onTap: () {
+                        setState(() {
+                          childrenAges[index]++;
+                        });
+                      },
+                      borderRadius: BorderRadius.circular(20),
+                      child: Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: AppColors.primary,
+                          ),
+                        ),
+                        child: const Icon(
+                          Icons.add,
+                          size: 16,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          if (index < childrenAges.length - 1) Divider(),
+        ],
       );
     },
   );

@@ -1,8 +1,14 @@
 class ApiUrls {
   //// production
+  ///
+  ///habib bhai
   static const baseUrl =
-      "https://travolyo.com/api/"; //"https://dentirostral-pseudoindependently-michell.ngrok-free.dev/api/";    // "https://travolyo.com/api/";
-  static const webUrl = "https://travolyo.com/admin/";
+      "https://ectomeric-unhumanely-lyndia.ngrok-free.dev/api/";
+  //"https://rawana.com/api/";
+  // "https://hebdomadally-bidirectional-marylyn.ngrok-free.dev/api/";
+  // " https://hebdomadally-bidirectional-marylyn.ngrok-free.dev";
+  //"https://rawana.com/api/"; //"https://dentirostral-pseudoindependently-michell.ngrok-free.dev/api/";    // "https://rawana.com/api/";
+  static const webUrl = "https://rawana.com/admin/";
 
   static const login = "auth/login";
   static const signup = "auth/register";
@@ -30,6 +36,13 @@ class ApiUrls {
   static const vendorhotelfacilitytype = "hotel/facilities";
   static const vendorhotelservicetpe = "hotel/service-type";
 
+  // new api
+  static const getCountries = "locations/countries";
+  static String hotelCitiesByCountry(String countryCode) =>
+      'locations/cities/$countryCode';
+  static const flightAirports = "locations/airports";
+  static const hotelLocationSearch = 'locations/search';
+
   static const updateProfile = "profile-update";
   static const deleteAccount = "delete-my-account";
   static const updateProfilePicture = "upload-profile-img";
@@ -46,7 +59,26 @@ class ApiUrls {
   static const vendorpublishcar = "vendor/car/publish";
 
   /// details
-  static const hotelDetailsEndPoint = "hotel/detail";
+  static const hotelDetailsEndPoint = "hotels/detail";
+
+  /// Build hotel detail URL with provider query param
+  static String hotelDetailUrl(String hotelId,
+      {String? provider, String? currency}) {
+    final params = <String, String>{};
+    if (provider != null && provider.isNotEmpty) {
+      params['provider'] = provider;
+    }
+    if (currency != null && currency.isNotEmpty) {
+      params['currency'] = currency;
+    }
+    final base = '${baseUrl}hotels/detail/$hotelId';
+    if (params.isEmpty) return base;
+    final query = params.entries
+        .map((e) => '${e.key}=${Uri.encodeComponent(e.value)}')
+        .join('&');
+    return '$base?$query';
+  }
+
   static const carDetailsEndPoint = "car/detail";
   static const vendorcarDetailsEndPoint = "vendor/car/details";
 
@@ -74,17 +106,27 @@ class ApiUrls {
   static const countryList = 'countries';
   static const hotelcheckout = 'checkout/me';
   static const bookinghistoryendpoint = 'me/booking-history';
-  static const hotelSearch = 'hotel/search';
+  static const hotelSearch = 'hotels/search';
+  static const hotelCheckoutEndpoint = 'hotels/checkout';
+  static const hotelBookingConfirmation = 'hotels/booking/confirmation';
+  static const hotelOrderDetails = 'hotels/order/';
   static const hotellocations = 'locations';
   static const carSearch = 'car/search';
   static const boatSearch = 'boat/search';
   static const tourSearch = 'tour/search';
   static const eventSearch = 'event/search';
   static const spaceSearch = 'space/search';
-  static const flightSearch = 'v1/flights/search';
+  static const homeAptsSearch = 'spaces/search';
+  static const flightSearch = 'flights/search';
+  static const activitiesSearch = 'activities/search';
   static const downloadInvoice = 'dowanload/invoice';
   static const flightDetailsEndPoint = 'flight/details';
   static const flightBookingDetails = 'checkout/detail';
+  static const flightPreBook = 'flights/prebook';
+  static const hotelPreBook = 'hotels/prebook';
+  static const activitiesPrebook = 'activities/prebook';
+  static const activitiesCheckout = 'activities/checkout';
+  static const activitiesOrderDetails = 'activities/order/';
   static const getvednorcartypes = 'vendor/car-type';
   static const getnotification = 'notification';
   static const getvednoraddcarfeatures = 'vendor/car-features';

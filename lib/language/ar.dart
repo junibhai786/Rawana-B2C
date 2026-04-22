@@ -526,6 +526,7 @@ Map<String, String> ar = {
   'Marine': 'بحري',
   'Independent': 'مستقل',
   'Activities': 'أنشطة',
+  'Home & Apts': 'المنازل والشقق',
   'Festival & Events': 'المهرجانات والفعاليات',
   'Special Interest': 'اهتمام خاص',
   "Successfully added to booking": "تمت الإضافة إلى الحجز بنجاح",
@@ -1325,4 +1326,240 @@ Map<String, String> ar = {
   'Spaces': 'المساحات',
   'events found': 'وجدت الأحداث',
   'Events': 'الأحداث',
+
+  // ── Authentication (Login / Sign-Up) ──────────────────────────────────
+  'Welcome Back': 'مرحباً بعودتك',
+  'Sign in to continue your journey': 'سجّل الدخول لمتابعة رحلتك',
+  'Enter your email': 'أدخل بريدك الإلكتروني',
+  "Email can't be empty": "لا يمكن أن يكون البريد الإلكتروني فارغاً",
+  'Please enter a valid email': 'يرجى إدخال بريد إلكتروني صحيح',
+  'Enter your password': 'أدخل كلمة المرور',
+  "Password can't be empty": "لا يمكن أن تكون كلمة المرور فارغة",
+  'Password must be at least 6 characters':
+      'يجب أن تكون كلمة المرور 6 أحرف على الأقل',
+  'Remember me': 'تذكرني',
+  'Sign In': 'تسجيل الدخول',
+  'Continue as Guest': 'تابع كضيف',
+  'or continue with': 'أو تابع باستخدام',
+  'Google': 'Google',
+  'Facebook': 'Facebook',
+  "Don't have an account? ": "ليس لديك حساب؟ ",
+  'By continuing, you agree to our ': 'بالمتابعة، أنت توافق على ',
+  'Terms of Service': 'شروط الخدمة',
+  ' and ': ' و ',
+  'Select Language': 'اختر اللغة',
+  'English': 'الإنجليزية',
+  'Default': 'افتراضي',
+  'Arabic': 'العربية',
+  'Create Account': 'إنشاء حساب',
+  'Start your travel journey with us': 'ابدأ رحلتك السياحية معنا',
+  'Full Name': 'الاسم الكامل',
+  'Enter your full name': 'أدخل اسمك الكامل',
+  "Name can't be empty": "لا يمكن أن يكون الاسم فارغاً",
+  'Name must be at least 2 characters': 'يجب أن يكون الاسم حرفين على الأقل',
+  'Name must contain only letters (2-40 characters)':
+      'يجب أن يحتوي الاسم على أحرف فقط (2-40 حرفاً)',
+  'Create a password': 'أنشئ كلمة مرور',
+  'Password must be at least 8 characters':
+      'يجب أن تكون كلمة المرور 8 أحرف على الأقل',
+  'Password must not exceed 32 characters':
+      'يجب ألا تتجاوز كلمة المرور 32 حرفاً',
+  'Password must contain uppercase, lowercase, number & special character':
+      'يجب أن تحتوي كلمة المرور على حروف كبيرة وصغيرة وأرقام ورموز',
+  'Confirm your password': 'تأكيد كلمة المرور',
+  "Confirm Password can't be empty": "لا يمكن أن يكون تأكيد كلمة المرور فارغاً",
+  'Passwords do not match': 'كلمتا المرور غير متطابقتين',
+  'I agree to the ': 'أوافق على ',
+  'and ': 'و ',
+  'Creating Account...': 'جارٍ إنشاء الحساب...',
+  'Please agree to Terms of Service and Privacy Policy to continue':
+      'يرجى الموافقة على شروط الخدمة وسياسة الخصوصية للمتابعة',
+  'Please enter a valid email address': 'يرجى إدخال عنوان بريد إلكتروني صحيح',
+
+  // ── Flight Tab ────────────────────────────────────────────────────────
+  'One-way': 'اتجاه واحد',
+  'Round-Trip': 'ذهاب وإياب',
+  'Departure City': 'مدينة المغادرة',
+  'Destination City': 'مدينة الوصول',
+  'Please select departure city': 'يرجى اختيار مدينة المغادرة',
+  'Please select destination city': 'يرجى اختيار مدينة الوصول',
+  'Please select a valid airport': 'يرجى اختيار مطار صحيح',
+  'Departure and destination must be different':
+      'يجب أن تختلف نقطة المغادرة عن الوجهة',
+  'Departure Date': 'تاريخ المغادرة',
+  'Required': 'مطلوب',
+  'Must be after departure': 'يجب أن يكون بعد تاريخ المغادرة',
+  'Return': 'العودة',
+  'Please select valid airports': 'يرجى اختيار مطارات صحيحة',
+  'Search Flights': 'البحث عن رحلات',
+  'Infant': 'رضيع',
+  'Under 2 years': 'أقل من سنتين',
+  'Above 12 years': 'أكثر من 12 سنة',
+  'Below 12 years': 'أقل من 12 سنة',
+  'Rooms': 'الغرف',
+  'Units': 'الوحدات',
+  'Guests & Rooms': 'الضيوف والغرف',
+  'Room 1': 'الغرفة 1',
+  'Years': 'سنوات',
+  'Available Flights': 'الرحلات المتاحة',
+  'No Flights Found': 'لا توجد رحلات',
+  "We couldn't find any flights matching your search criteria.":
+      "لم نتمكن من العثور على أي رحلات تطابق معايير البحث.",
+  'Failed to prebook flight. Please try again.':
+      'فشل الحجز المسبق. يرجى المحاولة مرة أخرى.',
+  'Please use the flights search to book':
+      'يرجى استخدام البحث عن الرحلات للحجز',
+  'No flights match your filters': 'لا توجد رحلات تطابق الفلاتر',
+  'Clear filters': 'مسح الفلاتر',
+  'dd/mm/yyyy': 'dd/mm/yyyy',
+  'Destination': 'الوجهة',
+  'Please select a destination': 'يرجى اختيار وجهة',
+  'Please select a destination first': 'يرجى اختيار وجهة أولاً',
+
+  // ── Hotel Search Screen ───────────────────────────────────────────────
+  'No Hotels Found': 'لا توجد فنادق',
+  'Try adjusting your dates or location.': 'حاول تعديل التواريخ أو الموقع.',
+  'Modify Search': 'تعديل البحث',
+  'Something went wrong': 'حدث خطأ ما',
+  'Try Again': 'حاول مجدداً',
+  'Searching...': 'جارٍ البحث...',
+  'Sort:': 'ترتيب:',
+  'PRICE PER NIGHT': 'السعر في الليلة',
+  'Up to': 'حتى',
+  'STAR RATING': 'تقييم النجوم',
+  'PROVIDER': 'المزود',
+  'Reset': 'إعادة تعيين',
+  'Apply Filters': 'تطبيق الفلاتر',
+  'SORT BY': 'ترتيب حسب',
+  'Star Rating (High to Low)': 'التقييم (من الأعلى إلى الأدنى)',
+  'Name (A \u2013 Z)': 'الاسم (أ - ي)',
+  'Any': 'الكل',
+  'Local': 'محلي',
+  'Stars': 'النجوم',
+
+  // ── Activities Screen ─────────────────────────────────────────────────
+  'Go Back': 'العودة',
+  'No Activities Found': 'لا توجد أنشطة',
+  'No Matches Found': 'لا توجد نتائج',
+  'Search Again': 'البحث مجدداً',
+  'Loading activity details...': 'جارٍ تحميل تفاصيل النشاط...',
+  'Failed to prepare booking. Please try again.':
+      'فشل تحضير الحجز. يرجى المحاولة مجدداً.',
+  'Instant': 'فوري',
+  'Per person': 'لكل شخص',
+  'No Image Available': 'لا توجد صورة',
+
+  // ── Home & Apartments Search Screen ──────────────────────────────────
+  'Select Units & Guests': 'اختر الوحدات والضيوف',
+  'Children Ages': 'أعمار الأطفال',
+  'Done': 'تم',
+  'Search Homes': 'البحث عن منازل',
+  'Search Activities': 'البحث عن أنشطة',
+  'No Homes & Apts Found': 'لا توجد منازل أو شقق',
+  'Try adjusting your dates or location': 'حاول تعديل التواريخ أو الموقع',
+  'View Home': 'عرض المنزل',
+
+  // ── Hotel Booking Confirmed Screen ────────────────────────────────────
+  'Your hotel reservation has been submitted successfully.':
+      'تم تقديم حجز الفندق بنجاح.',
+  'Booking Overview': 'ملخص الحجز',
+  'Booking code copied': 'تم نسخ كود الحجز',
+  'Rooms / Nights': 'الغرف / الليالي',
+  'Night': 'ليلة',
+  'night': 'ليلة',
+  'nights': 'ليالٍ',
+  'Guest Name': 'اسم الضيف',
+  'Total Price': 'السعر الإجمالي',
+  'Provider': 'مزود الخدمة',
+  'Payment Summary': 'ملخص الدفع',
+  'Payment Status': 'حالة الدفع',
+  'COMPLETED': 'مكتمل',
+  'Special Requests': 'طلبات خاصة',
+  'Top things to do in': 'أفضل الأنشطة في',
+
+  // ── Hotel Checkout Guest Form ────────────────────────────────────────────
+  'First Name *': 'الاسم الأول *',
+  'Customer': 'العميل',
+  'Please enter first name': 'يرجى إدخال الاسم الأول',
+  'First name must be at least 2 characters':
+      'يجب أن يتكون الاسم الأول حرفين على الأقل',
+  'Last Name *': 'اسم العائلة *',
+  'Last name': 'اسم العائلة',
+  'Please enter last name': 'يرجى إدخال اسم العائلة',
+  'Last name must be at least 2 characters':
+      'يجب أن يتكون اسم العائلة حرفين على الأقل',
+  'Email Address *': 'عنوان البريد الإلكتروني *',
+  'Please enter email address': 'يرجى إدخال عنوان البريد الإلكتروني',
+  'Phone Number *': 'رقم الهاتف *',
+  'Please enter phone number': 'يرجى إدخال رقم الهاتف',
+  'Number without country code': 'الرقم بدون كود الدولة',
+  'Credit / Debit Card': 'بطاقة ائتمان / خصم',
+  'Visa, Mastercard, Amex — powered by Stripe':
+      'فيزا، ماستركارد، أمكس — مدعوم بواسطة سترايب',
+  'N-Genius': 'N-Genius',
+  'Secure hosted checkout by Network International':
+      'دفع آمن مدار بواسطة نتورك إنترناشيونال',
+
+  // ── Home & Apts Search Result Screen ─────────────────────────────
+  'Price Range': 'نطاق السعر',
+  'No homes match your filters': 'لا توجد منازل تطابق فلترتك',
+  'home available': 'منزل متاح',
+  'homes available': 'منزلاً متاحاً',
+  'homes loaded': 'منزلاً تم تحميلها',
+
+  // ── Flight Checkout ────────────────────────────────────────────────
+  'First name is required': 'الاسم الأول مطلوب',
+  'Last name is required': 'اسم العائلة مطلوب',
+  'At least 2 characters': 'حرفان على الأقل',
+  'Email is required': 'البريد الإلكتروني مطلوب',
+  'Enter a valid email address': 'أدخل بريداً إلكترونياً صحيحاً',
+  'Passport number is required': 'رقم جواز السفر مطلوب',
+  'Include country code': 'أدخل رمز الدولة',
+  'Enter Your Email Address': 'أدخل عنوان بريدك الإلكتروني',
+  'Email address is required': 'عنوان البريد الإلكتروني مطلوب',
+  'Email address cannot exceed 20 characters':
+      'عنوان البريد لا يتجاوز 20 حرفاً',
+  'Phone number is required': 'رقم الهاتف مطلوب',
+  'Phone number cannot exceed 20 characters': 'رقم الهاتف لا يتجاوز 20 حرفاً',
+  'first name is required': 'الاسم الأول مطلوب',
+  'first name must be at least 2 characters':
+      'يجب أن يتكون الاسم الأول حرفين على الأقل',
+  'first name cannot exceed 20 characters': 'لا يتجاوز الاسم الأول 20 حرفاً',
+  'last name is required': 'اسم العائلة مطلوب',
+  'last name must be at least 2 characters':
+      'يجب أن يتكون اسم العائلة حرفين على الأقل',
+  'last name cannot exceed 20 characters': 'لا يتجاوز اسم العائلة 20 حرفاً',
+  'date of birth is required': 'تاريخ الميلاد مطلوب',
+  'nationality is required': 'الجنسية مطلوبة',
+  'passport number is required': 'رقم جواز السفر مطلوب',
+  'passport expiry is required': 'تاريخ انتهاء جواز السفر مطلوب',
+  'Processing payment...': 'جاري معالجة الدفع...',
+  'Unexpected server response. Please try again.':
+      'استجابة غير متوقعة من الخادم. حاول مجدداً.',
+  'Payment cancelled.': 'تم إلغاء الدفع.',
+  'Booking confirmed!': 'تم تأكيد الحجز!',
+  'Network error. Please try again.': 'خطأ في الشبكة. حاول مجدداً.',
+
+  // ── Flight Booking Screen ───────────────────────────────────────────
+  'Please accept the Terms & Conditions to proceed.':
+      'يرجى قبول الشروط والأحكام للمتابعة.',
+  'Failed to submit booking. Please try again.':
+      'فشل إرسال الحجز. حاول مجدداً.',
+
+  // ── General / Shared ────────────────────────────────────────────────
+  'An error occurred. Please try again.': 'حدث خطأ. حاول مجدداً.',
+
+  // ── Home Screen / Shared UI ──────────────────────────────────────
+  'Search Hotels': 'البحث عن فنادق',
+  'Explore World': 'استكشف العالم',
+  'Search destination': 'ابحث عن وجهة',
+  'Featured Destinations': 'وجهات مميزة',
+  'View all': 'عرض الكل',
+  'Best Seller': 'الأكثر مبيعاً',
+  'Wishlist': 'قائمة الرغبات',
+  'Participants': 'المشاركون',
+  'Units & Guests': 'الوحدات والضيوف',
+  'Unit': 'وحدة',
+  'Adult': 'بالغ',
+  'Child': 'طفل',
 };

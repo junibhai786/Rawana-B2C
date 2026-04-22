@@ -1,10 +1,10 @@
-import 'dart:convert';
 import 'dart:developer';
 
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:http/http.dart' as http;
+
 import 'package:moonbnd/Provider/auth_provider.dart';
+import 'package:moonbnd/constants.dart';
 import 'package:moonbnd/Provider/boat_provider.dart';
 import 'package:moonbnd/Provider/event_provider.dart';
 import 'package:moonbnd/Provider/flight_provider.dart';
@@ -12,7 +12,7 @@ import 'package:moonbnd/Provider/home_provider.dart';
 import 'package:moonbnd/Provider/singup_vendor_provider.dart';
 import 'package:moonbnd/Provider/space_provider.dart';
 import 'package:moonbnd/Provider/tour_provider.dart';
-import 'package:moonbnd/data_models/Imagecarouselwithdots.dart';
+
 import 'package:moonbnd/data_models/boat_data_item.dart';
 import 'package:moonbnd/data_models/car_data_Item.dart';
 import 'package:moonbnd/data_models/event_data.dart';
@@ -23,47 +23,63 @@ import 'package:moonbnd/modals/boat_list_model.dart';
 import 'package:moonbnd/modals/car_list_model.dart';
 import 'package:moonbnd/modals/event_list_model.dart';
 import 'package:moonbnd/modals/flight_list_model.dart';
+import 'package:moonbnd/modals/flight_airport_model.dart';
 import 'package:moonbnd/modals/home_item.dart' as home_item;
 import 'package:moonbnd/modals/hotel_list_model.dart';
 import 'package:moonbnd/modals/space_list_model.dart';
 import 'package:moonbnd/modals/tour_list_model.dart';
-import 'package:moonbnd/screens/auth/signin_screen.dart';
+
 import 'package:moonbnd/screens/boat/boat_detail_screen.dart';
 import 'package:moonbnd/screens/boat/boat_filter_screen.dart';
-import 'package:moonbnd/screens/boat/boat_map_screen.dart';
+
 import 'package:moonbnd/screens/car/car_details_screen.dart';
 import 'package:moonbnd/screens/car/filter_car_screen.dart';
-import 'package:moonbnd/screens/car/map_screen_car.dart';
+
 import 'package:moonbnd/screens/event/event_detail_screen.dart';
 import 'package:moonbnd/screens/event/event_filter.dart';
-import 'package:moonbnd/screens/event/event_map_screen.dart';
+
 import 'package:moonbnd/screens/flight/filter_flight_screen.dart';
 import 'package:moonbnd/screens/hotel/filter_screen.dart';
-import 'package:moonbnd/screens/flight/flight_details_screen.dart';
-import 'package:moonbnd/screens/hotel/map_screen.dart';
+import 'package:moonbnd/screens/flight/flight_checkout_screen.dart';
+
 import 'package:moonbnd/screens/space/filter_space_screen.dart';
-import 'package:moonbnd/screens/space/map_screen_space.dart';
+
 import 'package:moonbnd/screens/space/space_details_screen.dart';
 import 'package:moonbnd/screens/tour/filter_tour_screen.dart';
-import 'package:moonbnd/screens/tour/map_screen_tour.dart';
+
 import 'package:moonbnd/screens/tour/tour_details_screen.dart';
-import 'package:moonbnd/widgets/popup_login.dart';
+import 'package:moonbnd/widgets/flight_shimmer_card.dart';
+import 'package:moonbnd/widgets/activity_search_widget.dart';
+
 import 'package:flutter/material.dart';
+import 'package:moonbnd/app_colors.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../constants.dart';
+import '../../Provider/hotel_country_provider.dart';
+import '../../Provider/hotel_city_provider.dart';
+import '../../Provider/search_hotel_provider.dart';
+import '../../Provider/hotel_destination_provider.dart';
+import '../../widgets/hotel_country_selection_sheet.dart';
+import '../../widgets/hotel_city_selection_sheet.dart';
+import '../../Provider/flight_airport_provider.dart';
+import '../../widgets/flight_airport_selection_sheet.dart';
+import '../../widgets/hotel_destination_selection_sheet.dart';
 import '../../data_models/home_screen_data.dart';
 import '../../widgets/card_widget.dart';
 import '../hotel/search_hotel_screen.dart';
 import '../hotel/room_detail_screen.dart';
-import '../hotel/search_screen.dart';
-import '../notification/notifications_screen.dart';
+import '../home_apts/home_apts_search_screen.dart';
 
-import 'package:intl/intl.dart';
-import 'package:get/get.dart';
+import '../notification/notifications_screen.dart';
+import '../../Provider/currency_provider.dart';
+import '../../services/location_service.dart';
+import 'package:moonbnd/language/language_controller.dart';
+
+import 'package:flutter_easyloading/flutter_easyloading.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -75,11 +91,17 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen>
     with SingleTickerProviderStateMixin {
   bool isLoading = false;
+  bool _isInitialFetchDone = false; // guard against duplicate startup fetches
   //zeeshan
   String selectedSort = 'Recommended'.tr;
   DateTime? _checkInDate;
   DateTime? _checkOutDate;
   int _guestCount = 1;
+  int _hotelAdultCount = 1;
+  int _hotelChildCount = 0;
+  int _hotelRoomCount = 1;
+  List<int> _childrenAges = []; // Store ages for each child
+  String _selectedCountry = '';
   int? _selectedCity = 0;
   int? fromWhereLocation = 0;
   int? toWhereLocation = 0;
@@ -92,24 +114,68 @@ class _HomeScreenState extends State<HomeScreen>
   bool _isRoundTrip = true;
   DateTime? _flightDepartureDate;
   DateTime? _flightReturnDate;
-  int _passengerCount = 1;
+  int _adultCount = 1;
+  int _childCount = 0;
+  int _infantCount = 0;
+  String _cabinClass = 'Economy';
   String _departureCity = '';
   String _destinationCity = '';
   // Store ONLY IATA codes - no location IDs
   String? _departureIataCode;
   String? _destinationIataCode;
+  // Track if auto-detection has been done for the Flight tab
+  bool _flightLocationAutoDetected = false;
+  // Flight search loading state
+  bool _isFlightSearchLoading = false;
+  // Hotel search loading state
+  bool _isHotelSearchLoading = false;
 
-  @override
+  // ── Tab data caching & guards ────────────────────────────────────────────
+  /// Tracks which tabs have already loaded their data (prevent re-fetch on revisit)
+  Map<int, bool> _tabDataLoaded = {
+    0: false, // Explore
+    1: false, // Hotels
+    2: false, // Tours
+    3: false, // Spaces
+    4: false, // Cars
+    5: false, // Events
+    6: false, // Flights (no auto-load)
+    7: false, // Boats
+    8: false, // Activities (no API call)
+    9: false, // Home & Apts (no API call)
+  };
+
+  /// Tracks which tabs are currently fetching (prevent concurrent API calls)
+  Map<int, bool> _isTabFetching = {
+    0: false,
+    1: false,
+    2: false,
+    3: false,
+    4: false,
+    5: false,
+    6: false,
+    7: false,
+    8: false,
+    9: false,
+  };
+
   void dispose() {
     final homeProvider = Provider.of<HomeProvider>(context, listen: false);
     homeProvider.tabController?.dispose();
+    _countryController.dispose();
     super.dispose();
   }
 
   final TextEditingController _cityController = TextEditingController();
+  final TextEditingController _countryController = TextEditingController();
+  final TextEditingController _hotelDestinationController =
+      TextEditingController();
   final TextEditingController _fromCityController = TextEditingController();
   final TextEditingController _toCityController = TextEditingController();
   final ScrollController _cityScrollController = ScrollController();
+
+  final LanguageController _languageController = Get.find<LanguageController>();
+  late String _currentLanguage;
 
   // Form keys for validation
   final GlobalKey<FormState> _flightFormKey = GlobalKey<FormState>();
@@ -120,133 +186,385 @@ class _HomeScreenState extends State<HomeScreen>
   @override
   void initState() {
     super.initState();
+    _currentLanguage = _languageController.langLocal;
     final homeProvider = Provider.of<HomeProvider>(context, listen: false);
 
-    homeProvider.fetchLocations(); // ✅ preload cities
     homeProvider.tabController =
         TabController(length: categoryDatas.length, vsync: this);
 
-    // Add listener to handle both tap and swipe
+    // Animation listener: fires every frame during a swipe so the highlight
+    // updates in real-time (rounds the continuous float to nearest tab index).
+    homeProvider.tabController?.animation?.addListener(() {
+      if (!_isInitialFetchDone) return;
+      final animValue = homeProvider.tabController?.animation?.value ?? 0.0;
+      final nearestIndex = animValue.round().clamp(0, categoryDatas.length - 1);
+      final nearestCategoryId = categoryDatas[nearestIndex].id;
+      final homeProvider2 = Provider.of<HomeProvider>(context, listen: false);
+      if (homeProvider2.selectedHomeTab != nearestCategoryId) {
+        homeProvider2.setSelectedHomeTab(nearestCategoryId, animate: false);
+      }
+    });
+
+    // Index listener: fires when swipe fully settles — triggers data fetch.
     homeProvider.tabController?.addListener(() {
+      if (!_isInitialFetchDone) return;
       if (homeProvider.tabController?.indexIsChanging == false) {
-        // Tab animation completed, fetch data for new tab
-        _fetchDataForTab(homeProvider.tabController?.index ?? 0);
+        final tabIndex = homeProvider.tabController?.index ?? 0;
+        final categoryId = tabIndex < categoryDatas.length
+            ? categoryDatas[tabIndex].id
+            : categoryDatas.first.id;
+        _fetchDataForTab(categoryId, animate: false);
       }
     });
 
     setState(() {
       isLoading = true;
     });
-    Provider.of<VendorAuthProvider>(context, listen: false)
-        .fetchunreadnotificationcount()
-        .then((value) {});
+    // TODO: Re-enable when notification feature is active
+    // Provider.of<VendorAuthProvider>(context, listen: false)
+    //     .fetchunreadnotificationcount()
+    //     .then((value) {});
 
     Provider.of<AuthProvider>(context, listen: false).getMe().then((value) {
-      setState(() {
-        isLoading = false;
-        _fetchDataForTab(0);
-      });
-    });
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      // Set initial tab based on HomeProvider
-      final homeProvider = Provider.of<HomeProvider>(context, listen: false);
-      _fetchDataForTab(homeProvider.selectedHomeTab);
-    });
-  }
-
-  Future _fetchDataForTab(int index) async {
-    setState(() {
-      isLoading = true;
-      Provider.of<HomeProvider>(context, listen: false)
-          .setSelectedHomeTab(index);
-    });
-
-    switch (index) {
-      case 0:
-        await Provider.of<HomeProvider>(context, listen: false)
-            .homelistapi(index)
-            .then((_) {
-          setState(() {
-            isLoading = false;
-          });
-        });
-        break;
-      case 1:
-        // ignore: use_build_context_synchronously
-        await Provider.of<HomeProvider>(context, listen: false)
-            .hotellistapi(index, searchParams: {}).then((_) {
-          setState(() {
-            isLoading = false;
-          });
-        });
-        break;
-      case 2:
-        // ignore: use_build_context_synchronously
-        await Provider.of<TourProvider>(context, listen: false)
-            .tourlistapi(index, searchParams: {}).then((_) {
-          setState(() {
-            isLoading = false;
-          });
-        });
-        break;
-      case 3:
-        // ignore: use_build_context_synchronously
-        await Provider.of<SpaceProvider>(context, listen: false)
-            .spacelistapi(index, searchParams: {}).then((_) {
-          setState(() {
-            isLoading = false;
-          });
-        });
-        break;
-      case 4:
-        // ignore: use_build_context_synchronously
-        await Provider.of<HomeProvider>(context, listen: false)
-            .carlistapi(index, searchParams: {}).then((_) {
-          setState(() {
-            isLoading = false;
-          });
-        });
-        break;
-      case 5:
-        // ignore: use_build_context_synchronously
-        await Provider.of<EventProvider>(context, listen: false)
-            .eventlistapi(index, searchParams: {}).then((_) {
-          setState(() {
-            isLoading = false;
-          });
-        });
-        break;
-      case 6:
-        // Flight search requires mandatory parameters, so skip auto-loading
-        // User must use the search form to initiate a search
+      if (mounted) {
         setState(() {
           isLoading = false;
         });
-        break;
-      case 7:
-        // ignore: use_build_context_synchronously
-        await Provider.of<BoatProvider>(context, listen: false)
-            .boatlistapi(index, searchParams: {}).then((_) {
-          setState(() {
-            isLoading = false;
-          });
+        // Fetch the first active tab (Hotels, id: 1) — single startup fetch
+        _fetchDataForTab(categoryDatas.first.id).then((_) {
+          if (mounted) {
+            setState(() {
+              _isInitialFetchDone = true;
+            });
+          }
         });
-        break;
+      }
+    });
+
+    // Move fetchLocations to post-frame callback to avoid setState() during build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        homeProvider.fetchLocations(); // preload cities after first frame
+        // Removed duplicate _fetchDataForTab call — handled in getMe().then() above
+      }
+    });
+  }
+
+  void _showLanguageBottomSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (BuildContext ctx) {
+        return SizedBox(
+          height: 220,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Text(
+                  'Select Language'.tr,
+                  style: GoogleFonts.spaceGrotesk(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: ListTile(
+                  title: Text('English'.tr, style: GoogleFonts.spaceGrotesk()),
+                  trailing: _currentLanguage == 'English'
+                      ? Text('Default'.tr,
+                          style: const TextStyle(color: AppColors.primary))
+                      : null,
+                  shape: RoundedRectangleBorder(
+                    side: BorderSide(
+                        color: _currentLanguage == 'English'
+                            ? Colors.grey
+                            : Colors.transparent,
+                        width: 1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  onTap: () {
+                    setState(() {
+                      _currentLanguage = 'English';
+                      _languageController.changeLanguage('en');
+                    });
+                    Navigator.pop(ctx);
+                  },
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: ListTile(
+                  title: Text('Arabic'.tr, style: GoogleFonts.spaceGrotesk()),
+                  trailing: _currentLanguage == 'Arabic'.tr
+                      ? const Icon(Icons.check, color: AppColors.primary)
+                      : null,
+                  shape: RoundedRectangleBorder(
+                    side: BorderSide(
+                        color: _currentLanguage == 'Arabic'.tr
+                            ? Colors.grey
+                            : Colors.transparent,
+                        width: 1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  onTap: () {
+                    setState(() {
+                      _currentLanguage = 'Arabic'.tr;
+                      _languageController.changeLanguage('ar');
+                    });
+                    Navigator.pop(ctx);
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Future _fetchDataForTab(int index, {bool animate = true}) async {
+    // ────────────────────────────────────────────────────────────
+    // GUARD 1: If data already loaded AND not fetching, skip entirely
+    // ────────────────────────────────────────────────────────────
+    if (_tabDataLoaded[index] == true && _isTabFetching[index] == false) {
+      log('[_fetchDataForTab] ✓ Tab $index already loaded, skipping API call');
+      // Just update tab selection without showing loader
+      Provider.of<HomeProvider>(context, listen: false)
+          .setSelectedHomeTab(index, animate: animate);
+      return;
+    }
+
+    // ────────────────────────────────────────────────────────────
+    // GUARD 2: If already fetching this tab, prevent concurrent request
+    // ────────────────────────────────────────────────────────────
+    if (_isTabFetching[index] == true) {
+      log('[_fetchDataForTab] ⚠ Tab $index fetch already in progress, ignoring duplicate');
+      return;
+    }
+
+    // Mark as fetching and show loader ONLY if we're doing API call
+    if (mounted) {
+      setState(() {
+        _isTabFetching[index] = true;
+        isLoading = true;
+        Provider.of<HomeProvider>(context, listen: false)
+            .setSelectedHomeTab(index, animate: animate);
+      });
+    }
+
+    log('[▶] _fetchDataForTab START: index=$index, animate=$animate');
+
+    try {
+      switch (index) {
+        case 0:
+          // Explore
+          log('[_fetchDataForTab] case 0: Explore');
+          await Provider.of<HomeProvider>(context, listen: false)
+              .homelistapi(index);
+          break;
+
+        case 1:
+          // ===== HOTELS (Index 1) =====
+          // CRITICAL FIX: Do NOT call API on plain tab revisit
+          log('[_fetchDataForTab] case 1: Hotels check...');
+          final homeProvider =
+              Provider.of<HomeProvider>(context, listen: false);
+          final hasHotelData = homeProvider.hotelListPerCategory[index] != null;
+          log('[_fetchDataForTab] Hotels has cached data: $hasHotelData');
+
+          // Check for valid search parameters before triggering API
+          // We only auto-call if the user seems to have entered something (e.g. from a deep link or back nav)
+          bool hasValidSearchParams = (_selectedCountry.isNotEmpty) ||
+              (_selectedCity != null && _selectedCity != 0) ||
+              _checkInDate != null ||
+              _checkOutDate != null;
+
+          if (!hasHotelData && hasValidSearchParams) {
+            // Only call API on FIRST load if valid parameters are present
+            log('[_fetchDataForTab] → Calling hotellistapi (first load with parameters)');
+            await homeProvider.hotellistapi(index, searchParams: {
+              if (_selectedCountry.isNotEmpty) 'country': _selectedCountry,
+              if (_selectedCity != null && _selectedCity != 0)
+                'city': _selectedCity,
+              if (_checkInDate != null) 'check_in': _checkInDate,
+              if (_checkOutDate != null) 'check_out': _checkOutDate,
+              'guests': _hotelAdultCount,
+            });
+          } else if (!hasHotelData) {
+            // First load: No search parameters yet. Skip API call and show form only.
+            log('[_fetchDataForTab] → First load: No search parameters yet. Skipping API call.');
+          } else {
+            // Skip API on revisit - use cached data
+            log('[_fetchDataForTab] → Skipping hotellistapi (using cache)');
+          }
+          break;
+
+        case 2:
+          // Tours
+          log('[_fetchDataForTab] case 2: Tours');
+          final tourProvider =
+              Provider.of<TourProvider>(context, listen: false);
+          if (tourProvider.tourListPerCategory[index] == null) {
+            await tourProvider.tourlistapi(index, searchParams: {});
+          }
+          break;
+
+        case 3:
+          // Spaces
+          log('[_fetchDataForTab] case 3: Spaces');
+          final spaceProvider =
+              Provider.of<SpaceProvider>(context, listen: false);
+          if (spaceProvider.spaceListPerCategory[index] == null) {
+            await spaceProvider.spacelistapi(index, searchParams: {});
+          }
+          break;
+
+        case 4:
+          // Cars
+          log('[_fetchDataForTab] case 4: Cars');
+          final homeProviderCars =
+              Provider.of<HomeProvider>(context, listen: false);
+          if (homeProviderCars.carListPerCategory[index] == null) {
+            await homeProviderCars.carlistapi(index, searchParams: {});
+          }
+          break;
+
+        case 5:
+          // Events
+          log('[_fetchDataForTab] case 5: Events');
+          final eventProvider =
+              Provider.of<EventProvider>(context, listen: false);
+          if (eventProvider.eventListPerCategory[index] == null) {
+            await eventProvider.eventlistapi(index, searchParams: {});
+          }
+          break;
+
+        case 6:
+          // Flight - auto-detect departure airport silently in background
+          log('[_fetchDataForTab] case 6: Flight (starting background auto-detect)');
+          if (!_flightLocationAutoDetected) {
+            // Fire and forget: don't await, let it run in background
+            _autoDetectDepartureAirport();
+          }
+          break;
+
+        case 7:
+          // Boats
+          log('[_fetchDataForTab] case 7: Boats');
+          final boatProvider =
+              Provider.of<BoatProvider>(context, listen: false);
+          if (boatProvider.boatListPerCategory[index] == null) {
+            await boatProvider.boatlistapi(index, searchParams: {});
+          }
+          break;
+
+        case 8:
+          // Activities - UI only, no API call
+          log('[_fetchDataForTab] case 8: Activities (no API)');
+          break;
+      }
+
+      // Mark as successfully loaded
+      if (mounted) {
+        setState(() {
+          _tabDataLoaded[index] = true;
+          _isTabFetching[index] = false;
+          isLoading = false;
+        });
+      }
+      log('[✓] _fetchDataForTab COMPLETE: index=$index');
+    } catch (e) {
+      log('[✗] _fetchDataForTab ERROR: index=$index, error=$e');
+      if (mounted) {
+        setState(() {
+          _isTabFetching[index] = false;
+          isLoading = false;
+        });
+      }
+      // Continue without re-throwing to keep UI responsive
     }
   }
 //zeeshan
 
   // Flight Passenger Selector
   void _showPassengerSelector() async {
-    final int? result = await showModalBottomSheet<int>(
+    final Map<String, int>? result =
+        await showModalBottomSheet<Map<String, int>>(
       context: context,
       isScrollControlled: true,
       builder: (context) {
-        int tempPassengerCount = _passengerCount;
+        int tempAdult = _adultCount;
+        int tempChild = _childCount;
+        int tempInfant = _infantCount;
 
         return StatefulBuilder(
           builder: (context, modalSetState) {
+            Widget _counterRow(
+              String label,
+              String subtitle,
+              int count,
+              VoidCallback onDecrement,
+              VoidCallback onIncrement,
+            ) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          label.tr,
+                          style: GoogleFonts.spaceGrotesk(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 15,
+                            color: Colors.black,
+                          ),
+                        ),
+                        Text(
+                          subtitle.tr,
+                          style: GoogleFonts.spaceGrotesk(
+                            fontSize: 12,
+                            color: Colors.black54,
+                          ),
+                        ),
+                      ],
+                    ),
+                    Row(
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.remove_circle_outline),
+                          onPressed: count > 0 ? onDecrement : null,
+                        ),
+                        SizedBox(
+                          width: 28,
+                          child: Text(
+                            '$count',
+                            textAlign: TextAlign.center,
+                            style: GoogleFonts.spaceGrotesk(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 18,
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.add_circle_outline),
+                          onPressed: onIncrement,
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              );
+            }
+
             return Padding(
               padding: EdgeInsets.only(
                 bottom: MediaQuery.of(context).viewInsets.bottom,
@@ -274,68 +592,56 @@ class _HomeScreenState extends State<HomeScreen>
                       ),
                     ],
                   ),
+                  const Divider(),
 
-                  const SizedBox(height: 20),
-
-                  /// Passenger Counter
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Passengers'.tr,
-                        style: GoogleFonts.spaceGrotesk(
-                          color: Colors.black54,
-                          fontWeight: FontWeight.w500,
-                          fontSize: 15,
-                        ),
-                      ),
-                      Row(
-                        children: [
-                          IconButton(
-                            icon: const Icon(Icons.remove_circle_outline),
-                            onPressed: tempPassengerCount > 1
-                                ? () {
-                                    modalSetState(() {
-                                      tempPassengerCount--;
-                                    });
-                                  }
-                                : null,
-                          ),
-                          Text(
-                            '$tempPassengerCount',
-                            style: GoogleFonts.spaceGrotesk(
-                              fontWeight: FontWeight.w700,
-                              fontSize: 18,
-                            ),
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.add_circle_outline),
-                            onPressed: () {
-                              modalSetState(() {
-                                tempPassengerCount++;
-                              });
-                            },
-                          ),
-                        ],
-                      ),
-                    ],
+                  _counterRow(
+                    'Adult',
+                    '18+ years',
+                    tempAdult,
+                    () => modalSetState(() {
+                      if (tempAdult > 1) tempAdult--;
+                    }),
+                    () => modalSetState(() => tempAdult++),
+                  ),
+                  _counterRow(
+                    'Child',
+                    '0–17 years',
+                    tempChild,
+                    () => modalSetState(() {
+                      if (tempChild > 0) tempChild--;
+                    }),
+                    () => modalSetState(() => tempChild++),
+                  ),
+                  _counterRow(
+                    'Infant',
+                    'Under 2 years',
+                    tempInfant,
+                    () => modalSetState(() {
+                      if (tempInfant > 0) tempInfant--;
+                    }),
+                    () => modalSetState(() => tempInfant++),
                   ),
 
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 16),
 
                   /// Apply Button
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
                       onPressed: () {
-                        Navigator.pop(context, tempPassengerCount);
+                        Navigator.pop(context, {
+                          'adults': tempAdult,
+                          'children': tempChild,
+                          'infants': tempInfant,
+                        });
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF05A8C7),
+                        backgroundColor: kPrimaryColor,
                       ),
                       child: Text('Apply'.tr),
                     ),
                   ),
+                  const SizedBox(height: 16),
                 ],
               ),
             );
@@ -344,99 +650,423 @@ class _HomeScreenState extends State<HomeScreen>
       },
     );
 
-    /// ✅ Update parent state AFTER modal closes
     if (result != null) {
       setState(() {
-        _passengerCount = result;
+        _adultCount = result['adults'] ?? 1;
+        _childCount = result['children'] ?? 0;
+        _infantCount = result['infants'] ?? 0;
+
+        // Log passenger selection
+        log('[PassengerSelector] ✅ User applied passenger counts:');
+        log('[PassengerSelector] Adults: $_adultCount');
+        log('[PassengerSelector] Children: $_childCount');
+        log('[PassengerSelector] Infants: $_infantCount');
+        log('[PassengerSelector] Total: ${_adultCount + _childCount + _infantCount}');
       });
     }
   }
 
   void _showGuestSelector() async {
-    final int? result = await showModalBottomSheet<int>(
+    final Map<String, dynamic>? result =
+        await showModalBottomSheet<Map<String, dynamic>>(
       context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
       builder: (context) {
-        int tempGuestCount = _guestCount;
+        int tempAdult = _hotelAdultCount;
+        int tempChild = _hotelChildCount;
+        int tempRoom = _hotelRoomCount;
+        // Initialize temp child ages, preserving existing ages and padding with zeros
+        List<int> tempChildAges = List<int>.from(_childrenAges);
+        // Sync size of tempChildAges with tempChild count
+        if (tempChildAges.length < tempChild) {
+          // Add default ages for new children
+          while (tempChildAges.length < tempChild) {
+            tempChildAges.add(8); // Default age
+          }
+        } else if (tempChildAges.length > tempChild) {
+          // Remove extra ages
+          tempChildAges = tempChildAges.sublist(0, tempChild);
+        }
+
         return StatefulBuilder(
-          builder: (context, setState) {
-            return Container(
-              padding: EdgeInsets.all(20),
+          builder: (context, modalSetState) {
+            Widget _guestCounterRow(
+              String label,
+              String subtitle,
+              int count,
+              int minVal,
+              VoidCallback onDecrement,
+              VoidCallback onIncrement,
+            ) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          label.tr,
+                          style: GoogleFonts.spaceGrotesk(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 15,
+                            color: kHeadingColor,
+                          ),
+                        ),
+                        Text(
+                          subtitle.tr,
+                          style: GoogleFonts.spaceGrotesk(
+                            fontSize: 12,
+                            color: kMutedColor,
+                          ),
+                        ),
+                      ],
+                    ),
+                    Row(
+                      children: [
+                        InkWell(
+                          onTap: count > minVal
+                              ? () {
+                                  modalSetState(() {
+                                    count--;
+                                    // Sync all state variables based on label
+                                    if (label == 'Children') {
+                                      tempChild = count;
+                                      if (tempChildAges.isNotEmpty) {
+                                        tempChildAges.removeLast();
+                                      }
+                                    } else if (label == 'Adults') {
+                                      tempAdult = count;
+                                    } else if (label == 'Rooms') {
+                                      tempRoom = count;
+                                    }
+                                  });
+                                }
+                              : null,
+                          borderRadius: BorderRadius.circular(20),
+                          child: Container(
+                            width: 32,
+                            height: 32,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: count > minVal
+                                    ? kPrimaryColor
+                                    : const Color(0xffE5E7EB),
+                              ),
+                            ),
+                            child: Icon(
+                              Icons.remove,
+                              size: 16,
+                              color: count > minVal
+                                  ? kPrimaryColor
+                                  : const Color(0xffD1D5DB),
+                            ),
+                          ),
+                        ),
+                        SizedBox(
+                          width: 36,
+                          child: Text(
+                            '$count',
+                            textAlign: TextAlign.center,
+                            style: GoogleFonts.spaceGrotesk(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 16,
+                              color: kHeadingColor,
+                            ),
+                          ),
+                        ),
+                        InkWell(
+                          onTap: () {
+                            modalSetState(() {
+                              count++;
+                              // Update all state variables based on label
+                              if (label == 'Children') {
+                                tempChild = count;
+                                tempChildAges
+                                    .add(8); // Default age for new child
+                              } else if (label == 'Adults') {
+                                tempAdult = count;
+                              } else if (label == 'Rooms') {
+                                tempRoom = count;
+                              }
+                            });
+                          },
+                          borderRadius: BorderRadius.circular(20),
+                          child: Container(
+                            width: 32,
+                            height: 32,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: kPrimaryColor,
+                              ),
+                            ),
+                            child: const Icon(
+                              Icons.add,
+                              size: 16,
+                              color: kPrimaryColor,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              );
+            }
+
+            // Dynamic child age rows builder - using plus/minus buttons like web version
+            List<Widget> _buildChildAgeRows() {
+              if (tempChild == 0) {
+                return [];
+              }
+
+              print(
+                  '[DEBUG] Child age rows rendering. Children count: $tempChild, Ages list length: ${tempChildAges.length}');
+
+              return List.generate(
+                tempChild,
+                (index) {
+                  // Ensure tempChildAges has enough elements
+                  if (index >= tempChildAges.length) {
+                    tempChildAges.add(8); // Default age
+                  }
+                  print(
+                      '[DEBUG] Building child age row $index, current age: ${tempChildAges[index]}');
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Child ${index + 1} Age'.tr,
+                              style: GoogleFonts.spaceGrotesk(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 15,
+                                color: kHeadingColor,
+                              ),
+                            ),
+                            Text(
+                              'Years'.tr,
+                              style: GoogleFonts.spaceGrotesk(
+                                fontSize: 12,
+                                color: kMutedColor,
+                              ),
+                            ),
+                          ],
+                        ),
+                        Row(
+                          children: [
+                            // Minus button
+                            InkWell(
+                              onTap: tempChildAges[index] > 0
+                                  ? () {
+                                      print(
+                                          '[DEBUG] Child $index age decreased from ${tempChildAges[index]}');
+                                      modalSetState(() {
+                                        tempChildAges[index]--;
+                                      });
+                                    }
+                                  : null,
+                              borderRadius: BorderRadius.circular(20),
+                              child: Container(
+                                width: 32,
+                                height: 32,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: tempChildAges[index] > 0
+                                        ? kPrimaryColor
+                                        : const Color(0xffE5E7EB),
+                                  ),
+                                ),
+                                child: Icon(
+                                  Icons.remove,
+                                  size: 16,
+                                  color: tempChildAges[index] > 0
+                                      ? kPrimaryColor
+                                      : const Color(0xffD1D5DB),
+                                ),
+                              ),
+                            ),
+                            // Age value
+                            SizedBox(
+                              width: 36,
+                              child: Text(
+                                '${tempChildAges[index]}',
+                                textAlign: TextAlign.center,
+                                style: GoogleFonts.spaceGrotesk(
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 16,
+                                  color: kHeadingColor,
+                                ),
+                              ),
+                            ),
+                            // Plus button
+                            InkWell(
+                              onTap: () {
+                                print(
+                                    '[DEBUG] Child $index age increased from ${tempChildAges[index]}');
+                                modalSetState(() {
+                                  tempChildAges[index]++;
+                                });
+                              },
+                              borderRadius: BorderRadius.circular(20),
+                              child: Container(
+                                width: 32,
+                                height: 32,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: kPrimaryColor,
+                                  ),
+                                ),
+                                child: const Icon(
+                                  Icons.add,
+                                  size: 16,
+                                  color: kPrimaryColor,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              );
+            }
+
+            return Padding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+                left: 20,
+                right: 20,
+                top: 20,
+              ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text('Guests'.tr,
-                          style: GoogleFonts.spaceGrotesk(
-                            color: Colors.black,
-                            fontWeight: FontWeight.w700,
-                            fontSize: 18,
-                          )),
-                      IconButton(
-                        icon: Icon(
-                          Icons.close,
-                          color: Colors.redAccent,
-                        ),
-                        onPressed: () => Navigator.pop(context),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 20),
+                  // Header
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        'Guests'.tr,
+                        'Guests & Rooms'.tr,
                         style: GoogleFonts.spaceGrotesk(
-                          color: Colors.black54,
-                          fontWeight: FontWeight.w500,
-                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 18,
+                          color: kHeadingColor,
                         ),
                       ),
-                      Row(
-                        children: [
-                          IconButton(
-                            icon: Icon(Icons.remove_circle_outline),
-                            onPressed: tempGuestCount > 1
-                                ? () {
-                                    setState(() {
-                                      tempGuestCount--;
-                                    });
-                                  }
-                                : null,
-                          ),
-                          Text('$tempGuestCount',
-                              style: GoogleFonts.spaceGrotesk(
-                                color: Colors.black,
-                                fontWeight: FontWeight.w700,
-                                fontSize: 18,
-                              )),
-                          IconButton(
-                            icon: Icon(Icons.add_circle_outline),
-                            onPressed: () {
-                              setState(() {
-                                tempGuestCount++;
-                              });
-                            },
-                          ),
-                        ],
+                      IconButton(
+                        icon: const Icon(Icons.close, color: Colors.redAccent),
+                        onPressed: () => Navigator.pop(context),
                       ),
                     ],
                   ),
-                  SizedBox(height: 20),
+
+                  // Room badge
+                  Container(
+                    margin: const EdgeInsets.only(top: 4, bottom: 8),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: const Color(0xffE0F7FA),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      'Room 1'.tr,
+                      style: GoogleFonts.spaceGrotesk(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13,
+                        color: kPrimaryColor,
+                      ),
+                    ),
+                  ),
+
+                  const Divider(),
+
+                  _guestCounterRow(
+                    'Adults',
+                    'Above 12 years',
+                    tempAdult,
+                    1,
+                    () => modalSetState(() => tempAdult--),
+                    () => modalSetState(() => tempAdult++),
+                  ),
+                  const Divider(height: 1),
+                  _guestCounterRow(
+                    'Children',
+                    'Below 12 years',
+                    tempChild,
+                    0,
+                    () {
+                      modalSetState(() {
+                        if (tempChild > 0) {
+                          tempChild--;
+                          if (tempChildAges.isNotEmpty) {
+                            tempChildAges.removeLast();
+                          }
+                        }
+                      });
+                    },
+                    () {
+                      modalSetState(() {
+                        tempChild++;
+                        tempChildAges.add(0); // Default age for new child
+                      });
+                    },
+                  ),
+                  const Divider(height: 1),
+                  _guestCounterRow(
+                    'Rooms',
+                    'Units',
+                    tempRoom,
+                    1,
+                    () => modalSetState(() => tempRoom--),
+                    () => modalSetState(() => tempRoom++),
+                  ),
+
+                  // Dynamic child age rows - plus/minus buttons matching web
+                  if (tempChild > 0) ...[
+                    const Divider(height: 1),
+                    ..._buildChildAgeRows(),
+                  ],
+
+                  const SizedBox(height: 20),
+
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
                       onPressed: () {
-                        Navigator.pop(context, tempGuestCount);
+                        Navigator.pop(context, {
+                          'adults': tempAdult,
+                          'children': tempChild,
+                          'rooms': tempRoom,
+                          'childrenAges': tempChildAges,
+                        });
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Color(0xFF05A8C7),
+                        backgroundColor: kPrimaryColor,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        minimumSize: const Size(double.infinity, 48),
                       ),
                       child: Text('Apply'.tr),
                     ),
                   ),
+                  const SizedBox(height: 8),
                 ],
               ),
             );
@@ -447,7 +1077,11 @@ class _HomeScreenState extends State<HomeScreen>
 
     if (result != null) {
       setState(() {
-        _guestCount = result;
+        _hotelAdultCount = result['adults'] ?? 1;
+        _hotelChildCount = result['children'] ?? 0;
+        _hotelRoomCount = result['rooms'] ?? 1;
+        _childrenAges = List<int>.from(result['childrenAges'] ?? []);
+        _guestCount = _hotelAdultCount + _hotelChildCount;
       });
     }
   }
@@ -520,7 +1154,7 @@ class _HomeScreenState extends State<HomeScreen>
                             provider.locations.isEmpty
                         ? const Center(child: CircularProgressIndicator())
                         : provider.filteredLocations.isEmpty
-                            ? const Center(child: Text('No locations found'))
+                            ? Center(child: Text('No locations found'.tr))
                             : ListView.builder(
                                 controller: _cityScrollController,
                                 itemCount: provider.filteredLocations.length +
@@ -637,109 +1271,145 @@ class _HomeScreenState extends State<HomeScreen>
   //     },
   //   );
   // }
+  /// Hotel-specific country selection — delegates to [HotelCountrySelectionSheet].
+  void _showCountrySelection(BuildContext context) {
+    HotelCountrySelectionSheet.show(
+      context,
+      onCountrySelected: (country) {
+        _countryController.text = country.countryName;
+        // Clear city selection whenever country changes
+        _cityController.clear();
+        context.read<HotelCityProvider>().clearOnCountryChange();
+      },
+    );
+  }
+
   /// Airporttttttttt
   void _showAirportSelection(BuildContext context,
       {required bool isDeparture}) {
-    final flightProvider = context.read<FlightProvider>();
-    flightProvider.clearAirportResults();
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (_) {
-        return Consumer<FlightProvider>(
-          builder: (context, provider, _) {
-            return Container(
-              padding: const EdgeInsets.all(16),
-              height: MediaQuery.of(context).size.height * 0.8,
-              child: Column(
-                children: [
-                  Text(
-                    isDeparture
-                        ? 'Select Departure Airport'.tr
-                        : 'Select Destination Airport'.tr,
-                    style: const TextStyle(
-                        fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 16),
-
-                  /// 🔍 Search
-                  TextField(
-                    autofocus: true,
-                    onChanged: (value) {
-                      provider.searchAirports(value);
-                    },
-                    decoration: InputDecoration(
-                      hintText: 'Search Airport or IATA code...'.tr,
-                      prefixIcon: const Icon(Icons.search),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  /// Result List
-                  Expanded(
-                    child: provider.isSearchingAirports
-                        ? const Center(child: CircularProgressIndicator())
-                        : (provider.airportResults.isEmpty &&
-                                provider.lastSearchKeyword.length >= 2)
-                            ? Center(
-                                child: Text("No airport found".tr),
-                              )
-                            : ListView.builder(
-                                itemCount: provider.airportResults.length,
-                                itemBuilder: (context, index) {
-                                  final airport =
-                                      provider.airportResults[index];
-                                  final cityName =
-                                      airport.address?.cityName ?? '';
-                                  final iataCode = airport.iataCode ?? '';
-                                  final name = airport.name ?? '';
-
-                                  return ListTile(
-                                    leading: const Icon(Icons.local_airport),
-                                    title: Text('$cityName ($iataCode)'),
-                                    subtitle: Text(name),
-                                    onTap: () {
-                                      setState(() {
-                                        if (isDeparture) {
-                                          _departureCity =
-                                              '$cityName ($iataCode)';
-                                          _departureIataCode = iataCode;
-                                          _fromCityController.text =
-                                              _departureCity;
-                                          // Debug log for FROM airport selection
-                                          print(
-                                              'FROM selected IATA: $iataCode');
-                                        } else {
-                                          _destinationCity =
-                                              '$cityName ($iataCode)';
-                                          _destinationIataCode = iataCode;
-                                          _toCityController.text =
-                                              _destinationCity;
-                                          // Debug log for TO airport selection
-                                          print('TO selected IATA: $iataCode');
-                                        }
-                                      });
-                                      Navigator.pop(context);
-                                    },
-                                  );
-                                },
-                              ),
-                  ),
-                ],
-              ),
-            );
-          },
-        );
+    FlightAirportSelectionSheet.show(
+      context,
+      isDeparture: isDeparture,
+      otherSelectedIata:
+          isDeparture ? _destinationIataCode : _departureIataCode,
+      onAirportSelected: (airport) {
+        final displayText = '${airport.city} (${airport.iataCode})';
+        setState(() {
+          if (isDeparture) {
+            _departureCity = displayText;
+            _departureIataCode = airport.iataCode;
+            _fromCityController.text = displayText;
+          } else {
+            _destinationCity = displayText;
+            _destinationIataCode = airport.iataCode;
+            _toCityController.text = displayText;
+          }
+        });
       },
     );
+  }
+
+  /// Clear all flight search form fields
+  void _clearFlightSearchForm() {
+    setState(() {
+      // Clear text controllers
+      _fromCityController.clear();
+      _toCityController.clear();
+
+      // Clear flight search variables
+      _departureCity = '';
+      _destinationCity = '';
+      _departureIataCode = null;
+      _destinationIataCode = null;
+      _flightDepartureDate = null;
+      _flightReturnDate = null;
+
+      // Reset passenger counts
+      _adultCount = 1;
+      _childCount = 0;
+      _infantCount = 0;
+
+      // Reset cabin class and trip type
+      _cabinClass = 'Economy';
+      _isRoundTrip = true;
+
+      // Reset form validation state
+      _flightValidationAttempted = false;
+    });
+  }
+
+  /// Auto-detect departure airport silently in the background
+  /// Does NOT block UI or show any loading indicators
+  Future<void> _autoDetectDepartureAirport() async {
+    // Prevent multiple auto-detection attempts
+    if (_flightLocationAutoDetected) {
+      log('[Flight AutoDetect] Already auto-detected, skipping');
+      return;
+    }
+
+    log('[Flight AutoDetect] Starting silent background auto-detection...');
+
+    // Mark as attempted to prevent duplicate calls
+    if (mounted) {
+      setState(() {
+        _flightLocationAutoDetected = true;
+      });
+    }
+
+    // Schedule auto-detection to run after the current frame
+    // This ensures the UI remains interactive while detection runs
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      try {
+        // Get flight airports from provider
+        final airportProvider =
+            Provider.of<FlightAirportProvider>(context, listen: false);
+
+        // Ensure airports are fetched
+        if (airportProvider.airports.isEmpty) {
+          log('[Flight AutoDetect] Fetching airports...');
+          await airportProvider.fetchAirports();
+        }
+
+        if (airportProvider.airports.isEmpty) {
+          log('[Flight AutoDetect] No airports available');
+          return;
+        }
+
+        // Detect nearest airport based on current location
+        final detectedIataCode = await LocationService.detectNearestAirportCode(
+          airportProvider.airports,
+        );
+
+        if (detectedIataCode != null) {
+          // Find the airport model for display
+          FlightAirportModel? detectedAirport;
+          try {
+            detectedAirport = airportProvider.airports.firstWhere(
+              (airport) => airport.iataCode == detectedIataCode,
+            );
+          } catch (e) {
+            log('[Flight AutoDetect] Airport not found: $detectedIataCode');
+            detectedAirport = null;
+          }
+
+          if (detectedAirport != null && mounted) {
+            setState(() {
+              final displayText =
+                  '${detectedAirport!.city} (${detectedAirport.iataCode})';
+              _departureCity = displayText;
+              _departureIataCode = detectedAirport.iataCode;
+              _fromCityController.text = displayText;
+            });
+
+            log('[Flight AutoDetect] ✓ Auto-detected: ${detectedAirport.iataCode} (${detectedAirport.city})');
+          }
+        } else {
+          log('[Flight AutoDetect] Could not detect location (permission denied or unavailable)');
+        }
+      } catch (e) {
+        log('[Flight AutoDetect] Error: $e');
+      }
+    });
   }
 
   Widget _buildFlightSearchSection(BuildContext context) {
@@ -751,9 +1421,18 @@ class _HomeScreenState extends State<HomeScreen>
         ? '${_flightReturnDate!.day}/${_flightReturnDate!.month}/${_flightReturnDate!.year}'
         : 'dd/mm/yyyy'.tr;
 
-    String passengerText = _passengerCount == 1
-        ? '1 Passenger'.tr
-        : '$_passengerCount Passengers'.tr;
+    final int _totalPassengers = _adultCount + _childCount + _infantCount;
+    String passengerText;
+    {
+      final parts = <String>[];
+      if (_adultCount > 0)
+        parts.add('$_adultCount ${'Adult'.tr}${_adultCount > 1 ? 's' : ''}');
+      if (_childCount > 0)
+        parts.add('$_childCount ${'Child'.tr}${_childCount > 1 ? 'ren' : ''}');
+      if (_infantCount > 0)
+        parts.add('$_infantCount ${'Infant'.tr}${_infantCount > 1 ? 's' : ''}');
+      passengerText = parts.isEmpty ? '1 ${'Adult'.tr}' : parts.join(', ');
+    }
 
     return Padding(
       padding: const EdgeInsets.only(left: 20, right: 20, bottom: 20),
@@ -776,6 +1455,7 @@ class _HomeScreenState extends State<HomeScreen>
                       _isRoundTrip = false;
                     });
                   },
+                  icon: Icons.arrow_forward,
                 ),
                 SizedBox(width: 12),
                 _buildTripTypeButton(
@@ -786,6 +1466,7 @@ class _HomeScreenState extends State<HomeScreen>
                       _isRoundTrip = true;
                     });
                   },
+                  icon: Icons.compare_arrows,
                 ),
               ],
             ),
@@ -799,8 +1480,8 @@ class _HomeScreenState extends State<HomeScreen>
                   'From'.tr,
                   style: GoogleFonts.spaceGrotesk(
                     fontSize: 13,
-                    fontWeight: FontWeight.w400,
-                    color: Color(0xff1D2025),
+                    fontWeight: FontWeight.w500,
+                    color: kHeadingColor,
                   ),
                 ),
                 SizedBox(height: 4),
@@ -830,15 +1511,15 @@ class _HomeScreenState extends State<HomeScreen>
                           hintText: 'Departure City'.tr,
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8),
-                            borderSide: BorderSide(color: Color(0xffE5E7EB)),
+                            borderSide: BorderSide(color: kBorderColor),
                           ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8),
-                            borderSide: BorderSide(color: Color(0xffE5E7EB)),
+                            borderSide: BorderSide(color: kBorderColor),
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8),
-                            borderSide: BorderSide(color: Color(0xFF05A8C7)),
+                            borderSide: BorderSide(color: kPrimaryColor),
                           ),
                           errorBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8),
@@ -849,24 +1530,24 @@ class _HomeScreenState extends State<HomeScreen>
                             borderSide: BorderSide(color: Colors.red),
                           ),
                           contentPadding: EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 14),
+                              horizontal: 16, vertical: 14),
                           prefixIcon: Padding(
                             padding: const EdgeInsets.all(12.0),
                             child: SvgPicture.asset(
                               'assets/icons/location.svg',
                               width: 20,
                               height: 20,
-                              color: Color(0xff6B7280),
+                              color: kMutedColor,
                             ),
                           ),
                           hintStyle: GoogleFonts.spaceGrotesk(
                             fontSize: 14,
-                            color: const Color(0xff6B7280),
+                            color: kMutedColor,
                           ),
                         ),
                         style: GoogleFonts.spaceGrotesk(
                           fontSize: 14,
-                          color: const Color(0xff1D2025),
+                          color: kHeadingColor,
                         ),
                       ),
                     ],
@@ -884,8 +1565,8 @@ class _HomeScreenState extends State<HomeScreen>
                   'To'.tr,
                   style: GoogleFonts.spaceGrotesk(
                     fontSize: 13,
-                    fontWeight: FontWeight.w400,
-                    color: Color(0xff1D2025),
+                    fontWeight: FontWeight.w500,
+                    color: kHeadingColor,
                   ),
                 ),
                 SizedBox(height: 4),
@@ -921,15 +1602,15 @@ class _HomeScreenState extends State<HomeScreen>
                           hintText: 'Destination City'.tr,
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8),
-                            borderSide: BorderSide(color: Color(0xffE5E7EB)),
+                            borderSide: BorderSide(color: kBorderColor),
                           ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8),
-                            borderSide: BorderSide(color: Color(0xffE5E7EB)),
+                            borderSide: BorderSide(color: kBorderColor),
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8),
-                            borderSide: BorderSide(color: Color(0xFF05A8C7)),
+                            borderSide: BorderSide(color: kPrimaryColor),
                           ),
                           errorBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8),
@@ -940,24 +1621,24 @@ class _HomeScreenState extends State<HomeScreen>
                             borderSide: BorderSide(color: Colors.red),
                           ),
                           contentPadding: EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 14),
+                              horizontal: 16, vertical: 14),
                           prefixIcon: Padding(
                             padding: const EdgeInsets.all(12.0),
                             child: SvgPicture.asset(
                               'assets/icons/location.svg',
                               width: 20,
                               height: 20,
-                              color: Color(0xff6B7280),
+                              color: kMutedColor,
                             ),
                           ),
                           hintStyle: GoogleFonts.spaceGrotesk(
                             fontSize: 14,
-                            color: const Color(0xff6B7280),
+                            color: kMutedColor,
                           ),
                         ),
                         style: GoogleFonts.spaceGrotesk(
                           fontSize: 14,
-                          color: const Color(0xff1D2025),
+                          color: kHeadingColor,
                         ),
                       ),
 
@@ -1012,8 +1693,8 @@ class _HomeScreenState extends State<HomeScreen>
                   'Departure Date'.tr,
                   style: GoogleFonts.spaceGrotesk(
                     fontSize: 13,
-                    fontWeight: FontWeight.w400,
-                    color: Color(0xff1D2025),
+                    fontWeight: FontWeight.w500,
+                    color: kHeadingColor,
                   ),
                 ),
                 SizedBox(height: 4),
@@ -1055,7 +1736,7 @@ class _HomeScreenState extends State<HomeScreen>
                                     border: Border.all(
                                         color: formFieldState.hasError
                                             ? Colors.red
-                                            : Color(0xffE5E7EB)),
+                                            : kBorderColor),
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: Row(
@@ -1064,7 +1745,7 @@ class _HomeScreenState extends State<HomeScreen>
                                         'assets/icons/calendar.svg',
                                         width: 20,
                                         height: 20,
-                                        color: Color(0xff6B7280),
+                                        color: kMutedColor,
                                       ),
                                       SizedBox(width: 8),
                                       Text(
@@ -1072,8 +1753,8 @@ class _HomeScreenState extends State<HomeScreen>
                                         style: GoogleFonts.spaceGrotesk(
                                           fontSize: 14,
                                           color: _flightDepartureDate != null
-                                              ? Color(0xff1D2025)
-                                              : Color(0xff6B7280),
+                                              ? kHeadingColor
+                                              : kMutedColor,
                                         ),
                                       ),
                                     ],
@@ -1124,11 +1805,21 @@ class _HomeScreenState extends State<HomeScreen>
                                     final DateTime? picked =
                                         await showDatePicker(
                                       context: context,
-                                      initialDate: _flightDepartureDate ??
-                                          DateTime.now(),
-                                      firstDate: _flightDepartureDate ??
-                                          DateTime.now(),
+                                      initialDate: _flightDepartureDate != null
+                                          ? _flightDepartureDate!
+                                              .add(const Duration(days: 1))
+                                          : DateTime.now(),
+                                      firstDate: DateTime.now(),
                                       lastDate: DateTime(2100),
+                                      selectableDayPredicate: (DateTime day) {
+                                        // If departure date is selected, only allow dates after it
+                                        if (_flightDepartureDate != null) {
+                                          return day
+                                              .isAfter(_flightDepartureDate!);
+                                        }
+                                        // If departure not selected, allow all dates
+                                        return true;
+                                      },
                                     );
                                     if (picked != null) {
                                       setState(() {
@@ -1145,7 +1836,7 @@ class _HomeScreenState extends State<HomeScreen>
                                       border: Border.all(
                                           color: formFieldState.hasError
                                               ? Colors.red
-                                              : Color(0xffE5E7EB)),
+                                              : kBorderColor),
                                       borderRadius: BorderRadius.circular(8),
                                     ),
                                     child: Row(
@@ -1154,7 +1845,7 @@ class _HomeScreenState extends State<HomeScreen>
                                           'assets/icons/calendar.svg',
                                           width: 20,
                                           height: 20,
-                                          color: Color(0xff6B7280),
+                                          color: kMutedColor,
                                         ),
                                         SizedBox(width: 8),
                                         Text(
@@ -1164,8 +1855,8 @@ class _HomeScreenState extends State<HomeScreen>
                                           style: GoogleFonts.spaceGrotesk(
                                             fontSize: 14,
                                             color: _flightReturnDate != null
-                                                ? Color(0xff1D2025)
-                                                : Color(0xff6B7280),
+                                                ? kHeadingColor
+                                                : kMutedColor,
                                           ),
                                         ),
                                       ],
@@ -1203,8 +1894,8 @@ class _HomeScreenState extends State<HomeScreen>
                   'Passengers'.tr,
                   style: GoogleFonts.spaceGrotesk(
                     fontSize: 13,
-                    fontWeight: FontWeight.w400,
-                    color: Color(0xff1D2025),
+                    fontWeight: FontWeight.w500,
+                    color: kHeadingColor,
                   ),
                 ),
                 SizedBox(height: 4),
@@ -1214,7 +1905,7 @@ class _HomeScreenState extends State<HomeScreen>
                     height: 47,
                     padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     decoration: BoxDecoration(
-                      border: Border.all(color: Color(0xffE5E7EB)),
+                      border: Border.all(color: kBorderColor),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Row(
@@ -1223,7 +1914,7 @@ class _HomeScreenState extends State<HomeScreen>
                           'assets/icons/user.svg',
                           width: 20,
                           height: 20,
-                          color: Color(0xff6B7280),
+                          color: kMutedColor,
                         ),
                         SizedBox(width: 8),
                         Expanded(
@@ -1231,7 +1922,7 @@ class _HomeScreenState extends State<HomeScreen>
                             passengerText,
                             style: GoogleFonts.spaceGrotesk(
                               fontSize: 14,
-                              color: Color(0xff1D2025),
+                              color: kHeadingColor,
                             ),
                           ),
                         ),
@@ -1241,114 +1932,148 @@ class _HomeScreenState extends State<HomeScreen>
                 ),
               ],
             ),
+            SizedBox(height: 12),
+
+            // Cabin Class field
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Cabin'.tr,
+                  style: GoogleFonts.spaceGrotesk(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    color: kHeadingColor,
+                  ),
+                ),
+                SizedBox(height: 4),
+                DropdownButtonFormField<String>(
+                  value: _cabinClass,
+                  onChanged: (value) {
+                    if (value != null) {
+                      setState(() {
+                        _cabinClass = value;
+                      });
+                    }
+                  },
+                  decoration: InputDecoration(
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: kBorderColor),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: kBorderColor),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: kPrimaryColor),
+                    ),
+                    contentPadding:
+                        EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  ),
+                  style: GoogleFonts.spaceGrotesk(
+                    fontSize: 14,
+                    color: kHeadingColor,
+                  ),
+                  icon:
+                      const Icon(Icons.keyboard_arrow_down, color: kMutedColor),
+                  items: [
+                    'Economy',
+                    'Premium Economy',
+                    'Business',
+                    'First Class',
+                  ].map((cabin) {
+                    return DropdownMenuItem<String>(
+                      value: cabin,
+                      child: Text(cabin.tr),
+                    );
+                  }).toList(),
+                ),
+              ],
+            ),
             SizedBox(height: 24),
 
             // Search Button
             Container(
               width: double.infinity,
-              height: 48,
+              height: 52,
               child: ElevatedButton(
-                onPressed: () {
-                  // Trigger validation
-                  setState(() {
-                    _flightValidationAttempted = true;
-                  });
+                onPressed: _isFlightSearchLoading
+                    ? null
+                    : () {
+                        // Trigger validation
+                        setState(() {
+                          _flightValidationAttempted = true;
+                        });
 
-                  // Check if form is valid
-                  if (!_flightFormKey.currentState!.validate()) {
-                    return; // Block search if validation fails
-                  }
+                        // Check if form is valid
+                        if (!_flightFormKey.currentState!.validate()) {
+                          return; // Block search if validation fails
+                        }
 
-                  // Validate IATA codes
-                  if (_departureIataCode == null ||
-                      _destinationIataCode == null) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Please select valid airports'.tr),
-                        backgroundColor: Colors.red,
-                      ),
-                    );
-                    return;
-                  }
+                        // Validate IATA codes
+                        if (_departureIataCode == null ||
+                            _destinationIataCode == null) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Please select valid airports'.tr),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                          return;
+                        }
 
-                  if (_departureIataCode == _destinationIataCode) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                            'Departure and destination must be different'.tr),
-                        backgroundColor: Colors.red,
-                      ),
-                    );
-                    return;
-                  }
+                        if (_departureIataCode == _destinationIataCode) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                  'Departure and destination must be different'
+                                      .tr),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                          return;
+                        }
 
-                  final flightProvider =
-                      Provider.of<FlightProvider>(context, listen: false);
+                        // Build search parameters with IATA codes
+                        final searchParams = {
+                          'from_where': _departureIataCode,
+                          'to_where': _destinationIataCode,
+                          'start': _flightDepartureDate,
+                          if (_isRoundTrip && _flightReturnDate != null)
+                            'return_date': _flightReturnDate,
+                          'trip_search_type':
+                              _isRoundTrip ? 'round_trip' : 'one_way',
+                          'seat_type': {
+                            'adults': _adultCount,
+                            'children': _childCount,
+                            'infants': _infantCount,
+                          },
+                          'cabin_class': _cabinClass,
+                        };
 
-                  // Build search parameters with IATA codes
-                  final searchParams = {
-                    'from_where': _departureIataCode,
-                    'to_where': _destinationIataCode,
-                    'start': _flightDepartureDate,
-                    if (_isRoundTrip && _flightReturnDate != null)
-                      'return_date': _flightReturnDate,
-                    'trip_search_type': _isRoundTrip ? 'round_trip' : 'one_way',
-                    'seat_type': {'adults': _passengerCount},
-                  };
+                        // Navigate immediately — FlightListItem handles the API call and shows shimmer
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => FlightListItem(
+                              flightList: FlightList(),
+                              searchParams: searchParams,
+                              adultCount: _adultCount,
+                              childCount: _childCount,
+                              infantCount: _infantCount,
+                              isRoundTrip: _isRoundTrip,
+                            ),
+                          ),
+                        );
 
-                  // Debug log before API call
-                  print('Flight Search Params: $searchParams');
-
-                  // Call flight search API
-                  flightProvider
-                      .flightlistapi(2, searchParams: searchParams)
-                      .then((result) {
-                    log('✈️ API Response Received');
-                    log('   Flight results: ${result?.data?.length ?? 0} flights');
-                    if (result == null ||
-                        result.data == null ||
-                        result.data!.isEmpty) {
-                      log('⚠️ WARNING: No flights found in response');
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content:
-                              Text('No flights found for selected route'.tr),
-                          backgroundColor: Colors.orange,
-                        ),
-                      );
-                    }
-                    setState(() {
-                      isLoading = false;
-                    });
-
-                    // Navigate after API response
-                    final flightList =
-                        flightProvider.flightListPerCategory[2] ?? FlightList();
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) =>
-                            FlightListItem(flightList: flightList),
-                      ),
-                    );
-                  }).catchError((error) {
-                    log('❌ Flight Search API Error: $error');
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content:
-                            Text('Flight search failed. Please try again.'.tr),
-                        backgroundColor: Colors.red,
-                      ),
-                    );
-                    setState(() {
-                      isLoading = false;
-                    });
-                  });
-                },
+                        _clearFlightSearchForm();
+                      },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Color(0xFF05A8C7),
+                  backgroundColor: kPrimaryColor,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(10),
                   ),
                   elevation: 0,
                 ),
@@ -1380,30 +2105,39 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
-  Widget _buildTripTypeButton(
-      String title, bool isSelected, VoidCallback onTap) {
+  Widget _buildTripTypeButton(String title, bool isSelected, VoidCallback onTap,
+      {IconData? icon}) {
     return Expanded(
       child: GestureDetector(
         onTap: onTap,
         child: Container(
           height: 48,
           decoration: BoxDecoration(
-            color: isSelected ? Color(0xFF05A8C7) : Color(0xffF1F5F9),
+            color: isSelected ? kPrimaryColor : kSurfaceColor,
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
-              color: isSelected ? Color(0xFF05A8C7) : Colors.transparent,
+              color: isSelected ? kPrimaryColor : Colors.transparent,
             ),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              SizedBox(width: 8),
+              if (icon != null) ...[
+                const SizedBox(width: 4),
+                Icon(
+                  icon,
+                  size: 16,
+                  color: isSelected ? Colors.white : kHeadingColor,
+                ),
+                const SizedBox(width: 6),
+              ] else
+                const SizedBox(width: 8),
               Text(
                 title.tr,
                 style: GoogleFonts.spaceGrotesk(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
-                  color: isSelected ? Colors.white : Color(0xff1D2025),
+                  color: isSelected ? Colors.white : kHeadingColor,
                 ),
               ),
             ],
@@ -1415,7 +2149,6 @@ class _HomeScreenState extends State<HomeScreen>
 
 //zeshan
   Widget _buildHotelSearchSection(BuildContext context) {
-    // Calculate the text values directly
     String checkInText = _checkInDate != null
         ? '${_checkInDate!.day}/${_checkInDate!.month}/${_checkInDate!.year}'
         : 'dd/mm/yyyy'.tr;
@@ -1424,15 +2157,42 @@ class _HomeScreenState extends State<HomeScreen>
         ? '${_checkOutDate!.day}/${_checkOutDate!.month}/${_checkOutDate!.year}'
         : 'dd/mm/yyyy'.tr;
 
-    String guestText =
-        _guestCount == 1 ? '1 Guest'.tr : '$_guestCount Guests'.tr;
+    final String guestSummary =
+        '$_hotelRoomCount ${'Unit'.tr}${_hotelRoomCount > 1 ? 's' : ''} · $_hotelAdultCount ${'Adult'.tr}${_hotelAdultCount > 1 ? 's' : ''} · $_hotelChildCount ${'Child'.tr}${_hotelChildCount != 1 ? 'ren' : ''}';
+
+    // Shared border style helper
+    OutlineInputBorder _border(Color color) => OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: BorderSide(color: color),
+        );
+
+    // Shared read-only field decoration
+    InputDecoration _fieldDecoration({
+      required String hint,
+      required Widget prefixIcon,
+      bool hasError = false,
+    }) =>
+        InputDecoration(
+          hintText: hint,
+          border: _border(kBorderColor),
+          enabledBorder: _border(kBorderColor),
+          focusedBorder: _border(kPrimaryColor),
+          errorBorder: _border(Colors.red),
+          focusedErrorBorder: _border(Colors.red),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          prefixIcon: Padding(
+            padding: const EdgeInsets.all(12.0),
+            child: prefixIcon,
+          ),
+          hintStyle: GoogleFonts.spaceGrotesk(
+            fontSize: 14,
+            color: kMutedColor,
+          ),
+        );
 
     return Padding(
-      padding: const EdgeInsets.only(
-        left: 20,
-        right: 20,
-        bottom: 20,
-      ),
+      padding: const EdgeInsets.only(left: 20, right: 20, bottom: 20),
       child: Form(
         key: _hotelFormKey,
         autovalidateMode: _hotelValidationAttempted
@@ -1441,391 +2201,405 @@ class _HomeScreenState extends State<HomeScreen>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // ── Destination field ──────────────────────────────────────────
             Text(
-              'Where to?'.tr,
+              'Destination'.tr,
               style: GoogleFonts.spaceGrotesk(
                 fontSize: 13,
-                fontWeight: FontWeight.w400,
-                color: Color(0xff1D2025),
+                fontWeight: FontWeight.w500,
+                color: kHeadingColor,
               ),
             ),
-            SizedBox(height: 12),
-
-            // City/Destination Field
-            GestureDetector(
-              onTap: () => _showCitySelection(context),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  TextFormField(
-                    controller: _cityController,
-                    readOnly: true,
-                    onTap: () => _showCitySelection(context),
-                    validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
-                        return 'Please select a city'.tr;
-                      }
-                      if (_selectedCity == null || _selectedCity == 0) {
-                        return 'Please select a valid city'.tr;
-                      }
-                      return null;
-                    },
-                    decoration: InputDecoration(
-                      hintText: 'City or destination'.tr,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(color: Color(0xffE5E7EB)),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(color: Color(0xffE5E7EB)),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(color: Color(0xFF05A8C7)),
-                      ),
-                      errorBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(color: Colors.red),
-                      ),
-                      focusedErrorBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(color: Colors.red),
-                      ),
-                      contentPadding:
-                          EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-                      prefixIcon: Padding(
-                        padding: const EdgeInsets.all(12.0),
-                        child: SvgPicture.asset(
-                          'assets/icons/location.svg',
-                          width: 20,
-                          height: 20,
-                          color: const Color(0xff6B7280),
-                        ),
-                      ),
-                      hintStyle: GoogleFonts.spaceGrotesk(
-                        fontSize: 14,
-                        color: const Color(0xff6B7280),
-                      ),
+            const SizedBox(height: 4),
+            Consumer<HotelDestinationProvider>(
+              builder: (context, destProvider, _) {
+                return TextFormField(
+                  controller: _hotelDestinationController,
+                  readOnly: true,
+                  validator: (_) {
+                    if (!destProvider.hasValidHotelDestination) {
+                      return 'Please select a destination'.tr;
+                    }
+                    return null;
+                  },
+                  onTap: () {
+                    // Open the hotel destination selection sheet
+                    HotelDestinationSelectionSheet.show(
+                      context,
+                      onDestinationSelected: (destination) {
+                        _hotelDestinationController.text =
+                            destination.displayName ?? '';
+                      },
+                    );
+                  },
+                  decoration: _fieldDecoration(
+                    hint: 'Search destination'.tr,
+                    prefixIcon: Icon(
+                      Icons.search,
+                      color: kMutedColor,
+                      size: 20,
                     ),
-                    style: GoogleFonts.spaceGrotesk(
-                      fontSize: 14,
-                      color: const Color(0xff1D2025),
-                    ),
+                  ).copyWith(
+                    suffixIcon: _hotelDestinationController.text.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.clear,
+                                size: 18, color: kMutedColor),
+                            onPressed: () {
+                              _hotelDestinationController.clear();
+                              destProvider.clearHotelDestination();
+                            },
+                          )
+                        : null,
                   ),
-                ],
-              ),
+                  style: GoogleFonts.spaceGrotesk(
+                    fontSize: 14,
+                    color: kHeadingColor,
+                  ),
+                );
+              },
             ),
 
-            SizedBox(height: 12),
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Column(
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            const SizedBox(height: 12),
+
+            // ── Check-in / Check-out row ────────────────────────────────────
+            Row(
+              children: [
+                // Check-in
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         'Check-in'.tr,
                         style: GoogleFonts.spaceGrotesk(
                           fontSize: 13,
-                          fontWeight: FontWeight.w400,
-                          color: Color(0xff1D2025),
+                          fontWeight: FontWeight.w500,
+                          color: kHeadingColor,
                         ),
                       ),
-                      Padding(
-                        padding: const EdgeInsets.only(left: 30),
-                        child: Text(
-                          'Check-out'.tr,
-                          style: GoogleFonts.spaceGrotesk(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w400,
-                            color: Color(0xff1D2025),
-                          ),
-                        ),
+                      const SizedBox(height: 4),
+                      FormField<DateTime>(
+                        initialValue: _checkInDate,
+                        validator: (_) {
+                          if (_checkInDate == null) return 'Required'.tr;
+                          return null;
+                        },
+                        builder: (formFieldState) {
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              GestureDetector(
+                                onTap: () async {
+                                  final DateTime? picked = await showDatePicker(
+                                    context: context,
+                                    initialDate: DateTime.now(),
+                                    firstDate: DateTime.now(),
+                                    lastDate: DateTime(2100),
+                                  );
+                                  if (picked != null) {
+                                    setState(() {
+                                      _checkInDate = picked;
+                                      formFieldState.didChange(picked);
+                                    });
+                                  }
+                                },
+                                child: Container(
+                                  height: 47,
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 12, vertical: 8),
+                                  decoration: BoxDecoration(
+                                    border: Border.all(
+                                        color: formFieldState.hasError
+                                            ? Colors.red
+                                            : kBorderColor),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      SvgPicture.asset(
+                                        'assets/icons/calendar.svg',
+                                        width: 16,
+                                        height: 16,
+                                        color: kMutedColor,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: Text(
+                                          checkInText,
+                                          style: GoogleFonts.spaceGrotesk(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w500,
+                                            color: _checkInDate != null
+                                                ? kHeadingColor
+                                                : kMutedColor,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              if (formFieldState.hasError)
+                                Padding(
+                                  padding:
+                                      const EdgeInsets.only(left: 4, top: 4),
+                                  child: Text(
+                                    formFieldState.errorText ?? '',
+                                    style: const TextStyle(
+                                        color: Colors.red, fontSize: 11),
+                                  ),
+                                ),
+                            ],
+                          );
+                        },
                       ),
-                      SizedBox(height: 4),
                     ],
-                  )
-                ],
+                  ),
+                ),
+
+                const SizedBox(width: 8),
+
+                // Check-out
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Check-out'.tr,
+                        style: GoogleFonts.spaceGrotesk(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                          color: kHeadingColor,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      FormField<DateTime>(
+                        initialValue: _checkOutDate,
+                        validator: (_) {
+                          if (_checkOutDate == null) return 'Required'.tr;
+                          if (_checkInDate != null &&
+                              _checkOutDate != null &&
+                              (_checkOutDate!.isBefore(_checkInDate!) ||
+                                  _checkOutDate!
+                                      .isAtSameMomentAs(_checkInDate!))) {
+                            return 'After check-in'.tr;
+                          }
+                          return null;
+                        },
+                        builder: (formFieldState) {
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              GestureDetector(
+                                onTap: () async {
+                                  final DateTime? picked = await showDatePicker(
+                                    context: context,
+                                    initialDate: _checkInDate != null
+                                        ? _checkInDate!
+                                            .add(const Duration(days: 1))
+                                        : DateTime.now(),
+                                    firstDate: DateTime.now(),
+                                    lastDate: DateTime(2100),
+                                    // selectableDayPredicate: (DateTime day) {
+                                    //   // If check-in is selected, only allow dates after check-in
+                                    //   if (_checkInDate != null) {
+                                    //     return day.isAfter(_checkInDate!);
+                                    //   }
+                                    //   // If check-in not selected, allow all dates
+                                    //   return true;
+                                    // },
+                                  );
+                                  if (picked != null) {
+                                    setState(() {
+                                      _checkOutDate = picked;
+                                      formFieldState.didChange(picked);
+                                    });
+                                  }
+                                },
+                                child: Container(
+                                  height: 47,
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 12, vertical: 8),
+                                  decoration: BoxDecoration(
+                                    border: Border.all(
+                                        color: formFieldState.hasError
+                                            ? Colors.red
+                                            : kBorderColor),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      SvgPicture.asset(
+                                        'assets/icons/calendar.svg',
+                                        width: 16,
+                                        height: 16,
+                                        color: kMutedColor,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: Text(
+                                          checkOutText,
+                                          style: GoogleFonts.spaceGrotesk(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w500,
+                                            color: _checkOutDate != null
+                                                ? kHeadingColor
+                                                : kMutedColor,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              if (formFieldState.hasError)
+                                Padding(
+                                  padding:
+                                      const EdgeInsets.only(left: 4, top: 4),
+                                  child: Text(
+                                    formFieldState.errorText ?? '',
+                                    style: const TextStyle(
+                                        color: Colors.red, fontSize: 11),
+                                  ),
+                                ),
+                            ],
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 12),
+
+            // ── Guests field ───────────────────────────────────────────────
+            Text(
+              'Guests'.tr,
+              style: GoogleFonts.spaceGrotesk(
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                color: kHeadingColor,
               ),
             ),
-            // Check-in & Check-out Row
-            Row(
-              children: [
-                Expanded(
-                  child: FormField<DateTime>(
-                    initialValue: _checkInDate,
-                    validator: (value) {
-                      if (_checkInDate == null) {
-                        return 'Required'.tr;
-                      }
-                      return null;
-                    },
-                    builder: (formFieldState) {
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          GestureDetector(
-                            onTap: () async {
-                              final DateTime? picked = await showDatePicker(
-                                context: context,
-                                initialDate: DateTime.now(),
-                                firstDate: DateTime.now(),
-                                lastDate: DateTime(2100),
-                              );
-                              if (picked != null) {
-                                setState(() {
-                                  _checkInDate = picked;
-                                  formFieldState.didChange(picked);
-                                });
-                              }
-                            },
-                            child: Container(
-                              height: 47,
-                              padding: EdgeInsets.symmetric(
-                                  horizontal: 12, vertical: 8),
-                              decoration: BoxDecoration(
-                                border: Border.all(
-                                    color: formFieldState.hasError
-                                        ? Colors.red
-                                        : Color(0xffE5E7EB)),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    children: [
-                                      SvgPicture.asset(
-                                        'assets/icons/calendar.svg',
-                                        width: 16,
-                                        height: 16,
-                                        color: Color(0xff6B7280),
-                                      ),
-                                      SizedBox(width: 10),
-                                      Text(
-                                        checkInText,
-                                        style: GoogleFonts.spaceGrotesk(
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w500,
-                                          color: Color(0xff1D2025),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                          if (formFieldState.hasError)
-                            Padding(
-                              padding: const EdgeInsets.only(left: 12, top: 4),
-                              child: Text(
-                                formFieldState.errorText ?? '',
-                                style: TextStyle(
-                                  color: Colors.red,
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ),
-                        ],
-                      );
-                    },
-                  ),
+            const SizedBox(height: 4),
+            GestureDetector(
+              onTap: _showGuestSelector,
+              child: Container(
+                height: 47,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  border: Border.all(color: kBorderColor),
+                  borderRadius: BorderRadius.circular(8),
                 ),
-                SizedBox(width: 8),
-                Expanded(
-                  child: FormField<DateTime>(
-                    initialValue: _checkOutDate,
-                    validator: (value) {
-                      if (_checkOutDate == null) {
-                        return 'Required'.tr;
-                      }
-                      if (_checkInDate != null &&
-                          _checkOutDate != null &&
-                          (_checkOutDate!.isBefore(_checkInDate!) ||
-                              _checkOutDate!.isAtSameMomentAs(_checkInDate!))) {
-                        return 'Must be after check-in'.tr;
-                      }
-                      return null;
-                    },
-                    builder: (formFieldState) {
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          GestureDetector(
-                            onTap: () async {
-                              final DateTime? picked = await showDatePicker(
-                                context: context,
-                                initialDate: _checkInDate ?? DateTime.now(),
-                                firstDate: _checkInDate ?? DateTime.now(),
-                                lastDate: DateTime(2100),
-                              );
-                              if (picked != null) {
-                                setState(() {
-                                  _checkOutDate = picked;
-                                  formFieldState.didChange(picked);
-                                });
-                              }
-                            },
-                            child: Container(
-                              height: 47,
-                              padding: EdgeInsets.symmetric(
-                                  horizontal: 12, vertical: 8),
-                              decoration: BoxDecoration(
-                                border: Border.all(
-                                    color: formFieldState.hasError
-                                        ? Colors.red
-                                        : Color(0xffE5E7EB)),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    children: [
-                                      SvgPicture.asset(
-                                        'assets/icons/calendar.svg',
-                                        width: 16,
-                                        height: 16,
-                                        color: Color(0xff6B7280),
-                                      ),
-                                      SizedBox(width: 10),
-                                      Text(
-                                        checkOutText,
-                                        style: GoogleFonts.spaceGrotesk(
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w500,
-                                          color: Color(0xff1D2025),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                          if (formFieldState.hasError)
-                            Padding(
-                              padding: const EdgeInsets.only(left: 12, top: 4),
-                              child: Text(
-                                formFieldState.errorText ?? '',
-                                style: TextStyle(
-                                  color: Colors.red,
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ),
-                        ],
-                      );
-                    },
-                  ),
-                ),
-              ],
-            ),
-            SizedBox(height: 12),
-
-            // Guests Field
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Guests label above the container
-                Text(
-                  'Guests'.tr,
-                  style: GoogleFonts.spaceGrotesk(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w400,
-                    color: Color(0xff1D2025),
-                  ),
-                ),
-                SizedBox(height: 4),
-                // Guest selector container
-                GestureDetector(
-                  onTap: _showGuestSelector,
-                  child: Container(
-                    height: 47,
-                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Color(0xffE5E7EB)),
-                      borderRadius: BorderRadius.circular(8),
+                child: Row(
+                  children: [
+                    SvgPicture.asset(
+                      'assets/icons/user.svg',
+                      width: 20,
+                      height: 20,
+                      color: kMutedColor,
                     ),
-                    child: Row(
-                      children: [
-                        SvgPicture.asset(
-                          'assets/icons/user.svg',
-                          width: 20,
-                          height: 20,
-                          color: Color(0xff6B7280),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        guestSummary,
+                        style: GoogleFonts.spaceGrotesk(
+                          fontSize: 14,
+                          color: kHeadingColor,
                         ),
-                        SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            guestText,
-                            style: GoogleFonts.spaceGrotesk(
-                              fontSize: 14,
-                              color: Color(
-                                  0xff1D2025), // Changed to darker color for better visibility
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            SizedBox(height: 16),
-//zeeshan
-            // Search Button
-            // In the _buildHotelSearchSection method, update the Search Button
-            Container(
-              width: double.infinity,
-              height: 48,
-              child: ElevatedButton(
-                onPressed: () {
-                  // Trigger validation
-                  setState(() {
-                    _hotelValidationAttempted = true;
-                  });
-
-                  // Check if form is valid
-                  if (!_hotelFormKey.currentState!.validate()) {
-                    return; // Block search if validation fails
-                  }
-
-                  // Navigate to hotel search results screen with search parameters
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => HotelSearchResultsScreen(
-                        city: _selectedCity == null ? 0 : _selectedCity,
-                        checkInDate: _checkInDate,
-                        checkOutDate: _checkOutDate,
-                        guests: _guestCount,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                  );
-                },
+                    const Icon(
+                      Icons.keyboard_arrow_down,
+                      color: kMutedColor,
+                      size: 20,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 20),
+
+            // ── Search Button ─────────────────────────────────────────────
+            Container(
+              width: double.infinity,
+              height: 52,
+              child: ElevatedButton(
+                onPressed: _isHotelSearchLoading
+                    ? null
+                    : () {
+                        // Validate form
+                        setState(() {
+                          _hotelValidationAttempted = true;
+                        });
+                        if (!_hotelFormKey.currentState!.validate()) {
+                          print('[HOTEL_SEARCH] Validation failed');
+                          return;
+                        }
+
+                        // Get city from selected destination
+                        final destProvider =
+                            context.read<HotelDestinationProvider>();
+                        if (!destProvider.hasValidHotelDestination) {
+                          print(
+                              '[HOTEL_SEARCH] Error: No destination selected');
+                          return;
+                        }
+
+                        final cityName =
+                            destProvider.selectedHotelDestination!.city ?? '';
+                        if (cityName.isEmpty) {
+                          print('[HOTEL_SEARCH] Error: City name is empty');
+                          return;
+                        }
+
+                        print('[HOTEL_SEARCH] Search Hotels button tapped');
+                        print(
+                            '[HOTEL_SEARCH] Validation passed - City: $cityName, Check-in: $_checkInDate, Check-out: $_checkOutDate, Adults: $_hotelAdultCount, Children: $_hotelChildCount, Rooms: $_hotelRoomCount');
+
+                        // Navigate immediately — results screen handles API and shimmer
+                        print(
+                            '[HOTEL_SEARCH] Navigating to results screen immediately');
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => HotelSearchResultsScreen(
+                              cityName: cityName,
+                              checkInDate: _checkInDate,
+                              checkOutDate: _checkOutDate,
+                              guests: _guestCount,
+                              adults: _hotelAdultCount,
+                              children: _hotelChildCount,
+                              childAges: _childrenAges.isNotEmpty
+                                  ? _childrenAges
+                                  : null,
+                              rooms: _hotelRoomCount,
+                            ),
+                          ),
+                        );
+                      },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Color(0xFF05A8C7),
+                  backgroundColor: kPrimaryColor,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(10),
                   ),
                   elevation: 0,
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    // SVG Search icon
-
                     SvgPicture.asset(
-                      'assets/icons/search.svg', // Make sure you have this icon in your assets
+                      'assets/icons/search.svg',
                       width: 20,
                       height: 20,
                       color: Colors.white,
                     ),
-                    SizedBox(width: 8), // Space between icon and text
+                    const SizedBox(width: 8),
                     Text(
                       'Search Hotels'.tr,
                       style: GoogleFonts.spaceGrotesk(
@@ -1859,7 +2633,7 @@ class _HomeScreenState extends State<HomeScreen>
                 style: GoogleFonts.spaceGrotesk(
                   fontSize: 18,
                   fontWeight: FontWeight.w700,
-                  color: Color(0xff1D2025),
+                  color: kHeadingColor,
                 ),
               ),
               TextButton(
@@ -1873,8 +2647,8 @@ class _HomeScreenState extends State<HomeScreen>
                   'View all'.tr,
                   style: GoogleFonts.spaceGrotesk(
                     fontSize: 14,
-                    color: Color(0xFF05A8C7),
-                    fontWeight: FontWeight.w500,
+                    color: kPrimaryColor,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ),
@@ -1935,8 +2709,8 @@ class _HomeScreenState extends State<HomeScreen>
     required bool isBestSeller,
   }) {
     return Container(
-      width: 300,
-      height: 300, // Even taller
+      width: 280,
+      height: 230,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
         color: Colors.white,
@@ -1975,7 +2749,7 @@ class _HomeScreenState extends State<HomeScreen>
                     child: Container(
                       padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
-                        color: Colors.orange,
+                        color: AppColors.accent,
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
@@ -2004,9 +2778,9 @@ class _HomeScreenState extends State<HomeScreen>
                   Text(
                     title,
                     style: GoogleFonts.spaceGrotesk(
-                      fontSize: 16,
+                      fontSize: 15,
                       fontWeight: FontWeight.w600,
-                      color: Color(0xff1D2025),
+                      color: kHeadingColor,
                     ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
@@ -2015,8 +2789,8 @@ class _HomeScreenState extends State<HomeScreen>
                   Text(
                     subtitle,
                     style: GoogleFonts.spaceGrotesk(
-                      fontSize: 14,
-                      color: Color(0xff6B7280),
+                      fontSize: 13,
+                      color: kMutedColor,
                     ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
@@ -2050,81 +2824,195 @@ class _HomeScreenState extends State<HomeScreen>
                     ),
                     Row(
                       children: [
-                        const SizedBox(
-                          width: 20,
-                        ),
-                        //search button
+                        const SizedBox(width: 20),
                         Expanded(
                           child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text(
-                                    "Hello, Welcome back!".tr,
-                                    style: GoogleFonts.spaceGrotesk(
-                                      fontWeight: FontWeight.w400,
-                                      fontSize: 14,
-                                      color: Color(0xff65758B),
+                              // Left: greeting + title
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      "Hello, Welcome back!".tr,
+                                      style: GoogleFonts.spaceGrotesk(
+                                        fontWeight: FontWeight.w400,
+                                        fontSize: 13,
+                                        color: kSubtitleColor,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
                                     ),
-                                  ),
-                                  Text(
-                                    "Explore World".tr,
-                                    style: GoogleFonts.spaceGrotesk(
-                                      color: Color(0xff1D2025),
-                                      fontSize: 24,
-                                      fontWeight: FontWeight.w700,
+                                    Text(
+                                      "Explore World".tr,
+                                      style: GoogleFonts.spaceGrotesk(
+                                        color: kHeadingColor,
+                                        fontSize: 22,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
-                              Stack(
+                              const SizedBox(width: 8),
+                              // Right: currency + language + bell
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  GestureDetector(
-                                    onTap: () => Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) =>
-                                            NotificationsScreen(),
-                                      ),
-                                    ),
-                                    child: SvgPicture.asset(
-                                      'assets/icons/Bell.svg',
-                                    ),
-                                  ),
-                                  Positioned(
-                                    right: -2,
-                                    top: -2,
-                                    child: Container(
-                                      padding: EdgeInsets.all(2),
-                                      constraints: BoxConstraints(
-                                        minWidth: 12,
-                                        minHeight: 12,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: Colors.red,
-                                        shape: BoxShape.circle,
-                                        border: Border.all(
+                                  Consumer<CurrencyProvider>(
+                                    builder: (context, currencyProvider, _) {
+                                      final currentCurrency = CurrencyProvider
+                                                  .currencyMap[
+                                              currencyProvider
+                                                  .selectedCurrency] ??
+                                          CurrencyProvider.currencyMap['USD']!;
+
+                                      return Container(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 6, vertical: 4),
+                                        decoration: BoxDecoration(
+                                          border:
+                                              Border.all(color: kBorderColor),
+                                          borderRadius:
+                                              BorderRadius.circular(10),
                                           color: Colors.white,
-                                          width: 2,
                                         ),
-                                      ),
-                                      child: Center(
-                                        child: Text(
-                                          provider2.notificationcountmodel
-                                                  ?.unreadCount
-                                                  .toString() ??
-                                              "",
-                                          style: TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 8,
-                                            fontWeight: FontWeight.bold,
+                                        child: DropdownButtonHideUnderline(
+                                          child: DropdownButton<String>(
+                                            value: currencyProvider
+                                                .selectedCurrency,
+                                            isDense: true,
+                                            icon: const Icon(
+                                                Icons.keyboard_arrow_down,
+                                                size: 18,
+                                                color: kSubtitleColor),
+                                            // Display button: flag + code
+                                            selectedItemBuilder: (context) =>
+                                                CurrencyProvider
+                                                    .supportedCurrencies
+                                                    .map((currencyCode) {
+                                              final data =
+                                                  CurrencyProvider.currencyMap[
+                                                          currencyCode] ??
+                                                      CurrencyProvider
+                                                          .currencyMap['USD']!;
+                                              return Center(
+                                                child: Text(
+                                                  '${data.flag} ${data.code}',
+                                                  style:
+                                                      GoogleFonts.spaceGrotesk(
+                                                    fontSize: 13,
+                                                    fontWeight: FontWeight.w600,
+                                                    color: kHeadingColor,
+                                                  ),
+                                                ),
+                                              );
+                                            }).toList(),
+                                            // Dropdown items: flag + code + name
+                                            items: CurrencyProvider
+                                                .supportedCurrencies
+                                                .map((currencyCode) {
+                                              final data =
+                                                  CurrencyProvider.currencyMap[
+                                                          currencyCode] ??
+                                                      CurrencyProvider
+                                                          .currencyMap['USD']!;
+                                              return DropdownMenuItem(
+                                                value: currencyCode,
+                                                child: Row(
+                                                  children: [
+                                                    Text(
+                                                      data.flag,
+                                                      style: const TextStyle(
+                                                        fontSize: 18,
+                                                      ),
+                                                    ),
+                                                    const SizedBox(width: 8),
+                                                    Text(
+                                                      data.code,
+                                                      style: GoogleFonts
+                                                          .spaceGrotesk(
+                                                        fontSize: 13,
+                                                        fontWeight:
+                                                            FontWeight.w600,
+                                                        color: kHeadingColor,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              );
+                                            }).toList(),
+                                            onChanged: (value) {
+                                              if (value != null) {
+                                                currencyProvider
+                                                    .setCurrency(value);
+                                              }
+                                            },
                                           ),
                                         ),
-                                      ),
+                                      );
+                                    },
+                                  ),
+                                  const SizedBox(width: 8),
+                                  GestureDetector(
+                                    onTap: () =>
+                                        _showLanguageBottomSheet(context),
+                                    child: const Icon(
+                                      Icons.language,
+                                      color: kPrimaryColor,
+                                      size: 26,
                                     ),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Stack(
+                                    children: [
+                                      GestureDetector(
+                                        onTap: () => Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                NotificationsScreen(),
+                                          ),
+                                        ),
+                                        child: SvgPicture.asset(
+                                          'assets/icons/Bell.svg',
+                                        ),
+                                      ),
+                                      Positioned(
+                                        right: -2,
+                                        top: -2,
+                                        child: Container(
+                                          padding: EdgeInsets.all(2),
+                                          constraints: BoxConstraints(
+                                            minWidth: 12,
+                                            minHeight: 12,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: Colors.red,
+                                            shape: BoxShape.circle,
+                                            border: Border.all(
+                                              color: Colors.white,
+                                              width: 2,
+                                            ),
+                                          ),
+                                          child: Center(
+                                            child: Text(
+                                              provider2.notificationcountmodel
+                                                      ?.unreadCount
+                                                      .toString() ??
+                                                  "",
+                                              style: TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 8,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      )
+                                    ],
                                   )
                                 ],
                               )
@@ -2141,11 +3029,11 @@ class _HomeScreenState extends State<HomeScreen>
                       child: Container(
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(20),
-                          color: Color(0xffF1F5F9),
+                          color: kSurfaceColor,
                         ),
-                        height: 60,
+                        height: 56,
                         padding:
-                            EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                            EdgeInsets.symmetric(horizontal: 6, vertical: 6),
                         child: ScrollConfiguration(
                           behavior: ScrollConfiguration.of(context)
                               .copyWith(scrollbars: false),
@@ -2154,54 +3042,53 @@ class _HomeScreenState extends State<HomeScreen>
                             child: Row(
                               children:
                                   categoryDatas.asMap().entries.map((entry) {
-                                int idx = entry.value.id;
+                                int categoryId = entry.value.id;
+                                int tabIndex = entry.key; // sequential position
                                 var category = entry.value;
                                 bool isSelected =
-                                    homeProvider.selectedHomeTab == idx;
+                                    homeProvider.selectedHomeTab == categoryId;
 
                                 return GestureDetector(
                                   onTap: () async {
-                                    await _fetchDataForTab(idx);
                                     if (selectedSort != 'Recommended'.tr) {
                                       selectedSort = 'Recommended'.tr;
                                     }
-                                    homeProvider.setSelectedHomeTab(idx);
-                                    homeProvider.tabController?.animateTo(idx);
+                                    await _fetchDataForTab(categoryId);
                                   },
                                   child: Container(
-                                    margin: EdgeInsets.symmetric(horizontal: 4),
+                                    margin: EdgeInsets.symmetric(horizontal: 2),
                                     padding: EdgeInsets.symmetric(
-                                        horizontal: 12, vertical: 12),
+                                        horizontal: 12, vertical: 8),
                                     decoration: BoxDecoration(
                                       color: isSelected
-                                          ? Color(0xFF05A8C7)
+                                          ? kPrimaryColor
                                           : Colors.transparent,
-                                      borderRadius: BorderRadius.circular(10),
+                                      borderRadius: BorderRadius.circular(16),
                                     ),
                                     child: Row(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
                                         Container(
-                                          width: 20,
-                                          height: 20,
+                                          width: 18,
+                                          height: 18,
                                           child: Center(
                                             child: SvgPicture.asset(
                                               category.kIcon,
                                               color: isSelected
                                                   ? Colors.white
-                                                  : Color(0xFF6B7280),
-                                              height: 16,
-                                              width: 16,
+                                                  : kMutedColor,
+                                              height: 14,
+                                              width: 14,
                                             ),
                                           ),
                                         ),
-                                        SizedBox(width: 8),
+                                        SizedBox(width: 6),
                                         Text(
                                           category.category.tr,
                                           style: GoogleFonts.spaceGrotesk(
                                             color: isSelected
                                                 ? Colors.white
-                                                : Color(0xFF6B7280),
+                                                : kMutedColor,
                                             fontSize: 14,
                                             fontWeight: FontWeight.w500,
                                           ),
@@ -2234,136 +3121,18 @@ class _HomeScreenState extends State<HomeScreen>
 
                       return TabBarView(
                         controller: homeProvider.tabController,
-                        children: [
-                          // Home tab (index 0)
-                          homeList == null
-                              ? const Center(child: CircularProgressIndicator())
-                              : MixedItemList(homeList: homeList),
-                          // Hotels tab (index 1)
-                          SingleChildScrollView(
-                            child: Column(
-                              children: [
-                                _buildHotelSearchSection(context),
-                                _buildFeaturedDestinations(),
-                              ],
-                            ),
-                          ),
-                          // Tours tab (index 2)
-                          Column(
-                            children: [
-                              _buildResultsCount(
-                                  2,
-                                  homeProvider,
-                                  boatProvider,
-                                  tourProvider,
-                                  spaceProvider,
-                                  eventProvider,
-                                  flightProvider),
-                              // _buildFilterTabs(2),
-                              Expanded(
-                                child: TourListItem(
-                                    tourList:
-                                        tourProvider.tourListPerCategory[2] ??
-                                            TourList()),
-                              ),
-                            ],
-                          ),
-                          // Spaces tab (index 3)
-                          Column(
-                            children: [
-                              _buildResultsCount(
-                                  3,
-                                  homeProvider,
-                                  boatProvider,
-                                  tourProvider,
-                                  spaceProvider,
-                                  eventProvider,
-                                  flightProvider),
-                              // _buildFilterTabs(3),
-                              Expanded(
-                                child: SpaceListItem(
-                                    spaceList:
-                                        spaceProvider.spaceListPerCategory[3] ??
-                                            SpaceList()),
-                              ),
-                            ],
-                          ),
-                          // Cars tab (index 4)
-                          Column(
-                            children: [
-                              _buildResultsCount(
-                                  4,
-                                  homeProvider,
-                                  boatProvider,
-                                  tourProvider,
-                                  spaceProvider,
-                                  eventProvider,
-                                  flightProvider),
-                              // _buildFilterTabs(4),
-                              Expanded(
-                                child: CarListItem(
-                                    carList:
-                                        homeProvider.carListPerCategory[4] ??
-                                            CarList()),
-                              ),
-                            ],
-                          ),
-                          // Events tab (index 5)
-                          Column(
-                            children: [
-                              _buildResultsCount(
-                                  5,
-                                  homeProvider,
-                                  boatProvider,
-                                  tourProvider,
-                                  spaceProvider,
-                                  eventProvider,
-                                  flightProvider),
-                              // _buildFilterTabs(5),
-                              Expanded(
-                                child: EventListItem(
-                                    eventList:
-                                        eventProvider.eventListPerCategory[5] ??
-                                            EventList()),
-                              ),
-                            ],
-                          ),
-                          // Flights tab (index 6)
-                          SingleChildScrollView(
-                            child: Column(
-                              children: [
-                                _buildFlightSearchSection(context),
-                                _buildFeaturedDestinations(),
-                                // SizedBox(height: 20),
-                                // _buildResultsCount(6, homeProvider, boatProvider,
-                                //     tourProvider, spaceProvider, eventProvider, flightProvider),
-                                // _buildFilterTabs(6),
-                                // FlightListItem(
-                                //     flightList: flightProvider.flightListPerCategory[6] ?? FlightList()),
-                              ],
-                            ),
-                          ),
-                          // Boats tab (index 7)
-                          Column(
-                            children: [
-                              _buildResultsCount(
-                                  7,
-                                  homeProvider,
-                                  boatProvider,
-                                  tourProvider,
-                                  spaceProvider,
-                                  eventProvider,
-                                  flightProvider),
-                              // _buildFilterTabs(7),
-                              Expanded(
-                                child: BoatListItem(
-                                    boatList:
-                                        boatProvider.boatListPerCategory[7] ??
-                                            BoatList()),
-                              ),
-                            ],
-                          ),
-                        ],
+                        children: categoryDatas.map<Widget>((cat) {
+                          return _buildTabContent(
+                            cat.id,
+                            homeList,
+                            homeProvider,
+                            boatProvider,
+                            tourProvider,
+                            spaceProvider,
+                            eventProvider,
+                            flightProvider,
+                          );
+                        }).toList(),
                       );
                     },
                   ),
@@ -2371,6 +3140,113 @@ class _HomeScreenState extends State<HomeScreen>
         );
       },
     );
+  }
+
+  /// Build tab content widget based on category ID
+  Widget _buildTabContent(
+    int categoryId,
+    dynamic homeList,
+    HomeProvider homeProvider,
+    BoatProvider boatProvider,
+    TourProvider tourProvider,
+    SpaceProvider spaceProvider,
+    EventProvider eventProvider,
+    FlightProvider flightProvider,
+  ) {
+    switch (categoryId) {
+      case 0: // Home
+        return homeList == null
+            ? const Center(child: CircularProgressIndicator())
+            : MixedItemList(homeList: homeList);
+      case 1: // Hotels
+        return SingleChildScrollView(
+          child: Column(
+            children: [
+              _buildHotelSearchSection(context),
+              _buildFeaturedDestinations(),
+            ],
+          ),
+        );
+      case 2: // Tours
+        return Column(
+          children: [
+            _buildResultsCount(2, homeProvider, boatProvider, tourProvider,
+                spaceProvider, eventProvider, flightProvider),
+            Expanded(
+              child: TourListItem(
+                  tourList: tourProvider.tourListPerCategory[2] ?? TourList()),
+            ),
+          ],
+        );
+      case 3: // Spaces
+        return Column(
+          children: [
+            _buildResultsCount(3, homeProvider, boatProvider, tourProvider,
+                spaceProvider, eventProvider, flightProvider),
+            Expanded(
+              child: SpaceListItem(
+                  spaceList:
+                      spaceProvider.spaceListPerCategory[3] ?? SpaceList()),
+            ),
+          ],
+        );
+      case 4: // Cars
+        return Column(
+          children: [
+            _buildResultsCount(4, homeProvider, boatProvider, tourProvider,
+                spaceProvider, eventProvider, flightProvider),
+            Expanded(
+              child: CarListItem(
+                  carList: homeProvider.carListPerCategory[4] ?? CarList()),
+            ),
+          ],
+        );
+      case 5: // Events
+        return Column(
+          children: [
+            _buildResultsCount(5, homeProvider, boatProvider, tourProvider,
+                spaceProvider, eventProvider, flightProvider),
+            Expanded(
+              child: EventListItem(
+                  eventList:
+                      eventProvider.eventListPerCategory[5] ?? EventList()),
+            ),
+          ],
+        );
+      case 6: // Flights
+        return SingleChildScrollView(
+          child: Column(
+            children: [
+              _buildFlightSearchSection(context),
+              _buildFeaturedDestinations(),
+            ],
+          ),
+        );
+      case 7: // Boats
+        return Column(
+          children: [
+            _buildResultsCount(7, homeProvider, boatProvider, tourProvider,
+                spaceProvider, eventProvider, flightProvider),
+            Expanded(
+              child: BoatListItem(
+                  boatList: boatProvider.boatListPerCategory[7] ?? BoatList()),
+            ),
+          ],
+        );
+      case 8: // Activities
+        return SingleChildScrollView(
+          child: Column(
+            children: [
+              const ActivitySearchWidget(),
+              _buildFeaturedDestinations(),
+            ],
+          ),
+        );
+      case 9: // Home & Apartments
+        return const HomeAptsSearchScreen();
+      default:
+        return const Center(child: Text('Unknown tab'));
+    }
   }
 
   Widget _buildResultsCount(
@@ -2442,14 +3318,14 @@ class _HomeScreenState extends State<HomeScreen>
               children: [
                 SvgPicture.asset(
                   'assets/icons/filters.svg',
-                  color: Color(0xff05A8C7),
+                  color: kPrimaryColor,
                 ),
                 SizedBox(width: 4),
                 Text(
                   'Filters'.tr,
                   style: GoogleFonts.spaceGrotesk(
                     fontSize: 14,
-                    color: Color(0xff05A8C7),
+                    color: kPrimaryColor,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -2790,71 +3666,6 @@ class _HomeScreenState extends State<HomeScreen>
         return boatProvider.boatListPerCategory[index]?.endId ?? 1;
       default:
         return 1;
-    }
-  }
-
-  Widget _buildTabContent(
-      int index,
-      HomeProvider homeProvider,
-      BoatProvider boatProvider,
-      TourProvider tourProvider,
-      SpaceProvider spaceProvider,
-      EventProvider eventProvider,
-      FlightProvider flightProvider) {
-    // Check if data exists for the current tab, if not show loading
-    bool hasData = false;
-    switch (index) {
-      case 1:
-        hasData = homeProvider.hotelListPerCategory.containsKey(1);
-        break;
-      case 2:
-        hasData = tourProvider.tourListPerCategory.containsKey(2);
-        break;
-      case 3:
-        hasData = spaceProvider.spaceListPerCategory.containsKey(3);
-        break;
-      case 4:
-        hasData = homeProvider.carListPerCategory.containsKey(4);
-        break;
-      case 5:
-        hasData = eventProvider.eventListPerCategory.containsKey(5);
-        break;
-      case 6:
-        hasData = flightProvider.flightListPerCategory.containsKey(6);
-        break;
-      case 7:
-        hasData = boatProvider.boatListPerCategory.containsKey(7);
-        break;
-      default:
-        hasData = true;
-    }
-
-    if (!hasData) {
-      return Center(child: CircularProgressIndicator());
-    }
-
-    switch (index) {
-      case 2:
-        return TourListItem(
-            tourList: tourProvider.tourListPerCategory[2] ?? TourList());
-      case 3:
-        return SpaceListItem(
-            spaceList: spaceProvider.spaceListPerCategory[3] ?? SpaceList());
-      case 4:
-        return CarListItem(
-            carList: homeProvider.carListPerCategory[4] ?? CarList());
-      case 5:
-        return EventListItem(
-            eventList: eventProvider.eventListPerCategory[5] ?? EventList());
-      case 6:
-        return FlightListItem(
-            flightList:
-                flightProvider.flightListPerCategory[6] ?? FlightList());
-      case 7:
-        return BoatListItem(
-            boatList: boatProvider.boatListPerCategory[7] ?? BoatList());
-      default:
-        return SizedBox.shrink();
     }
   }
 }
@@ -3219,7 +4030,7 @@ class _MixedItemListState extends State<MixedItemList> {
             context,
             MaterialPageRoute(
                 builder: (context) => RoomDetailScreen(
-                      hotelId: item.item.id,
+                      hotelId: item.item.id?.toString() ?? '0',
                     )),
           ),
         );
@@ -3279,13 +4090,23 @@ class _MixedItemListState extends State<MixedItemList> {
       case home_item.ItemType.flight:
         return FlightItem(
           dataSrc: FlightData.fromFlight(item.item),
-          press: () => Navigator.push(
-            context,
-            MaterialPageRoute(
-                builder: (context) => FlightDetailsScreen(
-                      flightId: int.tryParse(item.item.id ?? '0') ?? 0,
-                    )),
-          ),
+          press: () {
+            // NOTE: Old flight details navigation removed
+            // Flight booking now uses the new prebook flow on Available Flights screen
+            log('[HomeScreen] Flight item clicked - TODO: Implement new flow if needed');
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  'Please use the flights search to book'.tr,
+                  style: GoogleFonts.spaceGrotesk(
+                    fontSize: 13,
+                    color: Colors.white,
+                  ),
+                ),
+                duration: const Duration(seconds: 2),
+              ),
+            );
+          },
         );
       case home_item.ItemType.offer:
         return OfferItem(
@@ -3349,8 +4170,8 @@ class HotelListItem extends StatelessWidget {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) =>
-                              RoomDetailScreen(hotelId: propertyData.id),
+                          builder: (context) => RoomDetailScreen(
+                              hotelId: propertyData.id.toString()),
                         ),
                       );
                     },
@@ -3635,7 +4456,7 @@ class _PropertyItemState extends State<PropertyItem> {
       type: 'hotel'.tr,
       id: widget.dataSrc.id.toString(),
       badgeText: 'HOTEL'.tr,
-      badgeColor: Colors.blue,
+      badgeColor: AppColors.primary,
       priceSuffix: '/night'.tr,
       features: null,
     );
@@ -3657,7 +4478,7 @@ class _PropertyItemState extends State<PropertyItem> {
     );
 
     homeProvider.homelistapi(0);
-    homeProvider.fetchHotelDetails(widget.dataSrc.id);
+    homeProvider.fetchHotelDetails(widget.dataSrc.id.toString());
     await homeProvider.hotellistapi(1, searchParams: {});
 
     if (success == "Added to wishlist".tr) {
@@ -4036,160 +4857,524 @@ class _BoatListItemState extends State<BoatListItem> {
   }
 }
 
-class FlightListItem extends StatelessWidget {
+// ───────────────────────────────────────────────────────────
+// FLIGHT FILTER / SORT STATE  (file-private)
+// ───────────────────────────────────────────────────────────
+
+enum _FlightSortBy { price, duration, departure, arrival }
+
+enum _StopsFilter { any, direct, oneStop, twoPlus }
+
+enum _DepartureTimeFilter { any, morning, afternoon, evening }
+
+class _FlightFilterState {
+  final double minPrice;
+  final double maxPrice;
+  final _StopsFilter stopsFilter;
+  final _DepartureTimeFilter departureTimeFilter;
+
+  const _FlightFilterState({
+    this.minPrice = 0,
+    this.maxPrice = 50000,
+    this.stopsFilter = _StopsFilter.any,
+    this.departureTimeFilter = _DepartureTimeFilter.any,
+  });
+
+  bool get isActive =>
+      minPrice != 0 ||
+      maxPrice != 50000 ||
+      stopsFilter != _StopsFilter.any ||
+      departureTimeFilter != _DepartureTimeFilter.any;
+
+  _FlightFilterState copyWith({
+    double? minPrice,
+    double? maxPrice,
+    _StopsFilter? stopsFilter,
+    _DepartureTimeFilter? departureTimeFilter,
+  }) =>
+      _FlightFilterState(
+        minPrice: minPrice ?? this.minPrice,
+        maxPrice: maxPrice ?? this.maxPrice,
+        stopsFilter: stopsFilter ?? this.stopsFilter,
+        departureTimeFilter: departureTimeFilter ?? this.departureTimeFilter,
+      );
+}
+
+// ───────────────────────────────────────────────────────────
+// FLIGHT LIST SCREEN
+// ───────────────────────────────────────────────────────────
+
+class FlightListItem extends StatefulWidget {
   final FlightList flightList;
+  final Map<String, dynamic>? searchParams;
   final String? departureCity;
   final String? destinationCity;
   final VoidCallback? onBackPressed;
+  final int adultCount;
+  final int childCount;
+  final int infantCount;
+  final bool isRoundTrip;
 
   const FlightListItem({
     super.key,
     required this.flightList,
+    this.searchParams,
     this.departureCity,
     this.destinationCity,
     this.onBackPressed,
+    this.adultCount = 1,
+    this.childCount = 0,
+    this.infantCount = 0,
+    this.isRoundTrip = false,
   });
 
   @override
+  State<FlightListItem> createState() => _FlightListItemState();
+}
+
+class _FlightListItemState extends State<FlightListItem> {
+  bool _showShimmer = true;
+  List<Flight> _flights = [];
+
+  // ── Pagination state ────────────────────────────────────
+  int _currentPage = 1;
+  int _lastPage = 1;
+  int _totalFlights = 0;
+  bool _isLoadingMore = false;
+  bool _allLoaded = false;
+  final ScrollController _scrollController = ScrollController();
+
+  // ── Filter / Sort state ─────────────────────────────────
+  _FlightFilterState _activeFilter = const _FlightFilterState();
+  _FlightSortBy _sortBy = _FlightSortBy.price;
+
+  // ── Helpers ──────────────────────────────────────────────
+
+  /// Safely parse any price-like value to double.
+  static double _parsePrice(dynamic v) {
+    if (v == null) return 0;
+    if (v is double) return v;
+    if (v is int) return v.toDouble();
+    if (v is String) return double.tryParse(v) ?? 0;
+    return 0;
+  }
+
+  /// Parse duration strings like "10h 50m", "7h 54m", "45m" into total minutes.
+  static int _parseDurationMinutes(String? s) {
+    if (s == null || s.isEmpty) return 0;
+    final hMatch = RegExp(r'(\d+)\s*h').firstMatch(s);
+    final mMatch = RegExp(r'(\d+)\s*m').firstMatch(s);
+    final hours =
+        hMatch != null ? int.tryParse(hMatch.group(1) ?? '0') ?? 0 : 0;
+    final mins = mMatch != null ? int.tryParse(mMatch.group(1) ?? '0') ?? 0 : 0;
+    return hours * 60 + mins;
+  }
+
+  /// Parse datetime strings. Handles:
+  ///   "20 Apr, 2026 01:50"  (API full datetime)
+  ///   "01:50"               (time-only, anchored to epoch date for comparison)
+  ///   ISO 8601 "2026-04-20T01:50:00"
+  static DateTime? _parseDateTime(String? s) {
+    if (s == null || s.isEmpty) return null;
+    // Try ISO 8601 first
+    final iso = DateTime.tryParse(s);
+    if (iso != null) return iso;
+    // Try "dd MMM, yyyy HH:mm" or "dd MMM yyyy HH:mm"
+    try {
+      final months = {
+        'Jan': 1,
+        'Feb': 2,
+        'Mar': 3,
+        'Apr': 4,
+        'May': 5,
+        'Jun': 6,
+        'Jul': 7,
+        'Aug': 8,
+        'Sep': 9,
+        'Oct': 10,
+        'Nov': 11,
+        'Dec': 12,
+      };
+      final re =
+          RegExp(r'(\d{1,2})\s+([A-Za-z]+),?\s+(\d{4})\s+(\d{1,2}):(\d{2})');
+      final m = re.firstMatch(s);
+      if (m != null) {
+        final day = int.parse(m.group(1)!);
+        final month = months[m.group(2)] ?? 1;
+        final year = int.parse(m.group(3)!);
+        final hour = int.parse(m.group(4)!);
+        final min = int.parse(m.group(5)!);
+        return DateTime(year, month, day, hour, min);
+      }
+    } catch (_) {}
+    // Try time-only "HH:MM" – anchor to epoch for ordering
+    final timeRe = RegExp(r'^(\d{1,2}):(\d{2})$');
+    final tm = timeRe.firstMatch(s.trim());
+    if (tm != null) {
+      return DateTime(
+          2000, 1, 1, int.parse(tm.group(1)!), int.parse(tm.group(2)!));
+    }
+    return null;
+  }
+
+  /// Extract the departure hour for time-of-day filtering.
+  /// Priority: flight.departureAt → flightDetails[0].depTime
+  static int? _departureHour(Flight f) {
+    // Try top-level departure_at first (most complete)
+    final dt = _parseDateTime(f.departureAt);
+    if (dt != null) return dt.hour;
+    // Fall back to depTime from first flight detail
+    final depTime = f.flightDetails?.isNotEmpty == true
+        ? f.flightDetails![0].depTime
+        : null;
+    final dt2 = _parseDateTime(depTime);
+    return dt2?.hour;
+  }
+
+  // ── Core filter + sort method ────────────────────────────
+
+  List<Flight> _filtered(List<Flight> src) {
+    final out = src.where((f) {
+      // ── Price ───────────────────────────────────────────
+      final price = _parsePrice(f.totalPrice);
+      if (price > 0 &&
+          (price < _activeFilter.minPrice || price > _activeFilter.maxPrice)) {
+        return false;
+      }
+
+      // ── Stops ───────────────────────────────────────────
+      final stops = f.stops ?? 0;
+      switch (_activeFilter.stopsFilter) {
+        case _StopsFilter.direct:
+          if (stops != 0) return false;
+          break;
+        case _StopsFilter.oneStop:
+          if (stops != 1) return false;
+          break;
+        case _StopsFilter.twoPlus:
+          if (stops < 2) return false;
+          break;
+        case _StopsFilter.any:
+          break;
+      }
+
+      // ── Departure Time ──────────────────────────────────
+      switch (_activeFilter.departureTimeFilter) {
+        case _DepartureTimeFilter.morning:
+          final h = _departureHour(f);
+          if (h == null || h < 6 || h >= 12) return false;
+          break;
+        case _DepartureTimeFilter.afternoon:
+          final h = _departureHour(f);
+          if (h == null || h < 12 || h >= 18) return false;
+          break;
+        case _DepartureTimeFilter.evening:
+          final h = _departureHour(f);
+          if (h == null || h < 18) return false;
+          break;
+        case _DepartureTimeFilter.any:
+          break;
+      }
+
+      return true;
+    }).toList();
+
+    // ── Sort ─────────────────────────────────────────────
+    switch (_sortBy) {
+      case _FlightSortBy.price:
+        out.sort((a, b) =>
+            _parsePrice(a.totalPrice).compareTo(_parsePrice(b.totalPrice)));
+        break;
+      case _FlightSortBy.duration:
+        out.sort((a, b) => _parseDurationMinutes(a.duration)
+            .compareTo(_parseDurationMinutes(b.duration)));
+        break;
+      case _FlightSortBy.departure:
+        out.sort((a, b) {
+          final da = _parseDateTime(a.departureAt);
+          final db = _parseDateTime(b.departureAt);
+          if (da == null && db == null) return 0;
+          if (da == null) return 1;
+          if (db == null) return -1;
+          return da.compareTo(db);
+        });
+        break;
+      case _FlightSortBy.arrival:
+        out.sort((a, b) {
+          final da = _parseDateTime(a.arrivalAt);
+          final db = _parseDateTime(b.arrivalAt);
+          if (da == null && db == null) return 0;
+          if (da == null) return 1;
+          if (db == null) return -1;
+          return da.compareTo(db);
+        });
+        break;
+    }
+
+    return out;
+  }
+
+  String get _sortLabel {
+    switch (_sortBy) {
+      case _FlightSortBy.price:
+        return 'Price';
+      case _FlightSortBy.duration:
+        return 'Duration';
+      case _FlightSortBy.departure:
+        return 'Departure';
+      case _FlightSortBy.arrival:
+        return 'Arrival';
+    }
+  }
+
+  void _openFilter() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      barrierColor: Colors.black54,
+      builder: (_) => _FlightFilterSheet(
+        initial: _activeFilter,
+        onApply: (f) => setState(() => _activeFilter = f),
+      ),
+    );
+  }
+
+  void _openSort() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      barrierColor: Colors.black54,
+      builder: (_) => _FlightSortSheet(
+        selected: _sortBy,
+        onSelect: (s) => setState(() => _sortBy = s),
+      ),
+    );
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadFlights();
+    });
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 300) {
+      _loadMoreFlights();
+    }
+  }
+
+  /// Initial load — page 1 only. Replaces any existing list.
+  Future<void> _loadFlights() async {
+    final provider = Provider.of<FlightProvider>(context, listen: false);
+    try {
+      final result = await provider.flightlistapi(
+        2,
+        searchParams: widget.searchParams,
+        page: 1,
+      );
+      if (!mounted) return;
+      setState(() {
+        _flights = List<Flight>.from(result?.data ?? []);
+        _currentPage = 1;
+        _lastPage = result?.lastPage ?? 1;
+        _totalFlights = result?.total ?? _flights.length;
+        _allLoaded = _lastPage <= 1;
+        _showShimmer = false;
+      });
+      log('[FlightList] page 1 loaded ${_flights.length} flights, lastPage=$_lastPage total=$_totalFlights');
+    } catch (e) {
+      log('[FlightList] API error: $e');
+      if (mounted) {
+        setState(() {
+          _flights = [];
+          _showShimmer = false;
+        });
+      }
+    }
+  }
+
+  /// Load next page and append. Called on scroll near bottom.
+  Future<void> _loadMoreFlights() async {
+    if (_isLoadingMore || _allLoaded) return;
+    final nextPage = _currentPage + 1;
+    if (nextPage > _lastPage) {
+      if (mounted) setState(() => _allLoaded = true);
+      return;
+    }
+    if (mounted) setState(() => _isLoadingMore = true);
+    try {
+      final provider = Provider.of<FlightProvider>(context, listen: false);
+      final result = await provider.flightlistapi(
+        2,
+        searchParams: widget.searchParams,
+        page: nextPage,
+      );
+      if (!mounted) return;
+      setState(() {
+        _flights.addAll(result?.data ?? []);
+        _currentPage = nextPage;
+        _allLoaded = _currentPage >= _lastPage;
+        _isLoadingMore = false;
+      });
+      log('[FlightList] page $nextPage loaded ${result?.data?.length ?? 0} flights, total loaded=${_flights.length}');
+    } catch (e) {
+      log('[FlightList] load-more page $nextPage error: $e');
+      if (mounted) setState(() => _isLoadingMore = false);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final flights = flightList.data ?? [];
-    final totalFlights = flights.length;
+    final filteredFlights = _showShimmer ? <Flight>[] : _filtered(_flights);
 
     return Scaffold(
+      backgroundColor: kScaffoldBgColor,
       appBar: AppBar(
         title: Text(
           'Available Flights'.tr,
           style: GoogleFonts.spaceGrotesk(
-            color: Colors.black,
+            color: kHeadingColor,
             fontSize: 18,
-            fontWeight: FontWeight.bold,
+            fontWeight: FontWeight.w600,
           ),
         ),
-        centerTitle: true,
         backgroundColor: Colors.white,
+        elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.black),
+          icon: const Icon(Icons.arrow_back_ios_new,
+              color: kHeadingColor, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
       ),
-      body: flights.isEmpty
-          ? _buildEmptyState()
-          : Column(
-              children: [
-                // Header with search summary
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+      body: _showShimmer
+          ? ListView.builder(
+              itemCount: 4,
+              itemBuilder: (_, __) => FlightShimmerCard(
+                isRoundTrip: widget.isRoundTrip,
+              ),
+            )
+          : _flights.isEmpty
+              ? _buildEmptyState()
+              : Column(
                   children: [
-                    Row(
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.only(left: 20),
-                          child: Text(
-                            '${flights.length} flights available'.tr,
-                            style: GoogleFonts.spaceGrotesk(
-                              fontSize: 14,
-                              color: Colors.grey[600],
-                            ),
+                    // ── Filter / Sort bar ──────────────────────────
+                    _FlightFilterSortBar(
+                      flightCount: _totalFlights,
+                      sortLabel: _sortLabel,
+                      filterActive: _activeFilter.isActive,
+                      onFilter: _openFilter,
+                      onSort: _openSort,
+                    ),
+                    // No-match state
+                    if (filteredFlights.isEmpty)
+                      Expanded(
+                        child: Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.search_off_rounded,
+                                  size: 56, color: Colors.grey[300]),
+                              const SizedBox(height: 16),
+                              Text(
+                                'No flights match your filters'.tr,
+                                style: GoogleFonts.spaceGrotesk(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w600,
+                                  color: kSubtitleColor,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              TextButton(
+                                onPressed: () => setState(() =>
+                                    _activeFilter = const _FlightFilterState()),
+                                child: Text(
+                                  'Clear filters'.tr,
+                                  style: const TextStyle(
+                                    color: kPrimaryColor,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
+                      )
+                    else
+                      // Flight list
+                      Expanded(
+                        child: ListView.builder(
+                          controller: _scrollController,
+                          itemCount: filteredFlights.length + 1,
+                          itemBuilder: (context, index) {
+                            // Footer item
+                            if (index == filteredFlights.length) {
+                              if (_isLoadingMore) {
+                                return const Padding(
+                                  padding: EdgeInsets.symmetric(vertical: 24),
+                                  child: Center(
+                                    child: CircularProgressIndicator(
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                          kPrimaryColor),
+                                      strokeWidth: 2.5,
+                                    ),
+                                  ),
+                                );
+                              }
+                              if (_allLoaded && _flights.isNotEmpty) {
+                                return Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      vertical: 24, horizontal: 16),
+                                  child: Center(
+                                    child: Text(
+                                      'All $_totalFlights flights loaded',
+                                      style: GoogleFonts.spaceGrotesk(
+                                        fontSize: 13,
+                                        color: kVeryMutedColor,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              }
+                              return const SizedBox(height: 16);
+                            }
 
-                        const Spacer(), // ✅ replaces SizedBox(width: 190)
-
-                        GestureDetector(
-                          onTap: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (context) => FilterFlightScreen(),
+                            final flight = filteredFlights[index];
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 8,
+                              ),
+                              child: FlightCard(
+                                flight: flight,
+                                onSelectPressed: () async {
+                                  log('[FlightListScreen] Select button tapped for flight: ${flight.id}');
+                                  await _handleFlightSelect(
+                                    context,
+                                    flight,
+                                    widget.adultCount,
+                                    widget.childCount,
+                                    widget.infantCount,
+                                  );
+                                },
                               ),
                             );
                           },
-                          child: Padding(
-                            padding: const EdgeInsets.only(right: 15),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                SvgPicture.asset(
-                                  'assets/icons/filters.svg',
-                                  color: Color(0xff05A8C7),
-                                  width: 16,
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  'Filters'.tr,
-                                  style: GoogleFonts.spaceGrotesk(
-                                    fontSize: 14,
-                                    color: Color(0xff05A8C7),
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
                         ),
-                      ],
-                    ),
+                      ),
                   ],
                 ),
-
-                SizedBox(
-                  height: 10,
-                ),
-                // Flight list
-                Expanded(
-                  child: ListView.builder(
-                    itemCount: flights.length,
-                    itemBuilder: (context, index) {
-                      final flight = flights[index];
-                      // Get first flight detail for display
-                      final firstDetail =
-                          flight.flightDetails?.isNotEmpty == true
-                              ? flight.flightDetails!.first
-                              : null;
-
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 8,
-                        ),
-                        child: buildPropertyCard(
-                          context: context,
-                          images: firstDetail?.airlineLogo != null
-                              ? [firstDetail!.airlineLogo!]
-                              : [],
-                          title:
-                              '${firstDetail?.depIata ?? ''} to ${firstDetail?.arrIata ?? ''}',
-                          subtitle:
-                              '${firstDetail?.airlineCode ?? ''} ${firstDetail?.flightNumber ?? ''}',
-                          rating: 0.0,
-                          reviewCount: 0,
-                          reviewText: '',
-                          price: flight.totalPrice != null
-                              ? double.tryParse(flight.totalPrice!) ?? 0.0
-                              : 0.0,
-                          isWishlist: false,
-                          isFeatured: false,
-                          discount: 0,
-                          onTap: () => Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => FlightDetailsScreen(
-                                flightId: int.tryParse(flight.id ?? '0') ?? 0,
-                              ),
-                            ),
-                          ),
-                          onWishlistTap: null,
-                          type: 'flight',
-                          id: flight.id ?? '0',
-                          badgeText: 'FLIGHT',
-                          badgeColor: Colors.blueAccent,
-                          priceSuffix: '',
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ],
-            ),
     );
   }
 
@@ -4220,7 +5405,7 @@ class FlightListItem extends StatelessWidget {
               textAlign: TextAlign.center,
               style: GoogleFonts.spaceGrotesk(
                 fontSize: 16,
-                color: Colors.grey[600],
+                color: kSubtitleColor,
               ),
             ),
             SizedBox(height: 8),
@@ -4229,18 +5414,20 @@ class FlightListItem extends StatelessWidget {
               textAlign: TextAlign.center,
               style: GoogleFonts.spaceGrotesk(
                 fontSize: 14,
-                color: Colors.grey[500],
+                color: kVeryMutedColor,
               ),
             ),
             SizedBox(height: 30),
             ElevatedButton(
               onPressed: () {
-                if (onBackPressed != null) {
-                  onBackPressed!();
-                } else {}
+                if (widget.onBackPressed != null) {
+                  widget.onBackPressed!();
+                } else {
+                  Navigator.pop(context);
+                }
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: Color(0xff05A8C7),
+                backgroundColor: kPrimaryColor,
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
@@ -4259,6 +5446,1619 @@ class FlightListItem extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Future<void> _handleFlightSelect(
+    BuildContext context,
+    Flight flight,
+    int adults,
+    int children,
+    int infants,
+  ) async {
+    log('[FlightSelect] ========== FLIGHT SELECT ==========');
+    log('[FlightSelect] Flight ID: ${flight.id}');
+    log('[FlightSelect] Provider: ${flight.provider}');
+    log('[FlightSelect] Airline: ${flight.airlineName}');
+    log('[FlightSelect] Price: ${flight.totalPrice} ${flight.currency}');
+    log('[FlightSelect] 📋 Passenger counts being sent to prebook:');
+    log('[FlightSelect] Adults: $adults');
+    log('[FlightSelect] Children: $children');
+    log('[FlightSelect] Infants: $infants');
+    log('[FlightSelect] Total: ${adults + children + infants}');
+
+    try {
+      // Show loading
+      EasyLoading.show(status: 'Preparing your booking...'.tr);
+
+      // Get flight provider
+      final flightProvider =
+          Provider.of<FlightProvider>(context, listen: false);
+
+      // Call prebook API with selected flight object
+      log('[FlightSelect] Calling prebook API with selected flight...');
+      final preBookResponse = await flightProvider.preBookFlight(
+        selectedFlight: flight,
+        adults: adults,
+        children: children,
+        infants: infants,
+      );
+
+      // Dismiss loading
+      EasyLoading.dismiss();
+
+      if (preBookResponse != null && preBookResponse.success == true) {
+        log('[FlightSelect] ✅ PREBOOK SUCCESSFUL');
+        log('[FlightSelect] Price: ${preBookResponse.price}, Currency: ${preBookResponse.currency}');
+
+        // Prepare flight data for checkout screen
+        final checkoutData = _prepareFlightCheckoutData(
+            flight, preBookResponse, adults, children, infants);
+
+        log('[FlightSelect] Navigating to checkout screen with data keys: ${checkoutData.keys.toList()}');
+
+        // Navigate to checkout screen
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => FlightCheckoutScreen(
+              flightData: checkoutData,
+            ),
+          ),
+        );
+      } else {
+        log('[FlightSelect] ❌ PREBOOK FAILED');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              preBookResponse?.message ??
+                  'Failed to prebook flight. Please try again.'.tr,
+              style: GoogleFonts.spaceGrotesk(
+                fontSize: 13,
+                color: Colors.white,
+              ),
+            ),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+    } catch (e) {
+      log('[FlightSelect] ❌ EXCEPTION: $e');
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'An error occurred. Please try again.'.tr,
+            style: GoogleFonts.spaceGrotesk(
+              fontSize: 13,
+              color: Colors.white,
+            ),
+          ),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 3),
+        ),
+      );
+    }
+  }
+
+  Map<String, dynamic> _prepareFlightCheckoutData(
+    Flight flight,
+    dynamic preBookResponse,
+    int adults,
+    int children,
+    int infants,
+  ) {
+    // Get flight detail if available
+    final flightDetail = flight.flightDetails?.isNotEmpty == true
+        ? flight.flightDetails![0]
+        : null;
+
+    return {
+      // Flight info
+      'airline_name': flight.airlineName ?? 'Unknown Airline',
+      'airline_code': flightDetail?.airlineCode ?? '',
+      'flight_number': flightDetail?.flightNumber ?? '',
+      'provider': flight.provider,
+      'offer_id': flight.id,
+
+      // Route info
+      'dep_iata': flight.origin ?? '',
+      'arr_iata': flight.destination ?? '',
+      'dep_time': flightDetail?.depTime ?? '',
+      'arr_time': flightDetail?.arrTime ?? '',
+      'dep_date': flightDetail?.depDate ?? '',
+      'arr_date': flightDetail?.arrDate ?? '',
+      'duration': flight.duration ?? '',
+      'stops': flight.stops ?? 0,
+
+      // Booking info
+      'cabin_class': flight.cabinClass ?? 'ECONOMY',
+      'trip_type': flight.isRoundTrip ? 'round_trip' : 'one_way',
+
+      // Pricing
+      'price': double.tryParse(flight.totalPrice?.toString() ?? '0') ?? 0,
+      'currency': flight.currency ?? 'GBP',
+
+      // Passengers
+      'adults': adults,
+      'children': children,
+      'infants': infants,
+
+      // Checkout response
+      'checkout_url': preBookResponse?.checkoutUrl,
+      'token': preBookResponse?.token,
+    };
+  }
+}
+
+// ───────────────────────────────────────────────────────────
+// FLIGHT FILTER / SORT BAR  (always-visible row below AppBar)
+// ───────────────────────────────────────────────────────────
+
+class _FlightFilterSortBar extends StatelessWidget {
+  final int flightCount;
+  final String sortLabel;
+  final bool filterActive;
+  final VoidCallback onFilter;
+  final VoidCallback onSort;
+
+  const _FlightFilterSortBar({
+    required this.flightCount,
+    required this.sortLabel,
+    required this.filterActive,
+    required this.onFilter,
+    required this.onSort,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: Colors.white,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              '$flightCount flight${flightCount == 1 ? '' : 's'} available',
+              style: GoogleFonts.spaceGrotesk(
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                color: kSubtitleColor,
+              ),
+            ),
+          ),
+          _FlightPill(
+            icon: Icons.swap_vert_rounded,
+            label: 'Sort: $sortLabel',
+            active: false,
+            onTap: onSort,
+          ),
+          const SizedBox(width: 8),
+          _FlightPill(
+            icon: Icons.tune_rounded,
+            label: 'Filter',
+            active: filterActive,
+            onTap: onFilter,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FlightPill extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool active;
+  final VoidCallback onTap;
+
+  const _FlightPill({
+    required this.icon,
+    required this.label,
+    required this.active,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: active ? kPrimaryColor : kPrimaryColor.withOpacity(0.08),
+          borderRadius: BorderRadius.circular(22),
+          border: Border.all(
+            color: active ? kPrimaryColor : kPrimaryColor.withOpacity(0.35),
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 14, color: active ? Colors.white : kPrimaryColor),
+            const SizedBox(width: 5),
+            Text(
+              label,
+              style: GoogleFonts.spaceGrotesk(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: active ? Colors.white : kPrimaryColor,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ───────────────────────────────────────────────────────────
+// FLIGHT FILTER BOTTOM SHEET
+// ───────────────────────────────────────────────────────────
+
+class _FlightFilterSheet extends StatefulWidget {
+  final _FlightFilterState initial;
+  final ValueChanged<_FlightFilterState> onApply;
+  const _FlightFilterSheet({required this.initial, required this.onApply});
+
+  @override
+  State<_FlightFilterSheet> createState() => _FlightFilterSheetState();
+}
+
+class _FlightFilterSheetState extends State<_FlightFilterSheet> {
+  late _FlightFilterState _draft;
+
+  @override
+  void initState() {
+    super.initState();
+    _draft = widget.initial;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return DraggableScrollableSheet(
+      initialChildSize: 0.85,
+      maxChildSize: 0.95,
+      minChildSize: 0.50,
+      snap: true,
+      builder: (_, scrollCtrl) => Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(
+          children: [
+            // drag handle
+            const SizedBox(height: 10),
+            Container(
+              width: 36,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey.shade300,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            // header
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              child: Row(
+                children: [
+                  Text(
+                    'Filters',
+                    style: GoogleFonts.spaceGrotesk(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      color: kSheetHeadingColor,
+                    ),
+                  ),
+                  const Spacer(),
+                  GestureDetector(
+                    onTap: () => Navigator.of(context).pop(),
+                    child: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade100,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.close_rounded,
+                          size: 18, color: kSheetHeadingColor),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Divider(height: 1, color: Colors.grey.shade100),
+
+            // scrollable content
+            Expanded(
+              child: ListView(
+                controller: scrollCtrl,
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
+                children: [
+                  // ── PRICE PER FLIGHT ──────────────────────────
+                  _FlightSectionLabel(text: 'PRICE'),
+                  const SizedBox(height: 14),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      _FlightPriceTag(
+                          caption: 'Min',
+                          value: '\$${_draft.minPrice.round()}'),
+                      _FlightPriceTag(
+                          caption: 'Up to',
+                          value: '\$${_draft.maxPrice.round()}',
+                          alignRight: true),
+                    ],
+                  ),
+                  SliderTheme(
+                    data: SliderTheme.of(context).copyWith(
+                      activeTrackColor: kPrimaryColor,
+                      inactiveTrackColor: kPrimaryColor.withOpacity(0.15),
+                      thumbColor: kPrimaryColor,
+                      overlayColor: kPrimaryColor.withOpacity(0.12),
+                      trackHeight: 3,
+                    ),
+                    child: RangeSlider(
+                      values: RangeValues(_draft.minPrice, _draft.maxPrice),
+                      min: 0,
+                      max: 50000,
+                      divisions: 100,
+                      onChanged: (v) => setState(() => _draft =
+                          _draft.copyWith(minPrice: v.start, maxPrice: v.end)),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  Divider(height: 1, color: Colors.grey.shade100),
+                  const SizedBox(height: 24),
+
+                  // ── STOPS ──────────────────────────────────────
+                  _FlightSectionLabel(text: 'STOPS'),
+                  const SizedBox(height: 12),
+                  ..._StopsFilter.values
+                      .map((s) => _StopsTile(
+                            value: s,
+                            group: _draft.stopsFilter,
+                            onChange: (v) => setState(
+                                () => _draft = _draft.copyWith(stopsFilter: v)),
+                          ))
+                      .toList(),
+                  const SizedBox(height: 8),
+                  Divider(height: 1, color: Colors.grey.shade100),
+                  const SizedBox(height: 24),
+
+                  // ── DEPARTURE TIME ─────────────────────────────
+                  _FlightSectionLabel(text: 'DEPARTURE TIME'),
+                  const SizedBox(height: 12),
+                  ..._DepartureTimeFilter.values
+                      .map((d) => _DepartureTimeTile(
+                            value: d,
+                            group: _draft.departureTimeFilter,
+                            onChange: (v) => setState(() => _draft =
+                                _draft.copyWith(departureTimeFilter: v)),
+                          ))
+                      .toList(),
+                  const SizedBox(height: 80),
+                ],
+              ),
+            ),
+
+            // sticky action bar
+            Container(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.07),
+                    blurRadius: 12,
+                    offset: const Offset(0, -4),
+                  )
+                ],
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () =>
+                          setState(() => _draft = const _FlightFilterState()),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        side: BorderSide(color: Colors.grey.shade300),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10)),
+                      ),
+                      child: Text(
+                        'Reset',
+                        style: GoogleFonts.spaceGrotesk(
+                          fontWeight: FontWeight.w600,
+                          color: kSheetHeadingColor,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    flex: 2,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        widget.onApply(_draft);
+                        Navigator.of(context).pop();
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: kPrimaryColor,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10)),
+                      ),
+                      child: Text(
+                        'Apply Filters',
+                        style: GoogleFonts.spaceGrotesk(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 14,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ───────────────────────────────────────────────────────────
+// FLIGHT SORT BOTTOM SHEET
+// ───────────────────────────────────────────────────────────
+
+class _FlightSortSheet extends StatelessWidget {
+  final _FlightSortBy selected;
+  final ValueChanged<_FlightSortBy> onSelect;
+  const _FlightSortSheet({required this.selected, required this.onSelect});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      padding: const EdgeInsets.fromLTRB(20, 14, 20, 32),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Center(
+            child: Container(
+              width: 36,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey.shade300,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          _FlightSectionLabel(text: 'SORT BY'),
+          const SizedBox(height: 12),
+          ..._FlightSortBy.values
+              .map((s) => _FlightSortTile(
+                    value: s,
+                    selected: selected == s,
+                    onTap: () {
+                      onSelect(s);
+                      Navigator.of(context).pop();
+                    },
+                  ))
+              .toList(),
+        ],
+      ),
+    );
+  }
+}
+
+class _FlightSortTile extends StatelessWidget {
+  final _FlightSortBy value;
+  final bool selected;
+  final VoidCallback onTap;
+  const _FlightSortTile(
+      {required this.value, required this.selected, required this.onTap});
+
+  String get _label {
+    switch (value) {
+      case _FlightSortBy.price:
+        return ' Price';
+      case _FlightSortBy.duration:
+        return 'Duration';
+      case _FlightSortBy.departure:
+        return 'Departure ';
+      case _FlightSortBy.arrival:
+        return 'Arrival';
+    }
+  }
+
+  IconData get _icon {
+    switch (value) {
+      case _FlightSortBy.price:
+        return Icons.attach_money_rounded;
+      case _FlightSortBy.duration:
+        return Icons.timelapse_rounded;
+      case _FlightSortBy.departure:
+        return Icons.flight_takeoff_rounded;
+      case _FlightSortBy.arrival:
+        return Icons.flight_land_rounded;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+        decoration: BoxDecoration(
+          color:
+              selected ? kPrimaryColor.withOpacity(0.07) : Colors.transparent,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: selected
+                ? kPrimaryColor.withOpacity(0.40)
+                : Colors.grey.shade200,
+          ),
+        ),
+        child: Row(
+          children: [
+            Icon(_icon,
+                size: 17, color: selected ? kPrimaryColor : kMutedColor),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                _label,
+                style: GoogleFonts.spaceGrotesk(
+                  fontSize: 14,
+                  fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                  color: selected ? kPrimaryColor : kSheetHeadingColor,
+                ),
+              ),
+            ),
+            if (selected)
+              const Icon(Icons.check_circle_rounded,
+                  size: 17, color: kPrimaryColor),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ───────────────────────────────────────────────────────────
+// SHARED FLIGHT FILTER WIDGETS
+// ───────────────────────────────────────────────────────────
+
+class _FlightSectionLabel extends StatelessWidget {
+  final String text;
+  const _FlightSectionLabel({required this.text});
+
+  @override
+  Widget build(BuildContext context) => Text(
+        text,
+        style: GoogleFonts.spaceGrotesk(
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 1.0,
+          color: Colors.grey.shade500,
+        ),
+      );
+}
+
+class _FlightPriceTag extends StatelessWidget {
+  final String caption;
+  final String value;
+  final bool alignRight;
+  const _FlightPriceTag(
+      {required this.caption, required this.value, this.alignRight = false});
+
+  @override
+  Widget build(BuildContext context) => Column(
+        crossAxisAlignment:
+            alignRight ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+        children: [
+          Text(caption,
+              style: GoogleFonts.spaceGrotesk(
+                  fontSize: 11, color: Colors.grey.shade400)),
+          Text(value,
+              style: GoogleFonts.spaceGrotesk(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: kPrimaryColor,
+              )),
+        ],
+      );
+}
+
+class _StopsTile extends StatelessWidget {
+  final _StopsFilter value;
+  final _StopsFilter group;
+  final ValueChanged<_StopsFilter> onChange;
+  const _StopsTile(
+      {required this.value, required this.group, required this.onChange});
+
+  String get _label {
+    switch (value) {
+      case _StopsFilter.any:
+        return 'Any';
+      case _StopsFilter.direct:
+        return 'Direct only';
+      case _StopsFilter.oneStop:
+        return '1 Stop';
+      case _StopsFilter.twoPlus:
+        return '2+ Stops';
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final sel = value == group;
+    return InkWell(
+      onTap: () => onChange(value),
+      borderRadius: BorderRadius.circular(8),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 9),
+        child: Row(
+          children: [
+            _FlightRadioDot(selected: sel),
+            const SizedBox(width: 10),
+            Text(
+              _label,
+              style: GoogleFonts.spaceGrotesk(
+                fontSize: 14,
+                fontWeight: sel ? FontWeight.w600 : FontWeight.w400,
+                color: sel ? kSheetHeadingColor : Colors.grey.shade700,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _DepartureTimeTile extends StatelessWidget {
+  final _DepartureTimeFilter value;
+  final _DepartureTimeFilter group;
+  final ValueChanged<_DepartureTimeFilter> onChange;
+  const _DepartureTimeTile(
+      {required this.value, required this.group, required this.onChange});
+
+  String get _label {
+    switch (value) {
+      case _DepartureTimeFilter.any:
+        return 'Any time';
+      case _DepartureTimeFilter.morning:
+        return 'Morning  (06:00 – 12:00)';
+      case _DepartureTimeFilter.afternoon:
+        return 'Afternoon  (12:00 – 18:00)';
+      case _DepartureTimeFilter.evening:
+        return 'Evening  (18:00+)';
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final sel = value == group;
+    return InkWell(
+      onTap: () => onChange(value),
+      borderRadius: BorderRadius.circular(8),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 9),
+        child: Row(
+          children: [
+            _FlightRadioDot(selected: sel),
+            const SizedBox(width: 10),
+            Text(
+              _label,
+              style: GoogleFonts.spaceGrotesk(
+                fontSize: 14,
+                fontWeight: sel ? FontWeight.w600 : FontWeight.w400,
+                color: sel ? kSheetHeadingColor : Colors.grey.shade700,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _FlightRadioDot extends StatelessWidget {
+  final bool selected;
+  const _FlightRadioDot({required this.selected});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 18,
+      height: 18,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        border: Border.all(
+          color: selected ? kPrimaryColor : Colors.grey.shade400,
+          width: selected ? 5 : 1.5,
+        ),
+        color: Colors.white,
+      ),
+    );
+  }
+}
+
+// ================ FLIGHT CARD ================
+class FlightCard extends StatefulWidget {
+  final Flight flight;
+  final VoidCallback onSelectPressed;
+
+  const FlightCard({
+    Key? key,
+    required this.flight,
+    required this.onSelectPressed,
+  }) : super(key: key);
+
+  @override
+  State<FlightCard> createState() => _FlightCardState();
+}
+
+class _FlightCardState extends State<FlightCard> {
+  bool _isLoading = false;
+
+  Flight get flight => widget.flight;
+  VoidCallback get onSelectPressed => widget.onSelectPressed;
+
+  String _extractTime(String? timeString) {
+    if (timeString == null || timeString.isEmpty) {
+      log('[MobileFlightCard] _extractTime: received null/empty, returning "--:--"');
+      return '--:--';
+    }
+    try {
+      // If it's already in HH:MM format, return as-is
+      if (RegExp(r'^\d{2}:\d{2}').hasMatch(timeString)) {
+        log('[MobileFlightCard] _extractTime: detected HH:MM format in "$timeString", returning as-is');
+        return timeString.substring(0, 5);
+      }
+      // Otherwise parse ISO 8601 format: "2025-01-15T14:30:00"
+      log('[MobileFlightCard] _extractTime: parsing ISO format "$timeString"');
+      final dateTime = DateTime.parse(timeString);
+      final formatted =
+          '${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
+      log('[MobileFlightCard] _extractTime: parsed and formatted to "$formatted"');
+      return formatted;
+    } catch (e) {
+      log('[MobileFlightCard] _extractTime ERROR: Failed to parse "$timeString", Error: $e');
+      return '--:--';
+    }
+  }
+
+  String _extractDate(String? dateString) {
+    if (dateString == null || dateString.isEmpty) {
+      log('[MobileFlightCard] _extractDate: received null/empty, returning "--"');
+      return '--';
+    }
+    try {
+      // Check if it's already formatted like "19 Mar, 2026" - if so, return as-is
+      if (RegExp(
+              r'\d{1,2}\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec),?\s+\d{4}',
+              caseSensitive: false)
+          .hasMatch(dateString)) {
+        log('[MobileFlightCard] _extractDate: detected pre-formatted date "$dateString", returning as-is');
+        // Extract just the date part if it has time attached
+        final formatted =
+            dateString.split(' ').take(3).join(' ').replaceAll(',', '');
+        return formatted;
+      }
+
+      // Otherwise, parse ISO 8601 format: "2025-01-15T14:30:00"
+      log('[MobileFlightCard] _extractDate: parsing ISO format "$dateString"');
+      final dateTime = DateTime.parse(dateString);
+      final months = [
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'May',
+        'Jun',
+        'Jul',
+        'Aug',
+        'Sep',
+        'Oct',
+        'Nov',
+        'Dec'
+      ];
+      final formatted = '${months[dateTime.month - 1]} ${dateTime.day}';
+      log('[MobileFlightCard] _extractDate: parsed and formatted to "$formatted"');
+      return formatted;
+    } catch (e) {
+      log('[MobileFlightCard] _extractDate ERROR: Failed to parse "$dateString", Error: $e');
+      return '--';
+    }
+  }
+
+  String _formatPrice(dynamic price, String? currency) {
+    if (price == null) {
+      log('[MobileFlightCard] _formatPrice: price is null, returning "N/A"');
+      return 'N/A';
+    }
+    try {
+      final amount = price is String
+          ? double.parse(price)
+          : double.parse(price.toString());
+      final currencySymbol = _getCurrencySymbol(currency ?? 'USD');
+      final formatted = '$currencySymbol${amount.toStringAsFixed(0)}';
+      log('[MobileFlightCard] _formatPrice: amount=$amount, currency=$currency, formatted=$formatted');
+      return formatted;
+    } catch (e) {
+      log('[MobileFlightCard] _formatPrice ERROR: Failed to format price=$price, currency=$currency, Error: $e');
+      return 'N/A';
+    }
+  }
+
+  String _getCurrencySymbol(String currencyCode) {
+    const currencySymbols = {
+      'USD': '\$',
+      'EUR': '€',
+      'GBP': '£',
+      'INR': '₹',
+      'AED': 'د.إ',
+      'SAR': 'ر.س',
+      'QAR': 'ر.ق',
+      'KWD': 'د.ك',
+      'BHD': 'د.ب',
+      'OMR': 'ر.ع.',
+    };
+    return currencySymbols[currencyCode] ?? currencyCode;
+  }
+
+  Widget _buildLogoWidget() {
+    final firstDetail = flight.flightDetails?.isNotEmpty == true
+        ? flight.flightDetails![0]
+        : null;
+    final logoUrl = firstDetail?.airlineLogo;
+
+    log('[MobileFlightCard] Airline Name = ${flight.airlineName ?? "N/A"}');
+    log('[MobileFlightCard] Logo URL = $logoUrl');
+
+    if (logoUrl == null || logoUrl.isEmpty) {
+      log('[MobileFlightCard] Logo fallback used (empty URL)');
+      return Container(
+        width: 48,
+        height: 48,
+        decoration: BoxDecoration(
+          color: Colors.grey.shade100,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Icon(
+          Icons.airplanemode_active,
+          color: Colors.grey.shade600,
+          size: 24,
+        ),
+      );
+    }
+
+    // Check if it's an SVG
+    final isSvg = logoUrl.toLowerCase().endsWith('.svg');
+    if (isSvg) {
+      log('[MobileFlightCard] SVG logo detected');
+      return Container(
+        width: 48,
+        height: 48,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: Colors.grey.shade200),
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(6),
+          child: SvgPicture.network(
+            logoUrl,
+            width: 48,
+            height: 48,
+            fit: BoxFit.contain,
+            placeholderBuilder: (_) => Container(
+              color: Colors.grey.shade100,
+              child: Icon(
+                Icons.airplanemode_active,
+                color: Colors.grey.shade600,
+                size: 24,
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    // Raster image (PNG, JPG, etc.)
+    return Container(
+      width: 48,
+      height: 48,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(6),
+        child: Image.network(
+          logoUrl,
+          width: 48,
+          height: 48,
+          fit: BoxFit.contain,
+          errorBuilder: (_, e, __) {
+            log('[MobileFlightCard] Raster logo failed to load: $e');
+            return Container(
+              color: Colors.grey.shade100,
+              child: Icon(
+                Icons.airplanemode_active,
+                color: Colors.grey.shade600,
+                size: 24,
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  /// Build a single flight segment section (for departure or return)
+  Widget _buildFlightSegmentSection({
+    required String segmentLabel,
+    required String? depTime,
+    required String? depDate,
+    required String? depIata,
+    required String? arrTime,
+    required String? arrDate,
+    required String? arrIata,
+    required String? duration,
+    required String? stopsLabel,
+    required bool isReturn,
+  }) {
+    final finalDepTime = depTime ?? '--:--';
+    final finalDepDate = depDate ?? '--';
+    final finalDepCode = depIata ?? '--';
+    final finalArrTime = arrTime ?? '--:--';
+    final finalArrDate = arrDate ?? '--';
+    final finalArrCode = arrIata ?? '--';
+    final finalDuration = duration ?? '--';
+    final finalStops = stopsLabel ?? 'Non-stop';
+
+    if (isReturn) {
+      log('[RoundTripFlightCard] return dep = $finalDepTime, $finalDepDate, $finalDepCode');
+      log('[RoundTripFlightCard] return arr = $finalArrTime, $finalArrDate, $finalArrCode');
+      log('[RoundTripFlightCard] return duration = $finalDuration');
+      log('[RoundTripFlightCard] return stops = $finalStops');
+    } else {
+      log('[RoundTripFlightCard] outbound dep = $finalDepTime, $finalDepDate, $finalDepCode');
+      log('[RoundTripFlightCard] outbound arr = $finalArrTime, $finalArrDate, $finalArrCode');
+      log('[RoundTripFlightCard] outbound duration = $finalDuration');
+      log('[RoundTripFlightCard] outbound stops = $finalStops');
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Segment label
+        Padding(
+          padding: const EdgeInsets.only(bottom: 8.0),
+          child: Text(
+            segmentLabel,
+            style: GoogleFonts.spaceGrotesk(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: kVeryMutedColor,
+            ),
+          ),
+        ),
+        // Departure & Arrival Row
+        Row(
+          children: [
+            // Departure
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  finalDepTime,
+                  style: GoogleFonts.spaceGrotesk(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: kHeadingColor,
+                  ),
+                ),
+                Text(
+                  finalDepDate,
+                  style: GoogleFonts.spaceGrotesk(
+                    fontSize: 10,
+                    color: kVeryMutedColor,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  finalDepCode,
+                  style: GoogleFonts.spaceGrotesk(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500,
+                    color: kMutedColor,
+                  ),
+                ),
+              ],
+            ),
+            const Spacer(),
+            // Duration & Stops
+            Column(
+              children: [
+                Text(
+                  finalDuration,
+                  style: GoogleFonts.spaceGrotesk(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500,
+                    color: kMutedColor,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  finalStops,
+                  style: GoogleFonts.spaceGrotesk(
+                    fontSize: 10,
+                    color: kVeryMutedColor,
+                  ),
+                ),
+              ],
+            ),
+            const Spacer(),
+            // Arrival
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  finalArrTime,
+                  style: GoogleFonts.spaceGrotesk(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: kHeadingColor,
+                  ),
+                ),
+                Text(
+                  finalArrDate,
+                  style: GoogleFonts.spaceGrotesk(
+                    fontSize: 10,
+                    color: kVeryMutedColor,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  finalArrCode,
+                  style: GoogleFonts.spaceGrotesk(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500,
+                    color: kMutedColor,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isRoundTrip = flight.isRoundTrip;
+
+    // Get departure and return details
+    final departureDetail = flight.getDepartureDetail();
+    final returnDetail = flight.getReturnDetail();
+
+    log('[RoundTripFlightCard] tripType = ${isRoundTrip ? "round_trip" : "one_way"}');
+
+    if (isRoundTrip && returnDetail != null) {
+      // ROUND-TRIP UI
+      log('[RoundTripFlightCard] return_departure_at = ${flight.returnDepartureAt}');
+      log('[RoundTripFlightCard] return_arrival_at = ${flight.returnArrivalAt}');
+      log('[RoundTripFlightCard] return_duration = ${flight.returnDuration}');
+      log('[RoundTripFlightCard] return_stops = ${flight.returnStops}');
+
+      final priceStr = _formatPrice(flight.totalPrice, flight.currency);
+      final airlineName = flight.airlineName ?? 'Unknown Airline';
+
+      return Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          color: Colors.white,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.08),
+              blurRadius: 12,
+              offset: const Offset(0, 2),
+            ),
+          ],
+          border: Border.all(
+            color: Colors.grey.shade100,
+            width: 1,
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // ─── Header: Airline Logo + Name ───
+              Row(
+                children: [
+                  _buildLogoWidget(),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          airlineName,
+                          style: GoogleFonts.spaceGrotesk(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: kHeadingColor,
+                          ),
+                        ),
+                        // Provider Badge
+                        if (flight.provider != null &&
+                            flight.provider!.isNotEmpty)
+                          Container(
+                            margin: const EdgeInsets.only(top: 4),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFFE4EF),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              flight.provider!.toUpperCase(),
+                              style: GoogleFonts.spaceGrotesk(
+                                color: const Color(0xFFD63384),
+                                fontSize: 10,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        // Flight Number
+                        Text(
+                          'Flight ${flight.flightNumber ?? "--"}',
+                          style: GoogleFonts.spaceGrotesk(
+                            fontSize: 12,
+                            color: Colors.grey,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  // Original Badge (if badge field exists)
+                  if (flight.badge != null && flight.badge!.isNotEmpty)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xffFEF3C7),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        flight.badge!,
+                        style: GoogleFonts.spaceGrotesk(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                          color: const Color(0xffD97706),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 16),
+
+              // ─── Outbound Section ───
+              _buildFlightSegmentSection(
+                segmentLabel: 'Outbound',
+                depTime: departureDetail?.depTime,
+                depDate: departureDetail?.depDate,
+                depIata: departureDetail?.depIata,
+                arrTime: departureDetail?.arrTime,
+                arrDate: departureDetail?.arrDate,
+                arrIata: departureDetail?.arrIata,
+                duration: departureDetail?.duration,
+                stopsLabel: departureDetail != null
+                    ? (departureDetail.stops == 0
+                        ? 'Direct'
+                        : '${departureDetail.stops} stop${(departureDetail.stops ?? 0) > 1 ? 's' : ''}')
+                    : 'Non-stop',
+                isReturn: false,
+              ),
+
+              const SizedBox(height: 12),
+              Divider(color: Colors.grey.shade200, height: 12),
+              const SizedBox(height: 12),
+
+              // ─── Return Section ───
+              _buildFlightSegmentSection(
+                segmentLabel: 'Return',
+                depTime: returnDetail.depTime,
+                depDate: returnDetail.depDate,
+                depIata: returnDetail.depIata,
+                arrTime: returnDetail.arrTime,
+                arrDate: returnDetail.arrDate,
+                arrIata: returnDetail.arrIata,
+                duration: returnDetail.duration,
+                stopsLabel: returnDetail.stops == 0
+                    ? 'Direct'
+                    : '${returnDetail.stops} stop${(returnDetail.stops ?? 0) > 1 ? 's' : ''}',
+                isReturn: true,
+              ),
+
+              const SizedBox(height: 12),
+              Divider(color: Colors.grey.shade200, height: 12),
+
+              // ─── Price & Select Button ───
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'From'.tr,
+                        style: GoogleFonts.spaceGrotesk(
+                          fontSize: 11,
+                          color: kVeryMutedColor,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        priceStr,
+                        style: GoogleFonts.spaceGrotesk(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: kPrimaryColor,
+                        ),
+                      ),
+                    ],
+                  ),
+                  ElevatedButton(
+                    onPressed: _isLoading ? null : onSelectPressed,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: kPrimaryColor,
+                      disabledBackgroundColor: Colors.grey.shade400,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 10,
+                      ),
+                    ),
+                    child: _isLoading
+                        ? SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                Colors.white,
+                              ),
+                            ),
+                          )
+                        : Text(
+                            'Select'.tr,
+                            style: GoogleFonts.spaceGrotesk(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                          ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      );
+    } else {
+      // ONE-WAY UI (original)
+      final firstDetail = flight.flightDetails?.isNotEmpty == true
+          ? flight.flightDetails![0]
+          : null;
+
+      // RAW values from API response
+      final depTimeRaw = firstDetail?.depTime;
+      final depDateRaw = firstDetail?.depDate;
+      final depIataRaw = firstDetail?.depIata;
+      final arrTimeRaw = firstDetail?.arrTime;
+      final arrDateRaw = firstDetail?.arrDate;
+      final arrIataRaw = firstDetail?.arrIata;
+
+      // Final display values - DIRECTLY from API response
+      final finalDepartureTime = depTimeRaw ?? '--:--';
+      final finalDepartureDate = depDateRaw ?? '--';
+      final finalDepartureCode = depIataRaw ?? flight.origin ?? '--';
+      final finalArrivalTime = arrTimeRaw ?? '--:--';
+      final finalArrivalDate = arrDateRaw ?? '--';
+      final finalArrivalCode = arrIataRaw ?? flight.destination ?? '--';
+
+      // Duration and stops
+      final finalDuration = firstDetail?.duration ?? flight.duration ?? '--';
+      final finalStopsLabel = flight.stopsLabel ?? 'Non-stop';
+
+      // Airline info
+      final airlineName = flight.airlineName ?? 'Unknown Airline';
+      final flightNumber = firstDetail?.flightNumber ?? '--';
+
+      // Price
+      final priceStr = _formatPrice(flight.totalPrice, flight.currency);
+
+      return Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          color: Colors.white,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.08),
+              blurRadius: 12,
+              offset: const Offset(0, 2),
+            ),
+          ],
+          border: Border.all(
+            color: Colors.grey.shade100,
+            width: 1,
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // ─── Header: Airline Logo + Name + Flight Number ───
+              Row(
+                children: [
+                  _buildLogoWidget(),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          airlineName,
+                          style: GoogleFonts.spaceGrotesk(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: kHeadingColor,
+                          ),
+                        ),
+                        // Provider Badge
+                        if (flight.provider != null &&
+                            flight.provider!.isNotEmpty)
+                          Container(
+                            margin: const EdgeInsets.only(top: 4),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFFE4EF),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              flight.provider!.toUpperCase(),
+                              style: GoogleFonts.spaceGrotesk(
+                                color: const Color(0xFFD63384),
+                                fontSize: 10,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        // Flight Number
+                        Text(
+                          'Flight $flightNumber',
+                          style: GoogleFonts.spaceGrotesk(
+                            fontSize: 12,
+                            color: Colors.grey,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  // Badge (optional)
+                  if (flight.badge != null && flight.badge!.isNotEmpty)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xffFEF3C7),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        flight.badge!,
+                        style: GoogleFonts.spaceGrotesk(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                          color: const Color(0xffD97706),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 16),
+
+              // ─── Departure & Arrival Times & Dates ───
+              Row(
+                children: [
+                  // Departure
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        finalDepartureTime,
+                        style: GoogleFonts.spaceGrotesk(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: kHeadingColor,
+                        ),
+                      ),
+                      Text(
+                        finalDepartureDate,
+                        style: GoogleFonts.spaceGrotesk(
+                          fontSize: 11,
+                          color: kVeryMutedColor,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        finalDepartureCode,
+                        style: GoogleFonts.spaceGrotesk(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: kMutedColor,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const Spacer(),
+
+                  // Duration & Stops (Center)
+                  Column(
+                    children: [
+                      Text(
+                        finalDuration,
+                        style: GoogleFonts.spaceGrotesk(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: kMutedColor,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        finalStopsLabel,
+                        style: GoogleFonts.spaceGrotesk(
+                          fontSize: 11,
+                          color: kVeryMutedColor,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const Spacer(),
+
+                  // Arrival
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        finalArrivalTime,
+                        style: GoogleFonts.spaceGrotesk(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: kHeadingColor,
+                        ),
+                      ),
+                      Text(
+                        finalArrivalDate,
+                        style: GoogleFonts.spaceGrotesk(
+                          fontSize: 11,
+                          color: kVeryMutedColor,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        finalArrivalCode,
+                        style: GoogleFonts.spaceGrotesk(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: kMutedColor,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+
+              // ─── Divider ───
+              Divider(
+                color: Colors.grey.shade200,
+                height: 12,
+              ),
+
+              // ─── Price & Select Button ───
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'From'.tr,
+                        style: GoogleFonts.spaceGrotesk(
+                          fontSize: 11,
+                          color: kVeryMutedColor,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        priceStr,
+                        style: GoogleFonts.spaceGrotesk(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: kPrimaryColor,
+                        ),
+                      ),
+                    ],
+                  ),
+                  ElevatedButton(
+                    onPressed: _isLoading ? null : onSelectPressed,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: kPrimaryColor,
+                      disabledBackgroundColor: Colors.grey.shade400,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 10,
+                      ),
+                    ),
+                    child: _isLoading
+                        ? SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                Colors.white,
+                              ),
+                            ),
+                          )
+                        : Text(
+                            'Select'.tr,
+                            style: GoogleFonts.spaceGrotesk(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                          ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      );
+    }
   }
 }
 
@@ -4302,12 +7102,12 @@ class OfferItem extends StatelessWidget {
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: Colors.amber.shade50,
+                  color: AppColors.accent,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Icon(
                   Icons.local_offer,
-                  color: Colors.amber,
+                  color: AppColors.accent,
                   size: 24,
                 ),
               ),

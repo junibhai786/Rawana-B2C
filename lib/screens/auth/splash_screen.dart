@@ -1,9 +1,7 @@
-
 import 'package:flutter/material.dart';
-
+import 'package:shared_preferences/shared_preferences.dart';
 import '../onboarding/onboarding_screen.dart';
-
-
+import 'package:moonbnd/app_colors.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -18,7 +16,12 @@ class _SplashScreenState extends State<SplashScreen> {
     super.initState();
 
     // Wait for 5 seconds, then navigate to onboarding
-    Future.delayed(const Duration(seconds: 5), () {
+    Future.delayed(const Duration(seconds: 5), () async {
+      // Set flag that app has launched before
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('has_launched_before', true);
+
+      // ignore: use_build_context_synchronously
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
@@ -34,13 +37,13 @@ class _SplashScreenState extends State<SplashScreen> {
       body: Container(
         width: double.infinity,
         height: double.infinity,
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
               Colors.white,
-              Color(0xFFC2E9F2),
+              AppColors.secondary.withOpacity(0.3),
             ],
             stops: [0.3, 1.0],
           ),
@@ -51,22 +54,15 @@ class _SplashScreenState extends State<SplashScreen> {
             // --- LOGO SECTION ---
             // OPTION 1: If you have the image asset (Recommended)
             Image.asset(
-              'assets/images/logo.png',
+              'assets/icons/rawana.logo.jpeg',
               width: 250,
             ),
-
-
-
-
           ],
         ),
       ),
     );
   }
 }
-
-
-
 
 // import 'dart:async';
 // import 'package:flutter/material.dart';

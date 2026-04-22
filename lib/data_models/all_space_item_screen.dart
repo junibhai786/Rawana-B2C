@@ -2,6 +2,7 @@ import 'package:moonbnd/Provider/space_provider.dart';
 import 'package:moonbnd/modals/all_space_vendor_modal.dart';
 
 import 'package:flutter/material.dart';
+import 'package:moonbnd/app_colors.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -236,7 +237,7 @@ class _CarDataItemState extends State<AllSpaceScreenItem> {
                                     // );
                                   },
                                   style: ElevatedButton.styleFrom(
-                                      backgroundColor: Color(0xff17A2B8)),
+                                      backgroundColor: AppColors.secondary),
                                   child: Text("View"),
                                 ),
                               ),
@@ -258,7 +259,7 @@ class _CarDataItemState extends State<AllSpaceScreenItem> {
                                     // );
                                   },
                                   style: ElevatedButton.styleFrom(
-                                      backgroundColor: Color(0xffFFC107)),
+                                      backgroundColor: AppColors.accent),
                                   child: Text("Edit"),
                                 ),
                               ),
@@ -281,7 +282,7 @@ class _CarDataItemState extends State<AllSpaceScreenItem> {
                                     // );
                                   },
                                   style: ElevatedButton.styleFrom(
-                                      backgroundColor: Color(0xff1A2B47)),
+                                      backgroundColor: AppColors.accent),
                                   child: Text("Clone"),
                                 ),
                               ),
