@@ -1,10 +1,13 @@
 import 'dart:developer';
+import 'package:country_picker/country_picker.dart';
+import 'package:moonbnd/widgets/country_code.dart';
 import 'package:moonbnd/constants.dart';
 import 'package:moonbnd/Provider/activity_provider.dart';
 import 'package:moonbnd/screens/activities/activity_booking_confirmed_screen.dart';
 import 'package:moonbnd/screens/hotel/stripe_checkout_webview_screen.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter/material.dart';
+import 'package:moonbnd/app_colors.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:get/get.dart';
 import 'package:provider/provider.dart';
@@ -26,8 +29,10 @@ class _ActivityCheckoutScreenState extends State<ActivityCheckoutScreen> {
   // Form controls
   bool _agreedToTerms = false;
   String _selectedPaymentMethod = 'card';
+  String? _paymentGatewayUsed;
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
+  late Country selectedCountry;
   final TextEditingController _firstNameController = TextEditingController();
   final TextEditingController _lastNameController = TextEditingController();
   final TextEditingController _dateOfBirthController = TextEditingController();
@@ -41,6 +46,10 @@ class _ActivityCheckoutScreenState extends State<ActivityCheckoutScreen> {
 
   String _selectedTitle = 'Mr';
   String _selectedGender = 'Male';
+
+  // Form validation
+  final _formKey = GlobalKey<FormState>();
+  String? _termsError;
 
   // Processing guard
   bool _isProcessing = false;
@@ -65,6 +74,52 @@ class _ActivityCheckoutScreenState extends State<ActivityCheckoutScreen> {
     log('[ActivityCheckout] activityData keys  : ${widget.activityData.keys.toList()}');
     log('[ActivityCheckout] token value        : ${widget.activityData['checkout_token']}');
     log('[ActivityCheckout] checkout_url value : ${widget.activityData['checkout_url']}');
+    // Initialize with default country (US)
+    selectedCountry = _getDefaultCountry();
+  }
+
+  Country _getDefaultCountry() {
+    return Country.parse('AE');
+  }
+
+  /// Get max phone number length based on country code
+  int _getPhoneMaxLength() {
+    final phoneCode = selectedCountry.phoneCode;
+    // Phone number length limits by country code
+    final phoneLengthMap = {
+      // Americas
+      '1': 10, // US, Canada - 10 digits
+      // Europe
+      '44': 11, // UK - 10 digits + formatting
+      '33': 9, // France - 9 digits
+      '49': 11, // Germany - 10 digits
+      '39': 10, // Italy - 10 digits
+      '34': 9, // Spain - 9 digits
+      // Asia
+      '91': 10, // India - 10 digits
+      '92': 10, // Pakistan - 10 digits
+      '880': 10, // Bangladesh - 10 digits
+      '81': 11, // Japan - 10 digits
+      '82': 10, // South Korea - 9-10 digits
+      '86': 11, // China - 11 digits
+      '60': 10, // Malaysia - 9-10 digits
+      '62': 12, // Indonesia - 9-12 digits
+      '63': 10, // Philippines - 10 digits
+      '66': 9, // Thailand - 9 digits
+      '84': 10, // Vietnam - 9-10 digits
+      '65': 8, // Singapore - 8 digits
+      '852': 8, // Hong Kong - 8 digits
+      // Middle East
+      '971': 9, // UAE - 9 digits
+      '966': 9, // Saudi Arabia - 9 digits
+      '974': 8, // Qatar - 8 digits
+      '20': 10, // Egypt - 10 digits
+      // Africa
+      '27': 9, // South Africa - 9 digits
+      '234': 10, // Nigeria - 10 digits
+    };
+    // Use specific limit if available, otherwise use 15 as default
+    return (phoneLengthMap[phoneCode] ?? 15);
   }
 
   /// Validation helpers
@@ -126,8 +181,9 @@ class _ActivityCheckoutScreenState extends State<ActivityCheckoutScreen> {
   }
 
   String? _validatePassportNumber(String value) {
+    // Passport is optional for activities — only validate format if provided
     final passport = value.trim();
-    if (passport.isEmpty) return 'Passport number is required'.tr;
+    if (passport.isEmpty) return null;
     if (!_isValidPassportNumber(passport)) {
       return 'Passport number must be 5-20 characters'.tr;
     }
@@ -135,7 +191,7 @@ class _ActivityCheckoutScreenState extends State<ActivityCheckoutScreen> {
   }
 
   String? _validatePassportExpiry(String value) {
-    if (value.trim().isEmpty) return 'Passport expiry is required'.tr;
+    // Passport expiry is optional for activities
     return null;
   }
 
@@ -294,18 +350,12 @@ class _ActivityCheckoutScreenState extends State<ActivityCheckoutScreen> {
     log('[ActivityConfirmPay] button tapped — agreedToTerms=$_agreedToTerms isProcessing=$_isProcessing');
     if (_isProcessing) return;
 
-    // Validate all fields
-    final error = _validateAllFields();
-    log('[ActivityConfirmPay] validation result: ${error ?? "OK"}');
-    if (error != null) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content:
-            Text(error, style: GoogleFonts.spaceGrotesk(color: Colors.white)),
-        backgroundColor: Colors.red.shade700,
-        behavior: SnackBarBehavior.floating,
-      ));
-      return;
+    // Inline form validation — errors shown under each field
+    final formValid = _formKey.currentState!.validate();
+    if (!_agreedToTerms) {
+      setState(() => _termsError = 'You must accept the terms to continue'.tr);
     }
+    if (!formValid || !_agreedToTerms) return;
 
     final checkoutToken = _extractToken();
     log('[ActivityConfirmPay] checkoutToken resolved: "$checkoutToken"');
@@ -323,11 +373,16 @@ class _ActivityCheckoutScreenState extends State<ActivityCheckoutScreen> {
     }
 
     setState(() => _isProcessing = true);
-    EasyLoading.show(status: 'Processing payment...');
+    EasyLoading.show(status: 'Processing payment...'.tr);
 
     try {
       final paymentGateway =
           _selectedPaymentMethod == 'card' ? 'stripe' : 'ngenius';
+
+      // Store payment gateway for confirmation screen
+      setState(() {
+        _paymentGatewayUsed = paymentGateway;
+      });
 
       final provider = context.read<ActivityProvider>();
 
@@ -390,7 +445,9 @@ class _ActivityCheckoutScreenState extends State<ActivityCheckoutScreen> {
                 Navigator.of(context).pushReplacement(
                   MaterialPageRoute(
                     builder: (_) => ActivityBookingConfirmedScreen(
-                        data: provider.orderData!),
+                      data: provider.orderData!,
+                      paymentMethod: _paymentGatewayUsed,
+                    ),
                   ),
                 );
               } else {
@@ -402,7 +459,7 @@ class _ActivityCheckoutScreenState extends State<ActivityCheckoutScreen> {
                             .tr,
                     style: GoogleFonts.spaceGrotesk(color: Colors.white),
                   ),
-                  backgroundColor: Colors.orange,
+                  backgroundColor: AppColors.accent,
                   behavior: SnackBarBehavior.floating,
                   duration: const Duration(seconds: 6),
                 ));
@@ -421,7 +478,7 @@ class _ActivityCheckoutScreenState extends State<ActivityCheckoutScreen> {
             ScaffoldMessenger.of(context).showSnackBar(SnackBar(
               content: Text('Payment cancelled.'.tr,
                   style: GoogleFonts.spaceGrotesk(color: Colors.white)),
-              backgroundColor: Colors.orange,
+              backgroundColor: AppColors.accent,
               behavior: SnackBarBehavior.floating,
             ));
           } else if (outcome?.result == StripePaymentResult.failed) {
@@ -436,7 +493,7 @@ class _ActivityCheckoutScreenState extends State<ActivityCheckoutScreen> {
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(
             content: Text('Booking confirmed!'.tr,
                 style: GoogleFonts.spaceGrotesk(color: Colors.white)),
-            backgroundColor: Colors.green.shade700,
+            backgroundColor: AppColors.secondary,
             behavior: SnackBarBehavior.floating,
           ));
         }
@@ -512,39 +569,42 @@ class _ActivityCheckoutScreenState extends State<ActivityCheckoutScreen> {
               ),
             ),
           ),
-          body: SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                children: [
-                  // ── Activity Summary Card ────────────────────────────────
-                  _buildActivitySummaryCard(),
-                  const SizedBox(height: 20),
+          body: Form(
+            key: _formKey,
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  children: [
+                    // ── Activity Summary Card ────────────────────────────────
+                    _buildActivitySummaryCard(),
+                    const SizedBox(height: 20),
 
-                  // ── Booking Details Section ──────────────────────────────
-                  _buildBookingDetailsSection(),
-                  const SizedBox(height: 20),
+                    // ── Booking Details Section ──────────────────────────────
+                    _buildBookingDetailsSection(),
+                    const SizedBox(height: 20),
 
-                  // ── Guest Details Section ────────────────────────────────
-                  _buildGuestDetailsSection(),
-                  const SizedBox(height: 20),
+                    // ── Guest Details Section ────────────────────────────────
+                    _buildGuestDetailsSection(),
+                    const SizedBox(height: 20),
 
-                  // ── Payment Method Section ───────────────────────────────
-                  _buildPaymentMethodSection(),
-                  const SizedBox(height: 20),
+                    // ── Payment Method Section ───────────────────────────────
+                    _buildPaymentMethodSection(),
+                    const SizedBox(height: 20),
 
-                  // ── Special Requests ────────────────────────────────────
-                  _buildSpecialRequestsSection(),
-                  const SizedBox(height: 20),
+                    // ── Special Requests ────────────────────────────────────
+                    _buildSpecialRequestsSection(),
+                    const SizedBox(height: 20),
 
-                  // ── Price Summary ────────────────────────────────────────
-                  _buildPriceSummarySection(),
-                  const SizedBox(height: 20),
+                    // ── Price Summary ────────────────────────────────────────
+                    _buildPriceSummarySection(),
+                    const SizedBox(height: 20),
 
-                  // ── Terms & Checkout ────────────────────────────────────
-                  _buildTermsAndCheckout(),
-                  const SizedBox(height: 32),
-                ],
+                    // ── Terms & Checkout ────────────────────────────────────
+                    _buildTermsAndCheckout(),
+                    const SizedBox(height: 32),
+                  ],
+                ),
               ),
             ),
           ),
@@ -767,6 +827,7 @@ class _ActivityCheckoutScreenState extends State<ActivityCheckoutScreen> {
                     TextField(
                       controller: _phoneController,
                       keyboardType: TextInputType.phone,
+                      maxLength: _getPhoneMaxLength(),
                       onChanged: (value) {
                         final error = _validatePhone(value);
                         if (error != (_phoneError)) {
@@ -774,16 +835,59 @@ class _ActivityCheckoutScreenState extends State<ActivityCheckoutScreen> {
                         }
                       },
                       decoration: _buildTextFieldDecoration(
-                        hintText: '+971 123 456 7890',
+                        hintText: '501234567',
                         labelText: 'Phone Number'.tr,
-                        prefixIcon: const Icon(Icons.phone_outlined,
-                            size: 18, color: kPrimaryColor),
                         errorText: _phoneError,
                         hasError: _phoneError != null,
                         suffixIcon: _phoneError != null
                             ? Icon(Icons.error_outline_rounded,
                                 color: Colors.red.shade700, size: 18)
                             : null,
+                        prefixIcon: GestureDetector(
+                          onTap: () {
+                            countryCodeBottomSheet(
+                              (Country country) {
+                                setState(() {
+                                  selectedCountry = country;
+                                });
+                              },
+                              true,
+                              context,
+                            );
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 8),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  selectedCountry.flagEmoji,
+                                  style: const TextStyle(fontSize: 18),
+                                ),
+                                const SizedBox(width: 6),
+                                Text(
+                                  '+${selectedCountry.phoneCode}',
+                                  style: GoogleFonts.spaceGrotesk(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                    color: kHeadingColor,
+                                  ),
+                                ),
+                                const Padding(
+                                  padding: EdgeInsets.symmetric(horizontal: 4),
+                                  child: Icon(
+                                    Icons.arrow_drop_down_outlined,
+                                    size: 18,
+                                    color: kMutedColor,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ).copyWith(
+                        prefixIconConstraints:
+                            const BoxConstraints(minWidth: 130, maxHeight: 50),
                       ),
                       style: GoogleFonts.spaceGrotesk(
                           fontSize: 14, color: kHeadingColor),
@@ -1127,7 +1231,7 @@ class _ActivityCheckoutScreenState extends State<ActivityCheckoutScreen> {
                     'Secure card processing with Stripe'),
                 const SizedBox(height: 12),
                 _buildPaymentOption(
-                    'alternative', 'Alternative Payment'.tr, 'Digital wallets'),
+                    'alternative', 'N Genious Payment'.tr, 'Digital wallets'),
               ],
             ),
           ),
@@ -1344,12 +1448,16 @@ class _ActivityCheckoutScreenState extends State<ActivityCheckoutScreen> {
     final currency = data['currency'] ?? 'AED';
 
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
             Checkbox(
               value: _agreedToTerms,
-              onChanged: (v) => setState(() => _agreedToTerms = v!),
+              onChanged: (v) => setState(() {
+                _agreedToTerms = v!;
+                if (_agreedToTerms) _termsError = null;
+              }),
               activeColor: kPrimaryColor,
             ),
             Expanded(
@@ -1362,14 +1470,21 @@ class _ActivityCheckoutScreenState extends State<ActivityCheckoutScreen> {
             ),
           ],
         ),
-        const SizedBox(height: 16),
+        if (_termsError != null) ...[
+          Padding(
+            padding: const EdgeInsets.only(left: 12, bottom: 8),
+            child: Text(
+              _termsError!,
+              style: GoogleFonts.spaceGrotesk(fontSize: 12, color: Colors.red),
+            ),
+          ),
+        ],
+        const SizedBox(height: 8),
         SizedBox(
           width: double.infinity,
           height: 56,
           child: ElevatedButton(
-            onPressed: (_agreedToTerms && !_isProcessing)
-                ? () => _handleConfirmPay()
-                : null,
+            onPressed: _isProcessing ? null : () => _handleConfirmPay(),
             style: ElevatedButton.styleFrom(
               backgroundColor: kPrimaryColor,
               disabledBackgroundColor: kMutedColor,

@@ -38,7 +38,7 @@ class Flight {
   String? airlineLogo;
   String? stopsLabel;
   String? badge;
-  String? provider; // duffel or travolyo_b2b_xml_agency
+  String? provider; // duffel or rawana_b2b_xml_agency
   String? cabinClass;
   String? flightNumber;
 

@@ -1,5 +1,6 @@
 import 'package:moonbnd/widgets/tertiary_button.dart';
 import 'package:flutter/material.dart';
+import 'package:moonbnd/app_colors.dart';
 import 'package:get/get.dart';
 
 class BookingreprotScreen extends StatelessWidget {
@@ -92,7 +93,7 @@ class BookingCard extends StatelessWidget {
             const SizedBox(height: 8),
             const Text('Commission: \$39'),
             const Text('Status: Processing',
-                style: TextStyle(color: Colors.orange)),
+                style: TextStyle(color: AppColors.accent)),
             const SizedBox(height: 16),
             Row(
               children: [

@@ -2,6 +2,7 @@ import 'package:moonbnd/Provider/event_provider.dart';
 import 'package:moonbnd/screens/auth/signin_screen.dart';
 import 'package:moonbnd/widgets/popup_login.dart';
 import 'package:flutter/material.dart';
+import 'package:moonbnd/app_colors.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:provider/provider.dart';
@@ -54,7 +55,7 @@ class _EventItemState extends State<EventItem> {
       type: 'event',
       id: widget.dataSrc.id.toString(),
       badgeText: 'EVENT',
-      badgeColor: Colors.purple,
+      badgeColor: AppColors.accent,
       priceSuffix: '',
       extraInfo: 'Start time: ${widget.dataSrc.time}',
       duration: widget.dataSrc.duration,

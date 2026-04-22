@@ -1,6 +1,7 @@
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
+import 'package:moonbnd/app_colors.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:moonbnd/Provider/hotel_destination_provider.dart';
@@ -140,7 +141,7 @@ class _HotelDestinationSelectionSheetState
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(color: Color(0xFF05A8C7)),
+                  borderSide: const BorderSide(color: AppColors.primary),
                 ),
               ),
             ),
@@ -270,7 +271,7 @@ class _HotelDestinationSelectionSheetState
                                         text: '${provider.fuzzyDidYouMean}',
                                         style: const TextStyle(
                                           fontWeight: FontWeight.w700,
-                                          color: Color(0xFF05A8C7),
+                                          color: AppColors.primary,
                                         ),
                                       ),
                                       const TextSpan(text: '?'),
@@ -280,7 +281,7 @@ class _HotelDestinationSelectionSheetState
                               ),
                               const SizedBox(width: 4),
                               const Icon(Icons.arrow_forward_ios,
-                                  size: 12, color: Color(0xFF05A8C7)),
+                                  size: 12, color: AppColors.primary),
                             ],
                           ),
                         ),
@@ -335,7 +336,7 @@ class _HotelDestinationSelectionSheetState
                                     ),
                                     child: Icon(
                                       isCity ? Icons.location_on : Icons.public,
-                                      color: const Color(0xFF05A8C7),
+                                      color: AppColors.primary,
                                       size: 20,
                                     ),
                                   ),
@@ -397,7 +398,7 @@ class _HotelDestinationSelectionSheetState
                                               style: GoogleFonts.spaceGrotesk(
                                                 fontSize: 11,
                                                 fontWeight: FontWeight.w600,
-                                                color: const Color(0xff05A8C7),
+                                                color: AppColors.primary,
                                                 letterSpacing: 0.5,
                                               ),
                                             ),

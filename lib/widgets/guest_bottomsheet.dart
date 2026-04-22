@@ -1,6 +1,7 @@
 // ignore_for_file: prefer_const_constructors, prefer_const_literals_to_create_immutables
 
 import 'package:flutter/material.dart';
+import 'package:moonbnd/app_colors.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:moonbnd/constants.dart';
 import 'package:get/get.dart';
@@ -167,7 +168,7 @@ List<Widget> _buildChildAgeRows(List<int> childrenAges, StateSetter setState) {
                           shape: BoxShape.circle,
                           border: Border.all(
                             color: childrenAges[index] > 0
-                                ? const Color(0xFF05A8C7)
+                                ? AppColors.primary
                                 : const Color(0xffE5E7EB),
                           ),
                         ),
@@ -175,7 +176,7 @@ List<Widget> _buildChildAgeRows(List<int> childrenAges, StateSetter setState) {
                           Icons.remove,
                           size: 16,
                           color: childrenAges[index] > 0
-                              ? const Color(0xFF05A8C7)
+                              ? AppColors.primary
                               : const Color(0xffD1D5DB),
                         ),
                       ),
@@ -207,13 +208,13 @@ List<Widget> _buildChildAgeRows(List<int> childrenAges, StateSetter setState) {
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           border: Border.all(
-                            color: const Color(0xFF05A8C7),
+                            color: AppColors.primary,
                           ),
                         ),
                         child: const Icon(
                           Icons.add,
                           size: 16,
-                          color: Color(0xFF05A8C7),
+                          color: AppColors.primary,
                         ),
                       ),
                     ),

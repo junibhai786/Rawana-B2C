@@ -34,6 +34,7 @@ class HotelBookingConfirmationData {
   final double? totalPrice;
   final String? currency;
   final String? status;
+  final String? paymentMethod;
   final HotelBookingGuest? guest;
   final String? specialRequests;
 
@@ -50,6 +51,7 @@ class HotelBookingConfirmationData {
     this.totalPrice,
     this.currency,
     this.status,
+    this.paymentMethod,
     this.guest,
     this.specialRequests,
   });
@@ -76,6 +78,7 @@ class HotelBookingConfirmationData {
           : null,
       currency: json['currency']?.toString(),
       status: json['status']?.toString(),
+      paymentMethod: json['payment_method']?.toString(),
       guest: json['guest'] is Map<String, dynamic>
           ? HotelBookingGuest.fromJson(json['guest'] as Map<String, dynamic>)
           : null,

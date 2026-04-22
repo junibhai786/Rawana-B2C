@@ -1,13 +1,16 @@
-﻿import 'dart:convert';
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:moonbnd/app_colors.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:moonbnd/Provider/search_hotel_provider.dart';
 import 'package:moonbnd/Provider/currency_provider.dart';
 import 'package:moonbnd/modals/hotel_search_response_model.dart';
 import 'package:moonbnd/screens/hotel/room_detail_screen.dart';
+import 'package:moonbnd/services/hotel_api_service.dart';
 import 'package:moonbnd/constants.dart';
 import 'package:provider/provider.dart';
 import 'package:get/get.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // FILTER / SORT STATE (file-private)
@@ -59,6 +62,7 @@ class HotelSearchResultsScreen extends StatefulWidget {
   final int guests;
   final int adults;
   final int children;
+  final List<int>? childAges;
   final int rooms;
 
   const HotelSearchResultsScreen({
@@ -69,6 +73,7 @@ class HotelSearchResultsScreen extends StatefulWidget {
     this.guests = 1,
     this.adults = 1,
     this.children = 0,
+    this.childAges,
     this.rooms = 1,
   });
 
@@ -94,7 +99,7 @@ class _HotelSearchResultsScreenState extends State<HotelSearchResultsScreen> {
   }
 
   /// Normalises raw API provider strings to a canonical token:
-  ///   - anything containing "b2b"  â†’ "b2b"  (covers travolyo_b2b, b2b, etc.)
+  ///   - anything containing "b2b"  â†’ "b2b"  (covers rawana_b2b, b2b, etc.)
   ///   - "local"                    â†’ "local"
   ///   - anything else              â†’ lowercased raw value
   static String _normalizeProvider(String? raw) {
@@ -133,7 +138,7 @@ class _HotelSearchResultsScreenState extends State<HotelSearchResultsScreen> {
       }
 
       // â”€â”€ Provider filter â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-      // Use normalised value so "travolyo_b2b" correctly matches _ProviderFilter.b2b.
+      // Use normalised value so "rawana_b2b" correctly matches _ProviderFilter.b2b.
       final provNorm = _normalizeProvider(h.provider);
       switch (_activeFilter.providerFilter) {
         case _ProviderFilter.local:
@@ -168,11 +173,11 @@ class _HotelSearchResultsScreenState extends State<HotelSearchResultsScreen> {
   String get _sortLabel {
     switch (_sortBy) {
       case _SortBy.price:
-        return 'Price';
+        return 'Price'.tr;
       case _SortBy.stars:
-        return 'Stars';
+        return 'Stars'.tr;
       case _SortBy.name:
-        return 'Name';
+        return 'Name'.tr;
     }
   }
 
@@ -223,6 +228,7 @@ class _HotelSearchResultsScreenState extends State<HotelSearchResultsScreen> {
       checkOut: widget.checkOutDate,
       adults: widget.adults,
       children: widget.children,
+      childAges: widget.childAges,
       rooms: widget.rooms,
       currency: currency,
     );
@@ -437,7 +443,7 @@ class _HotelSearchResultsScreenState extends State<HotelSearchResultsScreen> {
                                 size: 56, color: Colors.grey[300]),
                             SizedBox(height: 16),
                             Text(
-                              'No hotels match your filters',
+                              'No hotels match your filters'.tr,
                               style: GoogleFonts.spaceGrotesk(
                                 fontSize: 15,
                                 fontWeight: FontWeight.w600,
@@ -449,7 +455,7 @@ class _HotelSearchResultsScreenState extends State<HotelSearchResultsScreen> {
                               onPressed: () => setState(
                                   () => _activeFilter = const _FilterState()),
                               child: Text(
-                                'Clear filters',
+                                'Clear filters'.tr,
                                 style: TextStyle(
                                   color: kPrimaryColor,
                                   fontWeight: FontWeight.w600,
@@ -501,10 +507,23 @@ class _HotelSearchResultsScreenState extends State<HotelSearchResultsScreen> {
                             }
                             return const SizedBox.shrink();
                           }
-                          return HotelCard(
-                            hotel: filteredHotels[index],
-                            cityName: widget.cityName,
-                          );
+                          return Consumer<CurrencyProvider>(
+                              builder: (context, currencyProvider, _) {
+                            SharedPreferences.getInstance().then((prefs) {
+                              // Token will be retrieved in the card
+                            });
+                            return HotelCard(
+                              hotel: filteredHotels[index],
+                              cityName: widget.cityName,
+                              checkIn: provider.lastCheckIn,
+                              checkOut: provider.lastCheckOut,
+                              adults: provider.lastAdults,
+                              children: provider.lastChildren,
+                              currency: currencyProvider.selectedCurrency,
+                              token:
+                                  null, // Will use SharedPreferences in _openDetail
+                            );
+                          });
                         },
                       ),
                     );
@@ -548,7 +567,7 @@ class _FilterSortBar extends StatelessWidget {
           Expanded(
             child: Text(
               hotelCount == null
-                  ? 'Searching...'
+                  ? 'Searching...'.tr
                   : '$hotelCount hotel${hotelCount == 1 ? '' : 's'} available',
               style: GoogleFonts.spaceGrotesk(
                 fontSize: 13,
@@ -559,14 +578,14 @@ class _FilterSortBar extends StatelessWidget {
           ),
           _Pill(
             icon: Icons.swap_vert_rounded,
-            label: 'Sort: $sortLabel',
+            label: '${'Sort:'.tr} $sortLabel',
             active: false,
             onTap: onSort,
           ),
           const SizedBox(width: 8),
           _Pill(
             icon: Icons.tune_rounded,
-            label: 'Filter',
+            label: 'Filter'.tr,
             active: filterActive,
             onTap: onFilter,
           ),
@@ -674,7 +693,7 @@ class _FilterSheetState extends State<_FilterSheet> {
               child: Row(
                 children: [
                   Text(
-                    'Filters',
+                    'Filters'.tr,
                     style: GoogleFonts.spaceGrotesk(
                       fontSize: 18,
                       fontWeight: FontWeight.w700,
@@ -691,7 +710,7 @@ class _FilterSheetState extends State<_FilterSheet> {
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(Icons.close_rounded,
-                          size: 18, color: Color(0xFF1A1A2E)),
+                          size: 18, color: AppColors.accent),
                     ),
                   ),
                 ],
@@ -798,7 +817,7 @@ class _FilterSheetState extends State<_FilterSheet> {
                             borderRadius: BorderRadius.circular(10)),
                       ),
                       child: Text(
-                        'Reset',
+                        'Reset'.tr,
                         style: GoogleFonts.spaceGrotesk(
                           fontWeight: FontWeight.w600,
                           color: kSheetHeadingColor,
@@ -822,7 +841,7 @@ class _FilterSheetState extends State<_FilterSheet> {
                             borderRadius: BorderRadius.circular(10)),
                       ),
                       child: Text(
-                        'Apply Filters',
+                        'Apply Filters'.tr,
                         style: GoogleFonts.spaceGrotesk(
                           fontWeight: FontWeight.w700,
                           fontSize: 14,
@@ -901,11 +920,11 @@ class _SortTile extends StatelessWidget {
   String get _label {
     switch (value) {
       case _SortBy.price:
-        return 'Price (Low to High)';
+        return 'Price (Low to High)'.tr;
       case _SortBy.stars:
-        return 'Star Rating (High to Low)';
+        return 'Star Rating (High to Low)'.tr;
       case _SortBy.name:
-        return 'Name (A â€“ Z)';
+        return 'Name (A – Z)'.tr;
     }
   }
 
@@ -970,7 +989,7 @@ class _SectionLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Text(
-        text,
+        text.tr,
         style: GoogleFonts.spaceGrotesk(
           fontSize: 11,
           fontWeight: FontWeight.w700,
@@ -992,7 +1011,7 @@ class _PriceTag extends StatelessWidget {
         crossAxisAlignment:
             alignRight ? CrossAxisAlignment.end : CrossAxisAlignment.start,
         children: [
-          Text(caption,
+          Text(caption.tr,
               style: GoogleFonts.spaceGrotesk(
                   fontSize: 11, color: Colors.grey.shade400)),
           Text(value,
@@ -1015,7 +1034,7 @@ class _StarTile extends StatelessWidget {
   String get _label {
     switch (value) {
       case _StarFilter.any:
-        return 'Any';
+        return 'Any'.tr;
       case _StarFilter.five:
         return '5 Stars';
       case _StarFilter.fourPlus:
@@ -1064,7 +1083,7 @@ class _StarTile extends StatelessWidget {
                 children: List.generate(
                   _count,
                   (_) => const Icon(Icons.star_rounded,
-                      size: 14, color: Color(0xFFFFC107)),
+                      size: 14, color: AppColors.accent),
                 ),
               )
             ],
@@ -1085,9 +1104,9 @@ class _ProviderTile extends StatelessWidget {
   String get _label {
     switch (value) {
       case _ProviderFilter.all:
-        return 'All';
+        return 'All'.tr;
       case _ProviderFilter.local:
-        return 'Local';
+        return 'Local'.tr;
       case _ProviderFilter.b2b:
         return 'B2B';
     }
@@ -1150,31 +1169,117 @@ class _RadioDot extends StatelessWidget {
       );
 }
 
-class HotelCard extends StatelessWidget {
+class HotelCard extends StatefulWidget {
   final HotelSearchResult hotel;
   final String? cityName;
+  final DateTime? checkIn;
+  final DateTime? checkOut;
+  final int adults;
+  final int children;
+  final String currency;
+  final String? token;
 
   const HotelCard({
     Key? key,
     required this.hotel,
     this.cityName,
+    this.checkIn,
+    this.checkOut,
+    this.adults = 1,
+    this.children = 0,
+    this.currency = 'USD',
+    this.token,
   }) : super(key: key);
 
-  void _openDetail(BuildContext context) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => RoomDetailScreen(
-          hotelId: hotel.id,
-          provider: hotel.provider,
-          searchData: hotel,
-        ),
-      ),
-    );
+  @override
+  State<HotelCard> createState() => _HotelCardState();
+}
+
+class _HotelCardState extends State<HotelCard> {
+  bool _isLoadingRooms = false;
+
+  void _openDetail(BuildContext context) async {
+    if (_isLoadingRooms) return;
+    if (mounted) setState(() => _isLoadingRooms = true);
+    try {
+      // Prepare parameters for the new API
+      final checkInStr = widget.checkIn != null
+          ? DateTime(widget.checkIn!.year, widget.checkIn!.month,
+                  widget.checkIn!.day)
+              .toString()
+              .split(' ')[0]
+          : DateTime.now().toString().split(' ')[0];
+
+      final checkOutStr = widget.checkOut != null
+          ? DateTime(widget.checkOut!.year, widget.checkOut!.month,
+                  widget.checkOut!.day)
+              .toString()
+              .split(' ')[0]
+          : DateTime.now()
+              .add(const Duration(days: 1))
+              .toString()
+              .split(' ')[0];
+
+      final offerId = widget.hotel.id;
+      final cityCode = widget.cityName ?? widget.hotel.city ?? 'unknown';
+
+      debugPrint('[RoomFetch] Fetching rooms with params:');
+      debugPrint('[RoomFetch] offerId: $offerId');
+      debugPrint('[RoomFetch] cityCode: $cityCode');
+      debugPrint('[RoomFetch] checkIn: $checkInStr');
+      debugPrint('[RoomFetch] checkOut: $checkOutStr');
+      debugPrint('[RoomFetch] adults: ${widget.adults}');
+      debugPrint('[RoomFetch] currency: ${widget.currency}');
+      debugPrint('[RoomFetch] provider: ${widget.hotel.provider}');
+
+      // Call the new API to fetch rooms (static method)
+      final response = await HotelApiService.fetchHotelRooms(
+        offerId: offerId,
+        cityCode: cityCode,
+        checkIn: checkInStr,
+        checkOut: checkOutStr,
+        adults: widget.adults,
+        currency: widget.currency,
+        provider: widget.hotel.provider ?? 'local',
+        token: widget.token ?? '',
+      );
+
+      if (mounted) setState(() => _isLoadingRooms = false);
+
+      // Navigate to RoomDetailScreen with the fetched data
+      if (mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => RoomDetailScreen(
+              hotelId: widget.hotel.id,
+              provider: widget.hotel.provider,
+              searchData: widget.hotel,
+              roomsApiResponse: response,
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) setState(() => _isLoadingRooms = false);
+
+      // Show error message
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error fetching rooms: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+
+      debugPrint('[RoomFetch] Error: $e');
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final hotel = widget.hotel;
     final hasImages = hotel.images != null && hotel.images!.isNotEmpty;
     final imageUrl = hasImages ? hotel.images!.first : null;
 
@@ -1436,10 +1541,12 @@ class HotelCard extends StatelessWidget {
 
                       // CTA button - consistent pill style
                       TextButton(
-                        onPressed: () => _openDetail(context),
+                        onPressed:
+                            _isLoadingRooms ? null : () => _openDetail(context),
                         style: TextButton.styleFrom(
                           backgroundColor: kPrimaryColor,
                           foregroundColor: Colors.white,
+                          disabledBackgroundColor: kPrimaryColor,
                           padding: const EdgeInsets.symmetric(
                               horizontal: 20, vertical: 11),
                           shape: RoundedRectangleBorder(
@@ -1448,20 +1555,27 @@ class HotelCard extends StatelessWidget {
                           minimumSize: Size.zero,
                           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                         ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              'View Rooms'.tr,
-                              style: GoogleFonts.spaceGrotesk(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            const SizedBox(width: 5),
-                            // const Icon(Icons.arrow_forward_ios_rounded,
-                            //     size: 11),
-                          ],
+                        child: SizedBox(
+                          width: 80,
+                          child: Center(
+                            child: _isLoadingRooms
+                                ? const SizedBox(
+                                    width: 16,
+                                    height: 16,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.white,
+                                    ),
+                                  )
+                                : Text(
+                                    'View Rooms'.tr,
+                                    style: GoogleFonts.spaceGrotesk(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                          ),
                         ),
                       ),
                     ],

@@ -1,4 +1,4 @@
-package com.travolyo.app
+package com.rawana.app
 
 import io.flutter.embedding.android.FlutterActivity
 

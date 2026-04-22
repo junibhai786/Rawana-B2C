@@ -11,6 +11,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:moonbnd/app_colors.dart';
 
 class FlightDetailsScreen extends StatefulWidget {
   final int flightId;
@@ -513,7 +514,7 @@ class _FlightDetailsState extends State<FlightDetailsScreen> {
                     width: 12,
                     height: 12,
                     decoration: BoxDecoration(
-                      color: Colors.blue,
+                      color: AppColors.primary,
                       shape: BoxShape.circle,
                       border: Border.all(
                         color: Colors.white,
@@ -528,7 +529,7 @@ class _FlightDetailsState extends State<FlightDetailsScreen> {
                     width: 12,
                     height: 12,
                     decoration: BoxDecoration(
-                      color: Colors.blue,
+                      color: AppColors.primary,
                       shape: BoxShape.circle,
                       border: Border.all(
                         color: Colors.white,

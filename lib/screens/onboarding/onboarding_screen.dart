@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:moonbnd/app_colors.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:moonbnd/screens/auth/login_secuirty_screen.dart';
@@ -46,7 +47,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   @override
   Widget build(BuildContext context) {
     // Define the custom Teal color from the design
-    const Color primaryColor = Color(0xFF05A8C7);
+    const Color primaryColor = AppColors.primary;
 
     return Scaffold(
       body: Container(

@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:moonbnd/app_colors.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'dart:developer';
 import 'package:provider/provider.dart';
+import 'package:country_picker/country_picker.dart';
+import 'package:moonbnd/widgets/country_code.dart';
 import 'package:moonbnd/screens/hotel/stripe_checkout_webview_screen.dart';
 import 'package:moonbnd/screens/hotel/hotel_booking_confirmed_screen.dart';
 import 'package:moonbnd/Provider/hotel_checkout_provider.dart';
@@ -54,12 +57,22 @@ class GuestFormData {
 }
 
 class _HotelCheckoutScreenState extends State<HotelCheckoutScreen> {
+  final _formKey = GlobalKey<FormState>();
+  String? _termsError;
+
   bool _agreedToTerms = false;
   String _selectedPaymentMethod = 'card';
+  String? _paymentGatewayUsed;
   bool _isConfirmingBooking =
       false; // shows full-screen overlay while fetching order details
+
+  /// Prevents the checkout API from firing twice due to fast double-taps or
+  /// Consumer frame-race conditions. Set true the moment the API is dispatched;
+  /// never reset (must pop and re-enter to retry).
+  bool _checkoutInitiated = false;
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
+  late Country selectedCountry;
 
   late List<GuestFormData> _guestForms;
 
@@ -67,11 +80,60 @@ class _HotelCheckoutScreenState extends State<HotelCheckoutScreen> {
   void initState() {
     super.initState();
     _initializeGuestForms();
+    selectedCountry = _getDefaultCountry();
   }
 
   void _initializeGuestForms() {
     _guestForms =
         List.generate(widget.adults + widget.children, (_) => GuestFormData());
+  }
+
+  Country _getDefaultCountry() {
+    try {
+      return Country.parse((widget.country ?? 'AE').toUpperCase());
+    } catch (e) {
+      return Country.parse('AE');
+    }
+  }
+
+  /// Get max phone number length based on country code
+  int _getPhoneMaxLength() {
+    final phoneCode = selectedCountry.phoneCode;
+    // Phone number length limits by country code
+    final phoneLengthMap = {
+      // Americas
+      '1': 10, // US, Canada - 10 digits
+      // Europe
+      '44': 11, // UK - 10 digits + formatting
+      '33': 9, // France - 9 digits
+      '49': 11, // Germany - 10 digits
+      '39': 10, // Italy - 10 digits
+      '34': 9, // Spain - 9 digits
+      // Asia
+      '91': 10, // India - 10 digits
+      '92': 10, // Pakistan - 10 digits
+      '880': 10, // Bangladesh - 10 digits
+      '81': 11, // Japan - 10 digits
+      '82': 10, // South Korea - 9-10 digits
+      '86': 11, // China - 11 digits
+      '60': 10, // Malaysia - 9-10 digits
+      '62': 12, // Indonesia - 9-12 digits
+      '63': 10, // Philippines - 10 digits
+      '66': 9, // Thailand - 9 digits
+      '84': 10, // Vietnam - 9-10 digits
+      '65': 8, // Singapore - 8 digits
+      '852': 8, // Hong Kong - 8 digits
+      // Middle East
+      '971': 9, // UAE - 9 digits
+      '966': 9, // Saudi Arabia - 9 digits
+      '974': 8, // Qatar - 8 digits
+      '20': 10, // Egypt - 10 digits
+      // Africa
+      '27': 9, // South Africa - 9 digits
+      '234': 10, // Nigeria - 10 digits
+    };
+    // Use specific limit if available, otherwise use 15 as default
+    return (phoneLengthMap[phoneCode] ?? 15);
   }
 
   @override
@@ -104,31 +166,34 @@ class _HotelCheckoutScreenState extends State<HotelCheckoutScreen> {
               onPressed: () => Navigator.pop(context),
             ),
           ),
-          body: SingleChildScrollView(
-            child: Column(
-              children: [
-                _buildProgressSteps(),
-                Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildHotelSummarySection(),
-                      const SizedBox(height: 20),
-                      _buildGuestDetailsSection(),
-                      const SizedBox(height: 20),
-                      _buildPaymentMethodSection(),
-                      const SizedBox(height: 20),
-                      _buildBookingSummarySection(),
-                      const SizedBox(height: 20),
-                      _buildTermsSection(),
-                      const SizedBox(height: 30),
-                      _buildCheckoutButton(),
-                      const SizedBox(height: 40),
-                    ],
+          body: Form(
+            key: _formKey,
+            child: SingleChildScrollView(
+              child: Column(
+                children: [
+                  _buildProgressSteps(),
+                  Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildHotelSummarySection(),
+                        const SizedBox(height: 20),
+                        _buildGuestDetailsSection(),
+                        const SizedBox(height: 20),
+                        _buildPaymentMethodSection(),
+                        const SizedBox(height: 20),
+                        _buildBookingSummarySection(),
+                        const SizedBox(height: 20),
+                        _buildTermsSection(),
+                        const SizedBox(height: 30),
+                        _buildCheckoutButton(),
+                        const SizedBox(height: 40),
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ), // Scaffold
@@ -530,37 +595,53 @@ class _HotelCheckoutScreenState extends State<HotelCheckoutScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildTextField(
-                  label: 'First Name *',
-                  hint: 'Customer',
+                  label: 'First Name *'.tr,
+                  hint: 'Customer'.tr,
                   maxLength: 20,
                   onChanged: (val) => _guestForms[index].firstName = val,
+                  validator: (val) {
+                    if (val == null || val.trim().isEmpty)
+                      return 'Please enter first name'.tr;
+                    if (val.trim().length < 2)
+                      return 'First name must be at least 2 characters'.tr;
+                    return null;
+                  },
                 ),
                 const SizedBox(height: 16),
                 _buildTextField(
-                  label: 'Last Name *',
-                  hint: 'Last name',
+                  label: 'Last Name *'.tr,
+                  hint: 'Last name'.tr,
                   maxLength: 20,
                   onChanged: (val) => _guestForms[index].lastName = val,
+                  validator: (val) {
+                    if (val == null || val.trim().isEmpty)
+                      return 'Please enter last name'.tr;
+                    if (val.trim().length < 2)
+                      return 'Last name must be at least 2 characters'.tr;
+                    return null;
+                  },
                 ),
                 if (isFirstGuest) ...[
                   const SizedBox(height: 16),
                   _buildTextField(
-                    label: 'Email Address *',
-                    hint: 'abc@travolyo.com',
+                    label: 'Email Address *'.tr,
+                    hint: 'abc@rawana.com',
                     maxLength: 30,
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
                     onChanged: (val) => _guestForms[index].email = val,
+                    validator: (val) {
+                      if (val == null || val.trim().isEmpty)
+                        return 'Please enter email address'.tr;
+                      if (!_isValidEmail(val.trim()))
+                        return 'Please enter a valid email address'.tr;
+                      return null;
+                    },
                   ),
                   const SizedBox(height: 16),
-                  _buildTextField(
-                    label: 'Phone Number *',
-                    hint: '+971501234567',
-                    maxLength: 20,
-                    controller: _phoneController,
-                    keyboardType: TextInputType.phone,
+                  _buildPhoneField(
+                    label: 'Phone Number *'.tr,
                     onChanged: (val) => _guestForms[index].phone = val,
-                    helperText: 'Include country code',
                   ),
                 ],
               ],
@@ -808,112 +889,86 @@ class _HotelCheckoutScreenState extends State<HotelCheckoutScreen> {
   }
 
   Widget _buildTermsSection() {
-    return Row(
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SizedBox(
-          width: 24,
-          height: 24,
-          child: Checkbox(
-            value: _agreedToTerms,
-            onChanged: (val) => setState(() => _agreedToTerms = val ?? false),
-            activeColor: kSecondaryColor,
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: RichText(
-            text: TextSpan(
-              style: GoogleFonts.spaceGrotesk(
-                fontSize: 13,
-                color: kSubtitleColor,
-                height: 1.4,
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(
+              width: 24,
+              height: 24,
+              child: Checkbox(
+                value: _agreedToTerms,
+                onChanged: (val) => setState(() {
+                  _agreedToTerms = val ?? false;
+                  if (_agreedToTerms) _termsError = null;
+                }),
+                activeColor: kSecondaryColor,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(4)),
               ),
-              children: [
-                TextSpan(text: "${'By proceeding, I agree to the'.tr} "),
-                TextSpan(
-                  text: 'Terms & Conditions'.tr,
-                  style: const TextStyle(
-                      color: kSecondaryColor, fontWeight: FontWeight.w600),
-                ),
-                TextSpan(text: " ${'and'.tr} "),
-                TextSpan(
-                  text: 'Privacy Policy'.tr,
-                  style: const TextStyle(
-                      color: kSecondaryColor, fontWeight: FontWeight.w600),
-                ),
-              ],
             ),
-          ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: RichText(
+                text: TextSpan(
+                  style: GoogleFonts.spaceGrotesk(
+                    fontSize: 13,
+                    color: kSubtitleColor,
+                    height: 1.4,
+                  ),
+                  children: [
+                    TextSpan(text: "${'By proceeding, I agree to the'.tr} "),
+                    TextSpan(
+                      text: 'Terms & Conditions'.tr,
+                      style: const TextStyle(
+                          color: kSecondaryColor, fontWeight: FontWeight.w600),
+                    ),
+                    TextSpan(text: " ${'and'.tr} "),
+                    TextSpan(
+                      text: 'Privacy Policy'.tr,
+                      style: const TextStyle(
+                          color: kSecondaryColor, fontWeight: FontWeight.w600),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
         ),
+        if (_termsError != null) ...[
+          const SizedBox(height: 6),
+          Text(
+            _termsError!,
+            style: GoogleFonts.spaceGrotesk(fontSize: 12, color: Colors.red),
+          ),
+        ],
       ],
     );
   }
 
   /// Validates inputs and calls the checkout API via [HotelCheckoutProvider].
   Future<void> _handleCheckout() async {
-    // --- Validation ---
+    // --- Inline form validation ---
+    final formValid = _formKey.currentState!.validate();
+    if (!_agreedToTerms) {
+      setState(() => _termsError = 'You must accept the terms to continue'.tr);
+    }
+    if (!formValid || !_agreedToTerms) return;
+
+    // Guard set AFTER validation so the user can fix form errors and retry.
+    // Once past here the API call is about to fire — block any duplicate.
+    if (_checkoutInitiated) return;
+    _checkoutInitiated = true;
+
+    // --- Extract field values after validation ---
     final firstName =
         _guestForms.isNotEmpty ? _guestForms[0].firstName.trim() : '';
     final lastName =
         _guestForms.isNotEmpty ? _guestForms[0].lastName.trim() : '';
     final email = _emailController.text.trim();
     final phone = _phoneController.text.trim();
-
-    if (firstName.isEmpty) {
-      _showError('Please enter first name');
-      return;
-    }
-    if (firstName.length < 2) {
-      _showError('First name must be at least 2 characters');
-      return;
-    }
-    if (firstName.length > 20) {
-      _showError('First name cannot exceed 20 characters');
-      return;
-    }
-    if (lastName.isEmpty) {
-      _showError('Please enter last name');
-      return;
-    }
-    if (lastName.length < 2) {
-      _showError('Last name must be at least 2 characters');
-      return;
-    }
-    if (lastName.length > 20) {
-      _showError('Last name cannot exceed 20 characters');
-      return;
-    }
-    if (email.isEmpty) {
-      _showError('Please enter email address');
-      return;
-    }
-    if (email.length > 30) {
-      _showError('Email address cannot exceed 30 characters');
-      return;
-    }
-    if (!_isValidEmail(email)) {
-      _showError('Please enter a valid email address');
-      return;
-    }
-    if (phone.isEmpty) {
-      _showError('Please enter phone number');
-      return;
-    }
-    if (phone.length > 20) {
-      _showError('Phone number cannot exceed 20 characters');
-      return;
-    }
-    if (!_isValidPhone(phone)) {
-      _showError('Please enter a valid phone number');
-      return;
-    }
-    if (!_agreedToTerms) {
-      _showError('Please agree to Terms & Conditions');
-      return;
-    }
 
     // --- Checkout token: must come from a fresh prebook response ---
     final checkoutToken = widget.prebookResponse.checkoutToken;
@@ -968,6 +1023,10 @@ class _HotelCheckoutScreenState extends State<HotelCheckoutScreen> {
     if (!mounted) return;
 
     if (success) {
+      // Store payment gateway for confirmation screen
+      setState(() {
+        _paymentGatewayUsed = paymentGateway;
+      });
       final response = provider.checkoutResponse;
       final paymentUrl = response?.paymentUrl;
 
@@ -1009,49 +1068,49 @@ class _HotelCheckoutScreenState extends State<HotelCheckoutScreen> {
 
             log('');
             log('[PAYMENT FLOW STATE]');
-            log('STEP: polling_for_confirmed_status');
+            log('STEP: fetching_order_details');
             log('BOOKING CODE: $bookingCode');
             log('SESSION ID: ${outcome?.sessionId}');
 
-            // ── Poll until order reaches a terminal status ──
-            // The WebView has already let the backend return URL execute,
-            // so the order should transition from pending → paid shortly.
-            // We poll to confirm before navigating.
-            final confirmed = await provider.pollForConfirmedStatus(
-              bookingCode,
-              maxAttempts: 10,
-              interval: const Duration(seconds: 2),
-            );
-
+            // Wait a few seconds for the Stripe webhook to land before
+            // fetching. The webhook updates the order record asynchronously;
+            // the return URL being called does NOT guarantee the DB is updated.
+            // We only need ONE successful fetch — status 'pending' is fine
+            // because Stripe has already confirmed the payment.
+            await Future.delayed(const Duration(seconds: 5));
             if (!mounted) return;
 
-            if (confirmed && provider.orderData != null) {
+            final fetched = await provider.fetchHotelOrderDetails(bookingCode);
+            if (!mounted) return;
+
+            if (fetched && provider.orderData != null) {
               log('');
               log('[PAYMENT FLOW STATE]');
               log('STEP: navigating_to_confirmation');
-              log('FINAL STATUS: ${provider.orderData!.status}');
+              log('ORDER STATUS: ${provider.orderData!.status}');
 
               Navigator.of(context).pushReplacement(
                 MaterialPageRoute(
                   builder: (_) => HotelBookingConfirmedScreen(
                     data: provider.orderData!,
                     city: widget.city,
+                    paymentMethod: _paymentGatewayUsed,
                   ),
                 ),
               );
             } else {
-              // Payment still processing after all poll attempts
+              // API fetch failed (network error, server error) — let user know
+              // payment went through and give them the booking code.
               setState(() => _isConfirmingBooking = false);
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(
-                    provider.orderError ??
-                        'Payment is being processed. Please check your bookings shortly.',
+                    'Payment confirmed! Your booking code is $bookingCode. Check My Bookings for details.',
                     style: GoogleFonts.spaceGrotesk(),
                   ),
-                  backgroundColor: Colors.orange,
+                  backgroundColor: kPrimaryColor,
                   behavior: SnackBarBehavior.floating,
-                  duration: const Duration(seconds: 6),
+                  duration: const Duration(seconds: 8),
                 ),
               );
             }
@@ -1072,7 +1131,7 @@ class _HotelCheckoutScreenState extends State<HotelCheckoutScreen> {
             SnackBar(
               content:
                   Text('Payment cancelled.', style: GoogleFonts.spaceGrotesk()),
-              backgroundColor: Colors.orange,
+              backgroundColor: AppColors.accent,
               behavior: SnackBarBehavior.floating,
             ),
           );
@@ -1128,7 +1187,7 @@ class _HotelCheckoutScreenState extends State<HotelCheckoutScreen> {
     return Consumer<HotelCheckoutProvider>(
       builder: (context, checkoutProvider, _) {
         final isLoading = checkoutProvider.isLoading;
-        final canSubmit = _agreedToTerms && !isLoading;
+        final canSubmit = !isLoading;
 
         return SizedBox(
           width: double.infinity,
@@ -1207,6 +1266,7 @@ class _HotelCheckoutScreenState extends State<HotelCheckoutScreen> {
     Function(String)? onChanged,
     String? helperText,
     int? maxLength,
+    String? Function(String?)? validator,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1220,11 +1280,13 @@ class _HotelCheckoutScreenState extends State<HotelCheckoutScreen> {
           ),
         ),
         const SizedBox(height: 6),
-        TextField(
+        TextFormField(
           controller: controller,
           keyboardType: keyboardType,
           onChanged: onChanged,
           maxLength: maxLength,
+          validator: validator,
+          autovalidateMode: AutovalidateMode.onUserInteraction,
           style: GoogleFonts.spaceGrotesk(fontSize: 14, color: kHeadingColor),
           decoration: InputDecoration(
             hintText: hint,
@@ -1246,6 +1308,16 @@ class _HotelCheckoutScreenState extends State<HotelCheckoutScreen> {
               borderRadius: BorderRadius.circular(10),
               borderSide: const BorderSide(color: kSecondaryColor, width: 1.5),
             ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(color: Colors.red),
+            ),
+            focusedErrorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(color: Colors.red, width: 1.5),
+            ),
+            errorStyle:
+                GoogleFonts.spaceGrotesk(fontSize: 12, color: Colors.red),
           ),
         ),
         if (helperText != null) ...[
@@ -1258,6 +1330,124 @@ class _HotelCheckoutScreenState extends State<HotelCheckoutScreen> {
             ),
           ),
         ],
+      ],
+    );
+  }
+
+  Widget _buildPhoneField({
+    required String label,
+    required Function(String) onChanged,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: GoogleFonts.spaceGrotesk(
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+            color: kHeadingColor,
+          ),
+        ),
+        const SizedBox(height: 6),
+        TextFormField(
+          controller: _phoneController,
+          keyboardType: TextInputType.phone,
+          onChanged: onChanged,
+          maxLength: _getPhoneMaxLength(),
+          autovalidateMode: AutovalidateMode.onUserInteraction,
+          validator: (val) {
+            if (val == null || val.trim().isEmpty)
+              return 'Please enter phone number'.tr;
+            if (!_isValidPhone(val.trim()))
+              return 'Please enter a valid phone number'.tr;
+            return null;
+          },
+          style: GoogleFonts.spaceGrotesk(fontSize: 14, color: kHeadingColor),
+          decoration: InputDecoration(
+            hintText: '501234567',
+            hintStyle:
+                GoogleFonts.spaceGrotesk(color: kSubtitleColor, fontSize: 14),
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            filled: true,
+            fillColor: kScaffoldBgColor,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: BorderSide.none,
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(color: kBorderColor),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(color: kSecondaryColor, width: 1.5),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(color: Colors.red),
+            ),
+            focusedErrorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(color: Colors.red, width: 1.5),
+            ),
+            errorStyle:
+                GoogleFonts.spaceGrotesk(fontSize: 12, color: Colors.red),
+            prefixIconConstraints:
+                const BoxConstraints(minWidth: 130, maxHeight: 50),
+            prefixIcon: GestureDetector(
+              onTap: () {
+                countryCodeBottomSheet(
+                  (Country country) {
+                    setState(() {
+                      selectedCountry = country;
+                    });
+                  },
+                  true,
+                  context,
+                );
+              },
+              child: Padding(
+                padding: const EdgeInsets.only(left: 8, right: 8),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      selectedCountry.flagEmoji,
+                      style: const TextStyle(fontSize: 20),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      '+${selectedCountry.phoneCode}',
+                      style: GoogleFonts.spaceGrotesk(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: kHeadingColor,
+                      ),
+                    ),
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 4),
+                      child: Icon(
+                        Icons.arrow_drop_down_outlined,
+                        size: 18,
+                        color: kMutedColor,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'Number without country code'.tr,
+          style: GoogleFonts.spaceGrotesk(
+            fontSize: 11,
+            color: kSecondaryColor,
+          ),
+        ),
       ],
     );
   }

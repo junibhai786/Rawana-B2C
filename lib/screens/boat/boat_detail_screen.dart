@@ -11,6 +11,7 @@ import 'package:moonbnd/screens/boat/boat_booking_screen.dart';
 import 'package:moonbnd/widgets/guest_tour_sheet.dart';
 import 'package:moonbnd/widgets/popup_login.dart';
 import 'package:flutter/material.dart';
+import 'package:moonbnd/app_colors.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
@@ -688,7 +689,7 @@ class _CarRentalDetailsScreenState extends State<BoatDetailsScreen> {
                       context, item.boatDetail); // Call the modal sheet method
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Color(0xff05A8C7),
+                  backgroundColor: AppColors.primary,
                   padding: EdgeInsets.symmetric(horizontal: 32, vertical: 16),
                 ),
                 child: Text('Book Now'.tr,style: GoogleFonts.spaceGrotesk(),),
@@ -1627,7 +1628,7 @@ class _CarRentalDetailsScreenState extends State<BoatDetailsScreen> {
   Widget _buildHighlightItem(String text) {
     return Row(
       children: [
-        Icon(Icons.check_circle, color: Colors.green),
+        Icon(Icons.check_circle, color: AppColors.secondary),
         SizedBox(width: 8),
         Expanded(child: Text(text)),
       ],
@@ -1686,7 +1687,7 @@ class _CarRentalDetailsScreenState extends State<BoatDetailsScreen> {
               Center(
                 child: Container(
                   decoration: BoxDecoration(
-                    color: const Color(0xFF05A8C7),
+                    color: AppColors.primary,
                     borderRadius: BorderRadius.circular(10.0), // Rounded corners
                   ),
                   padding: const EdgeInsets.symmetric(horizontal: 100.0,vertical: 6),
@@ -1997,7 +1998,7 @@ class _CarRentalDetailsScreenState extends State<BoatDetailsScreen> {
                               (index) => Icon(
                             Icons.star,
                             color: index < (review.rateNumber ?? 0)
-                                ? Colors.yellow // Changed from kPrimaryColor to yellow for stars
+                                ? AppColors.accent // Changed from kPrimaryColor to yellow for stars
                                 : Colors.grey,
                             size: 18,
                           ),

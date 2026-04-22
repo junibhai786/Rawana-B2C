@@ -1,11 +1,14 @@
 import 'dart:convert';
 import 'dart:developer';
+import 'package:country_picker/country_picker.dart';
+import 'package:moonbnd/widgets/country_code.dart';
 import 'package:moonbnd/constants.dart';
 import 'package:moonbnd/Urls/url_holder_loan.dart';
 import 'package:moonbnd/screens/hotel/stripe_checkout_webview_screen.dart';
 import 'package:moonbnd/screens/flight/payment_complete_screen.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter/material.dart';
+import 'package:moonbnd/app_colors.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
@@ -52,6 +55,7 @@ class _FlightCheckoutScreenState extends State<FlightCheckoutScreen> {
   String _selectedPaymentMethod = 'card'; // card or alternative
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
+  late Country selectedCountry;
 
   // Passenger forms tracking
   late List<PassengerFormData> _passengerForms;
@@ -59,6 +63,10 @@ class _FlightCheckoutScreenState extends State<FlightCheckoutScreen> {
 
   // Processing guard — prevents duplicate taps
   bool _isProcessing = false;
+
+  // Form validation
+  final _formKey = GlobalKey<FormState>();
+  String? _termsError;
 
   // Inline field errors from server 422 response
   String? _phoneError;
@@ -72,6 +80,52 @@ class _FlightCheckoutScreenState extends State<FlightCheckoutScreen> {
     log('[FlightCheckout] checkout_url value: ${widget.flightData['checkout_url']}');
     log('[FlightCheckout] resolved token    : ${_extractToken()}');
     _initializePassengerForms();
+    // Initialize with default country (US)
+    selectedCountry = _getDefaultCountry();
+  }
+
+  Country _getDefaultCountry() {
+    return Country.parse('AE');
+  }
+
+  /// Get max phone number length based on country code
+  int _getPhoneMaxLength() {
+    final phoneCode = selectedCountry.phoneCode;
+    // Phone number length limits by country code
+    final phoneLengthMap = {
+      // Americas
+      '1': 10, // US, Canada - 10 digits
+      // Europe
+      '44': 11, // UK - 10 digits + formatting
+      '33': 9, // France - 9 digits
+      '49': 11, // Germany - 10 digits
+      '39': 10, // Italy - 10 digits
+      '34': 9, // Spain - 9 digits
+      // Asia
+      '91': 10, // India - 10 digits
+      '92': 10, // Pakistan - 10 digits
+      '880': 10, // Bangladesh - 10 digits
+      '81': 11, // Japan - 10 digits
+      '82': 10, // South Korea - 9-10 digits
+      '86': 11, // China - 11 digits
+      '60': 10, // Malaysia - 9-10 digits
+      '62': 12, // Indonesia - 9-12 digits
+      '63': 10, // Philippines - 10 digits
+      '66': 9, // Thailand - 9 digits
+      '84': 10, // Vietnam - 9-10 digits
+      '65': 8, // Singapore - 8 digits
+      '852': 8, // Hong Kong - 8 digits
+      // Middle East
+      '971': 9, // UAE - 9 digits
+      '966': 9, // Saudi Arabia - 9 digits
+      '974': 8, // Qatar - 8 digits
+      '20': 10, // Egypt - 10 digits
+      // Africa
+      '27': 9, // South Africa - 9 digits
+      '234': 10, // Nigeria - 10 digits
+    };
+    // Use specific limit if available, otherwise use 15 as default
+    return (phoneLengthMap[phoneCode] ?? 15);
   }
 
   /// Initialize passenger form data based on adult/children/infants count
@@ -168,28 +222,31 @@ class _FlightCheckoutScreenState extends State<FlightCheckoutScreen> {
           onPressed: () => Navigator.pop(context),
         ),
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            _buildProgressSteps(),
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                children: [
-                  _buildFlightSummarySection(),
-                  const SizedBox(height: 20),
-                  _buildPassengerDetailsSection(),
-                  const SizedBox(height: 20),
-                  _buildPaymentMethodSection(),
-                  const SizedBox(height: 20),
-                  _buildPriceSummarySection(),
-                  const SizedBox(height: 24),
-                  _buildTermsAndCheckout(),
-                  const SizedBox(height: 40),
-                ],
+      body: Form(
+        key: _formKey,
+        child: SingleChildScrollView(
+          child: Column(
+            children: [
+              _buildProgressSteps(),
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  children: [
+                    _buildFlightSummarySection(),
+                    const SizedBox(height: 20),
+                    _buildPassengerDetailsSection(),
+                    const SizedBox(height: 20),
+                    _buildPaymentMethodSection(),
+                    const SizedBox(height: 20),
+                    _buildPriceSummarySection(),
+                    const SizedBox(height: 24),
+                    _buildTermsAndCheckout(),
+                    const SizedBox(height: 40),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -513,15 +570,35 @@ class _FlightCheckoutScreenState extends State<FlightCheckoutScreen> {
                     (v) => setState(() => form.title = v!)),
                 const SizedBox(height: 16),
                 _buildLabel('First Name *'.tr),
-                _buildTextField(controllers[0], 'First name'.tr, maxLength: 20),
+                _buildTextField(controllers[0], 'First name'.tr, maxLength: 20,
+                    validator: (v) {
+                  if (v == null || v.trim().isEmpty)
+                    return 'First name is required'.tr;
+                  if (v.trim().length < 2) return 'At least 2 characters'.tr;
+                  return null;
+                }),
                 const SizedBox(height: 16),
                 _buildLabel('Last Name *'.tr),
-                _buildTextField(controllers[1], 'Last name'.tr, maxLength: 20),
+                _buildTextField(controllers[1], 'Last name'.tr, maxLength: 20,
+                    validator: (v) {
+                  if (v == null || v.trim().isEmpty)
+                    return 'Last name is required'.tr;
+                  if (v.trim().length < 2) return 'At least 2 characters'.tr;
+                  return null;
+                }),
                 if (isFirstPassenger) ...[
                   const SizedBox(height: 16),
                   _buildLabel('Email Address *'.tr),
-                  _buildTextField(_emailController, 'Enter Your Email Address',
-                      keyboardType: TextInputType.emailAddress, maxLength: 20),
+                  _buildTextField(
+                      _emailController, 'Enter Your Email Address'.tr,
+                      keyboardType: TextInputType.emailAddress,
+                      maxLength: 30, validator: (v) {
+                    if (v == null || v.trim().isEmpty)
+                      return 'Email is required'.tr;
+                    if (!_isValidEmail(v.trim()))
+                      return 'Enter a valid email address'.tr;
+                    return null;
+                  }),
                   const SizedBox(height: 16),
                   _buildLabel('Phone Number *'.tr),
                   _buildPhoneField(),
@@ -546,7 +623,7 @@ class _FlightCheckoutScreenState extends State<FlightCheckoutScreen> {
                       ),
                     )
                   else
-                    Text('Include country code',
+                    Text('Include country code'.tr,
                         style: GoogleFonts.spaceGrotesk(
                             fontSize: 11, color: kPrimaryColor)),
                 ],
@@ -564,7 +641,12 @@ class _FlightCheckoutScreenState extends State<FlightCheckoutScreen> {
                     form, (v) => setState(() => form.nationality = v)),
                 const SizedBox(height: 16),
                 _buildLabel('Passport Number *'.tr),
-                _buildTextField(controllers[2], 'e.g. AA1234567'),
+                _buildTextField(controllers[2], 'e.g. AA1234567',
+                    validator: (v) {
+                  if (v == null || v.trim().isEmpty)
+                    return 'Passport number is required'.tr;
+                  return null;
+                }),
                 const SizedBox(height: 16),
                 _buildLabel('Passport Expiry Date *'.tr),
                 _buildPassportExpiryField(
@@ -841,12 +923,16 @@ class _FlightCheckoutScreenState extends State<FlightCheckoutScreen> {
     }
 
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
             Checkbox(
               value: _agreedToTerms,
-              onChanged: (v) => setState(() => _agreedToTerms = v!),
+              onChanged: (v) => setState(() {
+                _agreedToTerms = v!;
+                if (_agreedToTerms) _termsError = null;
+              }),
               activeColor: kPrimaryColor,
             ),
             Expanded(
@@ -859,14 +945,21 @@ class _FlightCheckoutScreenState extends State<FlightCheckoutScreen> {
             ),
           ],
         ),
-        const SizedBox(height: 16),
+        if (_termsError != null) ...[
+          Padding(
+            padding: const EdgeInsets.only(left: 12, bottom: 8),
+            child: Text(
+              _termsError!,
+              style: GoogleFonts.spaceGrotesk(fontSize: 12, color: Colors.red),
+            ),
+          ),
+        ],
+        const SizedBox(height: 8),
         SizedBox(
           width: double.infinity,
           height: 56,
           child: ElevatedButton(
-            onPressed: (_agreedToTerms && !_isProcessing)
-                ? () => _handleConfirmPay()
-                : null,
+            onPressed: _isProcessing ? null : () => _handleConfirmPay(),
             style: ElevatedButton.styleFrom(
               backgroundColor: kSecondaryColor,
               foregroundColor: Colors.white,
@@ -1148,13 +1241,14 @@ class _FlightCheckoutScreenState extends State<FlightCheckoutScreen> {
     final phone = _phoneController.text.trim();
     log('[Validate] email="${email}" phone="${phone}"');
 
-    if (email.isEmpty) return 'Email address is required';
-    if (email.length > 20) return 'Email address cannot exceed 20 characters';
-    if (!_isValidEmail(email)) return 'Please enter a valid email address';
+    if (email.isEmpty) return 'Email address is required'.tr;
+    if (email.length > 20)
+      return 'Email address cannot exceed 20 characters'.tr;
+    if (!_isValidEmail(email)) return 'Please enter a valid email address'.tr;
 
-    if (phone.isEmpty) return 'Phone number is required';
-    if (phone.length > 20) return 'Phone number cannot exceed 20 characters';
-    if (!_isValidPhone(phone)) return 'Please enter a valid phone number';
+    if (phone.isEmpty) return 'Phone number is required'.tr;
+    if (phone.length > 20) return 'Phone number cannot exceed 20 characters'.tr;
+    if (!_isValidPhone(phone)) return 'Please enter a valid phone number'.tr;
 
     for (int i = 0; i < _passengerForms.length; i++) {
       final form = _passengerForms[i];
@@ -1165,24 +1259,26 @@ class _FlightCheckoutScreenState extends State<FlightCheckoutScreen> {
 
       log('[Validate] $label firstName="${firstName}" lastName="${lastName}" dob="${form.dateOfBirth}" nationality="${form.nationality}" passport="${ctrl[2].text.trim()}" expiry="${form.passportExpiry}"');
 
-      if (firstName.isEmpty) return '$label: first name is required';
+      if (firstName.isEmpty) return '$label: ${'first name is required'.tr}';
       if (firstName.length < 2)
-        return '$label: first name must be at least 2 characters';
+        return '$label: ${'first name must be at least 2 characters'.tr}';
       if (firstName.length > 20)
-        return '$label: first name cannot exceed 20 characters';
+        return '$label: ${'first name cannot exceed 20 characters'.tr}';
 
-      if (lastName.isEmpty) return '$label: last name is required';
+      if (lastName.isEmpty) return '$label: ${'last name is required'.tr}';
       if (lastName.length < 2)
-        return '$label: last name must be at least 2 characters';
+        return '$label: ${'last name must be at least 2 characters'.tr}';
       if (lastName.length > 20)
-        return '$label: last name cannot exceed 20 characters';
+        return '$label: ${'last name cannot exceed 20 characters'.tr}';
 
-      if (form.dateOfBirth.isEmpty) return '$label: date of birth is required';
-      if (form.nationality.isEmpty) return '$label: nationality is required';
+      if (form.dateOfBirth.isEmpty)
+        return '$label: ${'date of birth is required'.tr}';
+      if (form.nationality.isEmpty)
+        return '$label: ${'nationality is required'.tr}';
       if (ctrl[2].text.trim().isEmpty)
-        return '$label: passport number is required';
+        return '$label: ${'passport number is required'.tr}';
       if (form.passportExpiry.isEmpty)
-        return '$label: passport expiry is required';
+        return '$label: ${'passport expiry is required'.tr}';
     }
     return null;
   }
@@ -1191,18 +1287,12 @@ class _FlightCheckoutScreenState extends State<FlightCheckoutScreen> {
     log('[ConfirmPay] button tapped — agreedToTerms=$_agreedToTerms isProcessing=$_isProcessing');
     if (_isProcessing) return;
 
-    // Validate all fields before hitting API
-    final error = _validateFields();
-    log('[ConfirmPay] validation result: ${error ?? "OK"}');
-    if (error != null) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content:
-            Text(error, style: GoogleFonts.spaceGrotesk(color: Colors.white)),
-        backgroundColor: Colors.red.shade700,
-        behavior: SnackBarBehavior.floating,
-      ));
-      return;
+    // Inline form validation — errors shown under each field
+    final formValid = _formKey.currentState!.validate();
+    if (!_agreedToTerms) {
+      setState(() => _termsError = 'You must accept the terms to continue'.tr);
     }
+    if (!formValid || !_agreedToTerms) return;
 
     log('[ConfirmPay] flightData keys: ${widget.flightData.keys.toList()}');
     log('[ConfirmPay] flightData[token]        = ${widget.flightData['token']}');
@@ -1224,7 +1314,7 @@ class _FlightCheckoutScreenState extends State<FlightCheckoutScreen> {
     }
 
     setState(() => _isProcessing = true);
-    EasyLoading.show(status: 'Processing payment...');
+    EasyLoading.show(status: 'Processing payment...'.tr);
 
     try {
       // Load auth token
@@ -1292,7 +1382,7 @@ class _FlightCheckoutScreenState extends State<FlightCheckoutScreen> {
       } catch (parseErr) {
         log('[FlightCheckout] ❌ JSON parse failed: $parseErr');
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Unexpected server response. Please try again.',
+          content: Text('Unexpected server response. Please try again.'.tr,
               style: GoogleFonts.spaceGrotesk(color: Colors.white)),
           backgroundColor: Colors.red.shade700,
           behavior: SnackBarBehavior.floating,
@@ -1344,14 +1434,14 @@ class _FlightCheckoutScreenState extends State<FlightCheckoutScreen> {
             );
           } else if (outcome?.result == StripePaymentResult.cancelled) {
             ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-              content: Text('Payment cancelled.',
+              content: Text('Payment cancelled.'.tr,
                   style: GoogleFonts.spaceGrotesk(color: Colors.white)),
-              backgroundColor: Colors.orange,
+              backgroundColor: AppColors.accent,
               behavior: SnackBarBehavior.floating,
             ));
           } else if (outcome?.result == StripePaymentResult.failed) {
             ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-              content: Text('Payment failed. Please try again.',
+              content: Text('Payment failed. Please try again.'.tr,
                   style: GoogleFonts.spaceGrotesk(color: Colors.white)),
               backgroundColor: Colors.red.shade700,
               behavior: SnackBarBehavior.floating,
@@ -1359,9 +1449,9 @@ class _FlightCheckoutScreenState extends State<FlightCheckoutScreen> {
           }
         } else {
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text('Booking confirmed!',
+            content: Text('Booking confirmed!'.tr,
                 style: GoogleFonts.spaceGrotesk(color: Colors.white)),
-            backgroundColor: Colors.green.shade700,
+            backgroundColor: AppColors.secondary,
             behavior: SnackBarBehavior.floating,
           ));
         }
@@ -1402,7 +1492,7 @@ class _FlightCheckoutScreenState extends State<FlightCheckoutScreen> {
       log('[FlightCheckout] Exception: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Network error. Please try again.',
+          content: Text('Network error. Please try again.'.tr,
               style: GoogleFonts.spaceGrotesk(color: Colors.white)),
           backgroundColor: Colors.red.shade700,
           behavior: SnackBarBehavior.floating,
@@ -1474,11 +1564,15 @@ class _FlightCheckoutScreenState extends State<FlightCheckoutScreen> {
   }
 
   Widget _buildTextField(TextEditingController controller, String hint,
-      {TextInputType keyboardType = TextInputType.text, int? maxLength}) {
+      {TextInputType keyboardType = TextInputType.text,
+      int? maxLength,
+      String? Function(String?)? validator}) {
     return TextFormField(
       controller: controller,
       keyboardType: keyboardType,
       maxLength: maxLength,
+      validator: validator,
+      autovalidateMode: AutovalidateMode.onUserInteraction,
       style: GoogleFonts.spaceGrotesk(fontSize: 14, color: kHeadingColor),
       decoration: InputDecoration(
         hintText: hint,
@@ -1497,6 +1591,13 @@ class _FlightCheckoutScreenState extends State<FlightCheckoutScreen> {
         focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(10),
             borderSide: const BorderSide(color: kSecondaryColor, width: 1.5)),
+        errorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: const BorderSide(color: Colors.red)),
+        focusedErrorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: const BorderSide(color: Colors.red, width: 1.5)),
+        errorStyle: GoogleFonts.spaceGrotesk(fontSize: 12, color: Colors.red),
       ),
     );
   }
@@ -1508,13 +1609,13 @@ class _FlightCheckoutScreenState extends State<FlightCheckoutScreen> {
     return TextFormField(
       controller: _phoneController,
       keyboardType: TextInputType.phone,
-      maxLength: 20,
+      maxLength: _getPhoneMaxLength(),
       style: GoogleFonts.spaceGrotesk(fontSize: 14, color: kHeadingColor),
       onChanged: (_) {
         if (_phoneError != null) setState(() => _phoneError = null);
       },
       decoration: InputDecoration(
-        hintText: '+971501234567',
+        hintText: '501234567',
         hintStyle:
             GoogleFonts.spaceGrotesk(color: kSubtitleColor, fontSize: 14),
         filled: true,
@@ -1536,6 +1637,50 @@ class _FlightCheckoutScreenState extends State<FlightCheckoutScreen> {
         suffixIcon: hasError
             ? const Icon(Icons.error_rounded, color: Colors.red, size: 20)
             : null,
+        prefixIconConstraints:
+            const BoxConstraints(minWidth: 130, maxHeight: 50),
+        prefixIcon: GestureDetector(
+          onTap: () {
+            countryCodeBottomSheet(
+              (Country country) {
+                setState(() {
+                  selectedCountry = country;
+                });
+              },
+              true,
+              context,
+            );
+          },
+          child: Padding(
+            padding: const EdgeInsets.only(left: 8, right: 8),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  selectedCountry.flagEmoji,
+                  style: const TextStyle(fontSize: 20),
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  '+${selectedCountry.phoneCode}',
+                  style: GoogleFonts.spaceGrotesk(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: kHeadingColor,
+                  ),
+                ),
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 4),
+                  child: Icon(
+                    Icons.arrow_drop_down_outlined,
+                    size: 18,
+                    color: kMutedColor,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

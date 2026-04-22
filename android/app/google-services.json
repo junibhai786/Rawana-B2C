@@ -1,15 +1,15 @@
 {
   "project_info": {
     "project_number": "366908501818",
-    "project_id": "travolyo-f9e22",
-    "storage_bucket": "travolyo-f9e22.firebasestorage.app"
+    "project_id": "rawana-f9e22",
+    "storage_bucket": "rawana-f9e22.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
         "mobilesdk_app_id": "1:366908501818:android:7e8f124f71a86d8536ea03",
         "android_client_info": {
-          "package_name": "com.travolyo.app"
+          "package_name": "com.rawana.app"
         }
       },
       "oauth_client": [],

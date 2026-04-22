@@ -2,6 +2,7 @@ import 'package:moonbnd/constants.dart';
 import 'package:moonbnd/vendor/car/add_coupon_screen.dart';
 import 'package:moonbnd/widgets/elevatedbuttonicon.dart';
 import 'package:flutter/material.dart';
+import 'package:moonbnd/app_colors.dart';
 import 'package:get/get.dart';
 
 class ManageCouponsScreen extends StatelessWidget {
@@ -108,7 +109,7 @@ class ManageCouponsScreen extends StatelessWidget {
                     },
                     child: Text('Edit'),
                     style: ElevatedButton.styleFrom(
-                        backgroundColor: Color(0xff1a2b47)),
+                        backgroundColor: AppColors.accent),
                   ),
                 ),
                 SizedBox(width: 8),

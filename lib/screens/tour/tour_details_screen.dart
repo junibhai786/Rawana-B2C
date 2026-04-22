@@ -15,6 +15,7 @@ import 'package:moonbnd/screens/tour/tour_booking_screen.dart';
 import 'package:moonbnd/widgets/popup_login.dart';
 import 'package:moonbnd/widgets/tertiary_button.dart';
 import 'package:flutter/material.dart';
+import 'package:moonbnd/app_colors.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_svg/svg.dart';
 
@@ -669,7 +670,7 @@ class _TourPageState extends State<TourPage> {
               Center(
                 child: Container(
                   decoration: BoxDecoration(
-                    color: const Color(0xFF05A8C7),
+                    color: AppColors.primary,
                     borderRadius: BorderRadius.circular(10.0), // Rounded corners
                   ),
                   padding: const EdgeInsets.symmetric(horizontal: 100.0,vertical: 6),
@@ -979,7 +980,7 @@ class _TourPageState extends State<TourPage> {
                               (index) => Icon(
                             Icons.star,
                             color: index < (review.rateNumber ?? 0)
-                                ? Colors.yellow // Changed from kPrimaryColor to yellow for stars
+                                ? AppColors.accent // Changed from kPrimaryColor to yellow for stars
                                 : Colors.grey,
                             size: 18,
                           ),
@@ -1482,7 +1483,7 @@ class _TourPageState extends State<TourPage> {
     return Row(
       children: [
         Icon(included ? Icons.check_circle : Icons.cancel,
-            color: included ? Colors.green : Colors.red),
+            color: included ? AppColors.secondary : Colors.red),
         SizedBox(
           width: 10,
         ),
@@ -2711,7 +2712,7 @@ class _TourPageState extends State<TourPage> {
                               padding: EdgeInsets.symmetric(
                                   horizontal: 8, vertical: 4),
                               decoration: BoxDecoration(
-                                color: Colors.green,
+                                color: AppColors.secondary,
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Text(

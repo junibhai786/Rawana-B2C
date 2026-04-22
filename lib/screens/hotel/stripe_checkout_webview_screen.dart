@@ -49,20 +49,30 @@ class _StripeCheckoutWebViewScreenState
 
   // ── Domain / URL helpers ────────────────────────────────────────────────
 
-  bool _isStripeDomain(String url) {
+  bool _isPaymentGatewayDomain(String url) {
     return url.contains('checkout.stripe.com') ||
         url.contains('js.stripe.com') ||
         url.contains('hooks.stripe.com') ||
+        url.contains('ngenius-payments.com') ||
+        url.contains('ngenius.network.ae') ||
         url.contains('about:blank');
   }
+
+  // Keep backward-compatible alias
+  bool _isStripeDomain(String url) => _isPaymentGatewayDomain(url);
 
   /// Returns true when the URL is the backend's payment return route.
   bool _isReturnUrl(String url) {
     final lower = url.toLowerCase();
     return lower.contains('/payments/stripe/return') ||
         lower.contains('/payments/stripe/success') ||
+        lower.contains('/payments/ngenius/return') ||
+        lower.contains('/payments/ngenius/success') ||
+        lower.contains('/payments/ngenius/callback') ||
         lower.contains('payment_return') ||
-        lower.contains('payment-return');
+        lower.contains('payment-return') ||
+        lower.contains('payment_success') ||
+        lower.contains('payment-success');
   }
 
   /// Returns true when the URL is a cancel/fail route.
@@ -70,6 +80,8 @@ class _StripeCheckoutWebViewScreenState
     final lower = url.toLowerCase();
     return lower.contains('/payment/cancel') ||
         lower.contains('/stripe/cancel') ||
+        lower.contains('/ngenius/cancel') ||
+        lower.contains('/ngenius/failed') ||
         lower.contains('payment_cancel') ||
         lower.contains('payment-cancel') ||
         lower.contains('payment_fail') ||
@@ -305,8 +317,8 @@ class _StripeCheckoutWebViewScreenState
             final url = request.url;
             debugPrint('[STRIPE WEBVIEW NAVIGATION REQUEST] $url');
 
-            // Always allow Stripe-owned domains.
-            if (_isStripeDomain(url)) {
+            // Always allow payment gateway domains (Stripe + N-Genius).
+            if (_isPaymentGatewayDomain(url)) {
               return NavigationDecision.navigate;
             }
 

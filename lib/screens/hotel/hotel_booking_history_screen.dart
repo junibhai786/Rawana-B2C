@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:moonbnd/app_colors.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
@@ -180,11 +181,11 @@ class BookingCard extends StatelessWidget {
   Color get statusColor {
     switch (status.toLowerCase()) {
       case 'completed':
-        return Colors.green;
+        return AppColors.secondary;
       case 'confirmed':
-        return Colors.blue;
+        return AppColors.primary;
       case 'processing':
-        return Colors.orange;
+        return AppColors.accent;
       default:
         return Colors.grey;
     }

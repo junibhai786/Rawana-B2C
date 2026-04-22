@@ -7,6 +7,7 @@ import 'package:moonbnd/modals/manage_coupon_model.dart';
 import 'package:moonbnd/modals/manage_service_model.dart';
 import 'package:moonbnd/widgets/form.dart';
 import 'package:flutter/material.dart';
+import 'package:moonbnd/app_colors.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
@@ -234,7 +235,7 @@ class _ManageAddCouponScreenState extends State<ManageEditCouponScreen> {
                           focusedBorder: OutlineInputBorder(
                             // Border when dropdown is focused
                             borderSide:
-                                BorderSide(color: Colors.blue, width: 2.0),
+                                BorderSide(color: AppColors.primary, width: 2.0),
                           ),
                         ),
                         items: ['fixed', 'percent'].map((String value) {
@@ -387,7 +388,7 @@ class _ManageAddCouponScreenState extends State<ManageEditCouponScreen> {
                           focusedBorder: OutlineInputBorder(
                             // Border when dropdown is focused
                             borderSide:
-                                BorderSide(color: Colors.blue, width: 2.0),
+                                BorderSide(color: AppColors.primary, width: 2.0),
                           ),
                         ),
                         items: itemProvider.manageServiceResponse?.data
@@ -513,7 +514,7 @@ class _ManageAddCouponScreenState extends State<ManageEditCouponScreen> {
                           focusedBorder: OutlineInputBorder(
                             // Border when dropdown is focused
                             borderSide:
-                                BorderSide(color: Colors.blue, width: 2.0),
+                                BorderSide(color: AppColors.primary, width: 2.0),
                           ),
                         ),
                         items: ["publish", "draft"].map((String value) {

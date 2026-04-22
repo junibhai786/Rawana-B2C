@@ -25,6 +25,7 @@ import 'package:moonbnd/vendor/tour/manage_tour_screen.dart';
 import 'package:moonbnd/widgets/bottom_navigation.dart';
 import 'package:moonbnd/widgets/tertiary_button.dart';
 import 'package:flutter/material.dart';
+import 'package:moonbnd/app_colors.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:provider/provider.dart';
@@ -351,7 +352,7 @@ class _AccountScreenState extends State<AccountScreen> {
             : SafeArea(
                 child: ListView(children: [
                 Container(
-                  color: Color(0xff05A8C7),
+                  color: AppColors.primary,
                   child: Column(
                     children: [
                       Padding(
@@ -782,7 +783,7 @@ class _AccountScreenState extends State<AccountScreen> {
                 child: ListTile(
                   title: Text('English'.tr),
                   trailing: currentLanguage == 'English'
-                      ? Icon(Icons.check, color: Colors.blue)
+                      ? Icon(Icons.check, color: AppColors.primary)
                       : null,
                   shape: RoundedRectangleBorder(
                     side: BorderSide(
@@ -806,7 +807,7 @@ class _AccountScreenState extends State<AccountScreen> {
                 child: ListTile(
                   title: Text('Arabic'.tr),
                   trailing: currentLanguage == 'Arabic'
-                      ? Icon(Icons.check, color: Colors.blue)
+                      ? Icon(Icons.check, color: AppColors.primary)
                       : null,
                   shape: RoundedRectangleBorder(
                     side: BorderSide(

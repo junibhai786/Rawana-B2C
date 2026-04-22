@@ -6,6 +6,7 @@ import 'package:moonbnd/screens/hotel/booking_confirm_screen.dart';
 import 'package:moonbnd/widgets/separator.dart';
 import 'package:moonbnd/widgets/tertiary_button.dart';
 import 'package:flutter/material.dart';
+import 'package:moonbnd/app_colors.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -241,7 +242,7 @@ class _BookingScreenState extends State<BookingScreenForHotel> {
                 //               // ...List.generate(
                 //               //   5,
                 //               //   (index) =>  Icon(Icons.star,
-                //               //       color: Colors.yellow),
+                //               //       color: AppColors.accent),
                 //               // ),
                 //               SizedBox(width: 8),
 
@@ -618,7 +619,7 @@ class _BookingScreenState extends State<BookingScreenForHotel> {
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8.0),
                         borderSide: BorderSide(
-                            color: Colors.blue), // Focused border color
+                            color: AppColors.primary), // Focused border color
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8.0),
@@ -655,7 +656,7 @@ class _BookingScreenState extends State<BookingScreenForHotel> {
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8.0),
                         borderSide: BorderSide(
-                            color: Colors.blue), // Focused border color
+                            color: AppColors.primary), // Focused border color
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8.0),
@@ -689,7 +690,7 @@ class _BookingScreenState extends State<BookingScreenForHotel> {
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8.0),
-                        borderSide: BorderSide(color: Colors.blue),
+                        borderSide: BorderSide(color: AppColors.primary),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8.0),
@@ -724,7 +725,7 @@ class _BookingScreenState extends State<BookingScreenForHotel> {
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8.0),
                         borderSide: BorderSide(
-                            color: Colors.blue), // Focused border color
+                            color: AppColors.primary), // Focused border color
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8.0),
@@ -758,7 +759,7 @@ class _BookingScreenState extends State<BookingScreenForHotel> {
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8.0),
                         borderSide: BorderSide(
-                            color: Colors.blue), // Focused border color
+                            color: AppColors.primary), // Focused border color
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8.0),
@@ -786,7 +787,7 @@ class _BookingScreenState extends State<BookingScreenForHotel> {
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8.0),
                         borderSide: BorderSide(
-                            color: Colors.blue), // Focused border color
+                            color: AppColors.primary), // Focused border color
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8.0),
@@ -814,7 +815,7 @@ class _BookingScreenState extends State<BookingScreenForHotel> {
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8.0),
                         borderSide: BorderSide(
-                            color: Colors.blue), // Focused border color
+                            color: AppColors.primary), // Focused border color
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8.0),
@@ -842,7 +843,7 @@ class _BookingScreenState extends State<BookingScreenForHotel> {
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8.0),
                         borderSide: BorderSide(
-                            color: Colors.blue), // Focused border color
+                            color: AppColors.primary), // Focused border color
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8.0),
@@ -870,7 +871,7 @@ class _BookingScreenState extends State<BookingScreenForHotel> {
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8.0),
                         borderSide: BorderSide(
-                            color: Colors.blue), // Focused border color
+                            color: AppColors.primary), // Focused border color
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8.0),
@@ -893,7 +894,7 @@ class _BookingScreenState extends State<BookingScreenForHotel> {
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8.0),
-                        borderSide: BorderSide(color: Colors.blue),
+                        borderSide: BorderSide(color: AppColors.primary),
                       ),
                     ),
                     hint: Text('Select your country'),

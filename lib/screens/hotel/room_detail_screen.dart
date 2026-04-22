@@ -1,5 +1,6 @@
 // ignore_for_file: unnecessary_const, prefer_const_constructors, sort_child_properties_last, prefer_const_literals_to_create_immutables, unused_local_variable, avoid_print, use_build_context_synchronously
 
+import 'dart:convert';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:moonbnd/Provider/home_provider.dart';
 import 'package:moonbnd/data_models/room_detail_screen_data.dart' as rd;
@@ -13,6 +14,7 @@ import 'package:moonbnd/widgets/popup_login.dart';
 import 'package:moonbnd/widgets/room_widget.dart';
 import 'package:moonbnd/widgets/tertiary_button.dart';
 import 'package:flutter/material.dart';
+import 'package:moonbnd/app_colors.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:moonbnd/screens/hotel/hotel_checkout_screen.dart';
@@ -38,13 +40,17 @@ class RoomDetailScreen extends StatefulWidget {
   final Hotel? hotelData;
   final HotelModel?
       searchData; // Search API data — when provided, no detail API call is made
+  final Map<String, dynamic>?
+      roomsApiResponse; // New API response from /api/hotels/rooms
+
   RoomDetailScreen(
       {super.key,
       required this.hotelId,
       this.provider,
       this.room,
       this.hotelData,
-      this.searchData});
+      this.searchData,
+      this.roomsApiResponse});
 
   @override
   State<RoomDetailScreen> createState() => _RoomDetailScreenState();
@@ -80,6 +86,9 @@ class _RoomDetailScreenState extends State<RoomDetailScreen>
 
   /// HotelDetail converted from search data (used when _useSearchData is true)
   HotelDetail? _searchConvertedDetail;
+
+  /// Rooms parsed from roomsApiResponse (when API response is provided)
+  List<HotelRoomModel> _apiParsedRooms = [];
 
   /// Debug log all search data fields to verify API→UI mapping
   void _debugLogSearchData(HotelModel model) {
@@ -189,6 +198,138 @@ class _RoomDetailScreenState extends State<RoomDetailScreen>
     );
   }
 
+  /// Parse rooms from /api/hotels/rooms response
+  /// Expected structure: { "success": true, "data": [...], "message": "..." }
+  void _parseRoomsApiResponse(Map<String, dynamic>? response) {
+    if (response == null) {
+      _apiParsedRooms = [];
+      return;
+    }
+
+    try {
+      debugPrint('🛏️ [RoomDetailScreen] Parsing rooms API response...');
+      _apiParsedRooms = [];
+
+      final data = response['data'];
+      if (data == null || data is! List) {
+        debugPrint('⚠️ Rooms API data is not a list or missing');
+        return;
+      }
+
+      for (final roomData in data) {
+        try {
+          // Parse bed_configuration safely
+          final bedConfig = _parseBedConfiguration(
+              roomData['bed_type'] ?? roomData['bed_configuration']);
+
+          // Parse is_available safely
+          final isAvailable = _parseBoolValue(roomData['is_available']);
+
+          final room = HotelRoomModel(
+            id: (roomData['id'] ?? 'unknown').toString(),
+            name: roomData['title'] ?? roomData['name'] ?? 'Room',
+            roomType: roomData['room_type'] ?? '',
+            bedConfiguration: bedConfig,
+            maxAdults: _parseIntValue(roomData['max_adults']),
+            maxChildren: _parseIntValue(roomData['max_children']),
+            basePrice: roomData['base_price'] ?? roomData['price'],
+            totalPrice:
+                roomData['converted_total_price'] ?? roomData['total_price'],
+            nights: _parseIntValue(roomData['nights']) ?? 1,
+            currency: roomData['currency'] ?? '',
+            convertedCurrency:
+                roomData['converted_currency'] ?? roomData['currency'] ?? '',
+            convertedBasePrice: roomData['converted_base_price'],
+            convertedTotalPrice: roomData['converted_total_price'],
+            isAvailable: isAvailable,
+            sizeSqm: _parseIntValue(roomData['size'] ?? roomData['size_sqm']),
+            viewType: roomData['view'] ?? roomData['view_type'],
+            description: roomData['description'] ?? '',
+            images: _parseImages(roomData['image'] ?? roomData['images']),
+            amenities: _parseAmenities(roomData['amenities']),
+          );
+          _apiParsedRooms.add(room);
+          debugPrint(
+              '✅ Parsed room: ${room.name} (Available: ${room.isAvailable})');
+        } catch (e) {
+          debugPrint('❌ Error parsing room: $e');
+        }
+      }
+      debugPrint(
+          '✅ Successfully parsed ${_apiParsedRooms.length} rooms from API response');
+    } catch (e) {
+      debugPrint('❌ Error parsing rooms API response: $e');
+      _apiParsedRooms = [];
+    }
+  }
+
+  /// Helper to parse bed configuration from API response
+  Map<String, dynamic> _parseBedConfiguration(dynamic raw) {
+    try {
+      if (raw == null) return {};
+      if (raw is Map<String, dynamic>) return Map<String, dynamic>.from(raw);
+      if (raw is List && raw.isNotEmpty) {
+        final first = raw.first;
+        if (first is Map<String, dynamic>) return first;
+        if (first is String) {
+          final decoded = jsonDecode(first);
+          if (decoded is Map<String, dynamic>) return decoded;
+        }
+      }
+      return {};
+    } catch (e) {
+      debugPrint('⚠️ Error parsing bedConfiguration: $e');
+      return {};
+    }
+  }
+
+  /// Helper to parse bool values safely
+  bool _parseBoolValue(dynamic value) {
+    if (value == null) return true; // Default to true (available)
+    if (value is bool) return value;
+    if (value is int) return value != 0;
+    if (value is String) return value.toLowerCase() == 'true' || value == '1';
+    return true;
+  }
+
+  /// Helper to parse int values safely
+  int? _parseIntValue(dynamic value) {
+    if (value == null) return null;
+    if (value is int) return value;
+    if (value is double) return value.toInt();
+    if (value is String) return int.tryParse(value);
+    return null;
+  }
+
+  /// Helper to parse image URLs from API response
+  List<String> _parseImages(dynamic imageData) {
+    if (imageData == null) return [];
+    if (imageData is String) return [imageData];
+    if (imageData is List) {
+      return imageData
+          .map((e) => e.toString())
+          .where((e) => e.isNotEmpty)
+          .toList();
+    }
+    return [];
+  }
+
+  /// Helper to parse amenities from API response
+  List<String> _parseAmenities(dynamic amenitiesData) {
+    if (amenitiesData == null) return [];
+    if (amenitiesData is List) {
+      return amenitiesData
+          .map((e) {
+            if (e is String) return e;
+            if (e is Map && e.containsKey('name')) return e['name'].toString();
+            return e.toString();
+          })
+          .where((e) => e.isNotEmpty)
+          .toList();
+    }
+    return [];
+  }
+
   @override
   void initState() {
     super.initState();
@@ -213,6 +354,12 @@ class _RoomDetailScreenState extends State<RoomDetailScreen>
       // No API call needed — data comes from search response
       _searchConvertedDetail = _convertSearchData(widget.searchData!);
       _debugLogSearchData(widget.searchData!);
+
+      // If roomsApiResponse is provided, parse it (it has priority over searchData rooms)
+      if (widget.roomsApiResponse != null) {
+        _parseRoomsApiResponse(widget.roomsApiResponse);
+      }
+
       loading = false;
     } else {
       loading = true;
@@ -435,7 +582,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen>
                               shape: BoxShape.circle,
                               border: Border.all(
                                 color: count > minVal
-                                    ? const Color(0xFF05A8C7)
+                                    ? AppColors.primary
                                     : const Color(0xffE5E7EB),
                               ),
                             ),
@@ -443,7 +590,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen>
                               Icons.remove,
                               size: 16,
                               color: count > minVal
-                                  ? const Color(0xFF05A8C7)
+                                  ? AppColors.primary
                                   : const Color(0xffD1D5DB),
                             ),
                           ),
@@ -481,13 +628,13 @@ class _RoomDetailScreenState extends State<RoomDetailScreen>
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               border: Border.all(
-                                color: const Color(0xFF05A8C7),
+                                color: AppColors.primary,
                               ),
                             ),
                             child: const Icon(
                               Icons.add,
                               size: 16,
-                              color: Color(0xFF05A8C7),
+                              color: AppColors.primary,
                             ),
                           ),
                         ),
@@ -551,7 +698,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen>
                                   shape: BoxShape.circle,
                                   border: Border.all(
                                     color: tempChildAges[index] > 0
-                                        ? const Color(0xFF05A8C7)
+                                        ? AppColors.primary
                                         : const Color(0xffE5E7EB),
                                   ),
                                 ),
@@ -559,7 +706,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen>
                                   Icons.remove,
                                   size: 16,
                                   color: tempChildAges[index] > 0
-                                      ? const Color(0xFF05A8C7)
+                                      ? AppColors.primary
                                       : const Color(0xffD1D5DB),
                                 ),
                               ),
@@ -589,13 +736,13 @@ class _RoomDetailScreenState extends State<RoomDetailScreen>
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
                                   border: Border.all(
-                                    color: const Color(0xFF05A8C7),
+                                    color: AppColors.primary,
                                   ),
                                 ),
                                 child: const Icon(
                                   Icons.add,
                                   size: 16,
-                                  color: Color(0xFF05A8C7),
+                                  color: AppColors.primary,
                                 ),
                               ),
                             ),
@@ -696,7 +843,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen>
                         Navigator.pop(context);
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF05A8C7),
+                        backgroundColor: AppColors.primary,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
@@ -1083,7 +1230,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen>
                     room.isAvailable ? 'Available'.tr : 'Not Available'.tr,
                     style: GoogleFonts.spaceGrotesk(
                       fontSize: 12,
-                      color: room.isAvailable ? Colors.green : Colors.red,
+                      color: room.isAvailable ? AppColors.secondary : Colors.red,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -1199,7 +1346,24 @@ class _RoomDetailScreenState extends State<RoomDetailScreen>
     final hasData = detail?.data != null;
 
     return Scaffold(
-      extendBodyBehindAppBar: true,
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_ios_new, size: 20, color: Colors.black),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: Text(
+          detail?.data?.title ?? '',
+          style: GoogleFonts.spaceGrotesk(
+            color: Colors.black,
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+          ),
+          overflow: TextOverflow.ellipsis,
+        ),
+      ),
       body: loading
           ? Center(child: CircularProgressIndicator(color: kSecondaryColor))
           : detailError != null
@@ -1217,319 +1381,284 @@ class _RoomDetailScreenState extends State<RoomDetailScreen>
                                 Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    // 1. Back and Favorite Buttons (App Bar)
-                                    // This section maintains the exact style and logic you provided
-                                    SafeArea(
-                                      child: Padding(
-                                        padding: EdgeInsets.symmetric(
-                                          vertical: 12,
-                                        ),
-                                        child: Row(
-                                          children: [
-                                            // Back button
-                                            InkWell(
-                                              onTap: () {
-                                                Navigator.pop(context);
-                                              },
-                                              child: Padding(
-                                                padding: EdgeInsets.symmetric(
-                                                    horizontal: 12),
-                                                child: Container(
-                                                  height: 32,
-                                                  width: 32,
-                                                  decoration: BoxDecoration(
-                                                    color: Colors.grey
-                                                        .shade200, // Use Colors.white or theme color
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            50),
-                                                  ),
-                                                  child: Icon(
-                                                    Icons.arrow_back_ios_new,
-                                                    color: Colors.black,
-                                                    size: 18,
+                                    Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        // ─────────────────────────────────────
+                                        // 1. IMAGE SLIDER — full width, no padding
+                                        // ─────────────────────────────────────
+                                        Builder(builder: (context) {
+                                          final gallery = _useSearchData
+                                              ? (widget.searchData?.images ??
+                                                  [])
+                                              : (detail?.data?.gallery ?? []);
+                                          if (gallery.isEmpty) {
+                                            return Container(
+                                              height: 260,
+                                              width: double.infinity,
+                                              color: const Color(0xFFE3F2FD),
+                                              child: Column(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment.center,
+                                                children: [
+                                                  const Icon(Icons.hotel,
+                                                      size: 64,
+                                                      color: Color(0xFF90CAF9)),
+                                                  const SizedBox(height: 8),
+                                                  Text('No Image'.tr,
+                                                      style: GoogleFonts
+                                                          .spaceGrotesk(
+                                                              color: const Color(
+                                                                  0xFF90CAF9),
+                                                              fontSize: 14)),
+                                                ],
+                                              ),
+                                            );
+                                          }
+                                          return ClipRRect(
+                                            child: Stack(
+                                              children: [
+                                                SizedBox(
+                                                  height: 260,
+                                                  width: MediaQuery.of(context)
+                                                      .size
+                                                      .width,
+                                                  child: PageView.builder(
+                                                    onPageChanged: (value) =>
+                                                        setState(() =>
+                                                            currentPage =
+                                                                value),
+                                                    itemCount: gallery.length,
+                                                    itemBuilder: (context,
+                                                            index) =>
+                                                        SliderContent(
+                                                            imageUrl:
+                                                                gallery[index]),
+                                                    physics:
+                                                        const ClampingScrollPhysics(),
                                                   ),
                                                 ),
-                                              ),
+                                                Positioned(
+                                                  bottom: 12,
+                                                  right: 12,
+                                                  child: Container(
+                                                    padding: const EdgeInsets
+                                                        .symmetric(
+                                                        horizontal: 12,
+                                                        vertical: 4),
+                                                    decoration:
+                                                        const BoxDecoration(
+                                                            color:
+                                                                Colors.black),
+                                                    child: Text(
+                                                      '${currentPage + 1} / ${gallery.length}',
+                                                      style: GoogleFonts
+                                                          .spaceGrotesk(
+                                                              color:
+                                                                  Colors.white,
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .w500,
+                                                              fontSize: 12),
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
                                             ),
+                                          );
+                                        }),
 
-                                            Spacer(),
-
-                                            // Favorite button
-                                            // InkWell(
-                                            //   onTap: () async {
-                                            //     log("message");
-                                            //     final homeProvider =
-                                            //     Provider.of<HomeProvider>(context, listen: false);
-                                            //     final success = await homeProvider.addToWishlist(
-                                            //       '${widget.hotelId}',
-                                            //       'hotel',
-                                            //     );
-                                            //     homeProvider.fetchHotelDetails(widget.hotelId);
-                                            //     await homeProvider.hotellistapi(1, searchParams: {});
-                                            //
-                                            //     if (success == "Added to wishlist") {
-                                            //       setState(() {
-                                            //         item.hotelDetail?.data?.isInWishlist = true;
-                                            //       });
-                                            //     } else if (success == "Removed from wishlist") {
-                                            //       setState(() {
-                                            //         item.hotelDetail?.data?.isInWishlist = false;
-                                            //       });
-                                            //     }
-                                            //
-                                            //     ScaffoldMessenger.of(context).showSnackBar(
-                                            //       SnackBar(content: Text(success)),
-                                            //     );
-                                            //   },
-                                            //   child: Padding(
-                                            //     padding: EdgeInsets.symmetric(horizontal: 12),
-                                            //     child: Container(
-                                            //       height: 32,
-                                            //       width: 32,
-                                            //       decoration: BoxDecoration(
-                                            //         color: Colors.grey.shade200, // Use Colors.white or theme color
-                                            //         borderRadius: BorderRadius.circular(50),
-                                            //       ),
-                                            //       child: Icon(
-                                            //         item.hotelDetail?.data?.isInWishlist == true
-                                            //             ? Icons.favorite
-                                            //             : Icons.favorite_border,
-                                            //         color: item.hotelDetail?.data?.isInWishlist == true
-                                            //             ? Colors.red
-                                            //             : Colors.black,
-                                            //         size: 18,
-                                            //       ),
-                                            //     ),
-                                            //   ),
-                                            // ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-
-                                    Column(
-                                      children: [
-                                        const SizedBox(height: 12),
+                                        // ─────────────────────────────────────
+                                        // 2. CONTENT BELOW IMAGE
+                                        // ─────────────────────────────────────
                                         Padding(
-                                          padding: const EdgeInsets.symmetric(
-                                              horizontal: 12),
+                                          padding: const EdgeInsets.all(16),
                                           child: Column(
                                             crossAxisAlignment:
                                                 CrossAxisAlignment.start,
                                             children: [
-                                              Padding(
-                                                padding:
-                                                    const EdgeInsets.symmetric(
-                                                        horizontal: 15),
-                                                child: Text(
-                                                  detail?.data?.title ?? ''.tr,
-                                                  style:
-                                                      GoogleFonts.spaceGrotesk(
-                                                    fontWeight:
-                                                        FontWeight.w700, // Bold
-                                                    fontSize: 24,
-                                                    height: 32 / 24,
-                                                    letterSpacing: 0,
-                                                    color: Colors.black,
-                                                  ),
-                                                  maxLines: 3,
-                                                  overflow:
-                                                      TextOverflow.ellipsis,
-                                                ),
+                                              // Hotel name
+                                              Text(
+                                                detail?.data?.title ?? ''.tr,
+                                                style: GoogleFonts.spaceGrotesk(
+                                                    fontWeight: FontWeight.w700,
+                                                    fontSize: 22,
+                                                    color: Colors.black),
+                                                maxLines: 3,
+                                                overflow: TextOverflow.ellipsis,
                                               ),
-                                              Padding(
-                                                padding:
-                                                    const EdgeInsets.symmetric(
-                                                        horizontal: 15),
-                                                child: Row(
-                                                  children: [
-                                                    const Icon(
-                                                        Icons
-                                                            .location_on_rounded,
-                                                        color: Colors.black54),
-                                                    const SizedBox(width: 5),
-                                                    Expanded(
-                                                      child: Text(
-                                                        _useSearchData
-                                                            ? [
-                                                                detail?.data
-                                                                        ?.address ??
-                                                                    '',
-                                                                if (widget.searchData
-                                                                            ?.city !=
-                                                                        null &&
-                                                                    widget
-                                                                        .searchData!
-                                                                        .city!
-                                                                        .isNotEmpty)
+                                              const SizedBox(height: 8),
+
+                                              // Star rating
+                                              Builder(builder: (context) {
+                                                final stars = (_useSearchData
+                                                        ? ((widget.searchData
+                                                                        ?.starRating
+                                                                    as num?)
+                                                                ?.toInt() ??
+                                                            0)
+                                                        : (detail?.data
+                                                                ?.starRate ??
+                                                            0))
+                                                    .clamp(0, 5);
+                                                if (stars == 0)
+                                                  return const SizedBox
+                                                      .shrink();
+                                                return Padding(
+                                                  padding:
+                                                      const EdgeInsets.only(
+                                                          bottom: 8),
+                                                  child: Row(
+                                                    children: List.generate(
+                                                        stars,
+                                                        (_) => const Icon(
+                                                            Icons.star_rounded,
+                                                            color: AppColors.accent,
+                                                            size: 18)),
+                                                  ),
+                                                );
+                                              }),
+
+                                              // Location
+                                              Row(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  const Icon(
+                                                      Icons.location_on_rounded,
+                                                      color: Colors.black54,
+                                                      size: 18),
+                                                  const SizedBox(width: 4),
+                                                  Expanded(
+                                                    child: Text(
+                                                      _useSearchData
+                                                          ? [
+                                                              detail?.data
+                                                                      ?.address ??
+                                                                  '',
+                                                              if (widget.searchData
+                                                                          ?.city !=
+                                                                      null &&
                                                                   widget
                                                                       .searchData!
-                                                                      .city!,
-                                                                if (widget.searchData
-                                                                            ?.country !=
-                                                                        null &&
-                                                                    widget
-                                                                        .searchData!
-                                                                        .country!
-                                                                        .isNotEmpty)
+                                                                      .city!
+                                                                      .isNotEmpty)
+                                                                widget
+                                                                    .searchData!
+                                                                    .city!,
+                                                              if (widget.searchData
+                                                                          ?.country !=
+                                                                      null &&
                                                                   widget
                                                                       .searchData!
-                                                                      .country!,
-                                                              ]
-                                                                .where((s) => s
-                                                                    .isNotEmpty)
-                                                                .toSet()
-                                                                .join(', ')
-                                                            : (detail?.data
-                                                                        ?.address ??
-                                                                    '')
-                                                                .tr, // <-- .tr ONLY for non-search
-                                                        style: GoogleFonts
-                                                            .spaceGrotesk(
-                                                          fontWeight: FontWeight
-                                                              .w400, // Regular weight
-                                                          fontSize: 14,
-                                                          height: 19.5 /
-                                                              14, // line-height
-                                                          letterSpacing: 0,
+                                                                      .country!
+                                                                      .isNotEmpty)
+                                                                widget
+                                                                    .searchData!
+                                                                    .country!,
+                                                            ]
+                                                              .where((s) =>
+                                                                  s.isNotEmpty)
+                                                              .toSet()
+                                                              .join(', ')
+                                                          : (detail?.data
+                                                                      ?.address ??
+                                                                  '')
+                                                              .tr,
+                                                      style: GoogleFonts
+                                                          .spaceGrotesk(
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .w400,
+                                                              fontSize: 14,
+                                                              color: Colors
+                                                                  .black54),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                              const SizedBox(height: 8),
+
+                                              // Check-in / Check-out time
+                                              Builder(builder: (context) {
+                                                final checkIn = _useSearchData
+                                                    ? (widget.searchData
+                                                            ?.checkInTime ??
+                                                        '')
+                                                    : (detail?.data
+                                                            ?.checkInTime ??
+                                                        '');
+                                                final checkOut = _useSearchData
+                                                    ? (widget.searchData
+                                                            ?.checkOutTime ??
+                                                        '')
+                                                    : (detail?.data
+                                                            ?.checkOutTime ??
+                                                        '');
+                                                if (checkIn.isEmpty &&
+                                                    checkOut.isEmpty)
+                                                  return const SizedBox
+                                                      .shrink();
+                                                return Padding(
+                                                  padding:
+                                                      const EdgeInsets.only(
+                                                          bottom: 8),
+                                                  child: Row(
+                                                    children: [
+                                                      const Icon(
+                                                          Icons
+                                                              .access_time_rounded,
                                                           color: Colors.black54,
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
-
-                                              if (!_useSearchData)
-                                                Padding(
-                                                  padding: const EdgeInsets
-                                                      .symmetric(
-                                                      horizontal: 15),
-                                                  child: Text(
-                                                    "${detail?.data?.reviewScore?.totalReview ?? 0} Reviews"
-                                                        .tr, // .tr ONLY here
-                                                    style: GoogleFonts
-                                                        .spaceGrotesk(
-                                                      fontWeight: FontWeight
-                                                          .w400, // Regular
-                                                      fontSize: 13,
-                                                      height: 19.5 /
-                                                          13, // line-height
-                                                      letterSpacing: 0,
-                                                      color: const Color(
-                                                          0xFF65758B), // #65758B
-                                                    ),
-                                                  ),
-                                                ),
-
-                                              const SizedBox(height: 10),
-
-                                              // ───────────────────────────────
-                                              // 1. IMAGE SLIDER (wrapped inside rounded top)
-                                              // ───────────────────────────────
-                                              ClipRRect(
-                                                child: Stack(
-                                                  children: [
-                                                    SizedBox(
-                                                      height: 250,
-                                                      width:
-                                                          MediaQuery.of(context)
-                                                              .size
-                                                              .width,
-                                                      child: PageView.builder(
-                                                        onPageChanged: (value) {
-                                                          setState(() {
-                                                            currentPage = value;
-                                                          });
-                                                        },
-                                                        itemCount: detail
-                                                                ?.data
-                                                                ?.gallery
-                                                                ?.length ??
-                                                            0,
-                                                        itemBuilder:
-                                                            (context, index) =>
-                                                                SliderContent(
-                                                          imageUrl: detail?.data
-                                                                      ?.gallery?[
-                                                                  index] ??
-                                                              '',
-                                                        ),
-                                                        physics:
-                                                            const ClampingScrollPhysics(),
-                                                      ),
-                                                    ),
-                                                    Positioned(
-                                                      bottom: 12,
-                                                      right: 12,
-                                                      child: Container(
-                                                        padding:
-                                                            const EdgeInsets
-                                                                .symmetric(
-                                                          horizontal: 12,
-                                                          vertical: 4,
-                                                        ),
-                                                        decoration:
-                                                            BoxDecoration(
-                                                          color: Colors.black,
-                                                          // borderRadius: BorderRadius.circular(5),
-                                                        ),
-                                                        child: Text(
-                                                          '${currentPage + 1} / ${detail?.data?.gallery?.length ?? 0}',
+                                                          size: 18),
+                                                      const SizedBox(width: 4),
+                                                      Text(
+                                                          '$checkIn – $checkOut',
                                                           style: GoogleFonts
                                                               .spaceGrotesk(
-                                                            color: Colors.white,
-                                                            fontWeight:
-                                                                FontWeight.w500,
-                                                            fontSize: 12,
-                                                          ),
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
+                                                                  fontSize: 13,
+                                                                  color: Colors
+                                                                      .black54)),
+                                                    ],
+                                                  ),
+                                                );
+                                              }),
 
-                                              const SizedBox(height: 10),
-
-                                              // ───────────────────────────────
-                                              // 5. ABOUT THIS HOTEL
-                                              // ───────────────────────────────
-                                              // Dynamic amenity quick-pills from API data
+                                              // Amenity pills
                                               if (_useSearchData &&
                                                   widget.searchData!.amenities
                                                       .isNotEmpty)
                                                 Padding(
                                                   padding:
                                                       const EdgeInsets.only(
-                                                          left: 10),
+                                                          bottom: 12),
                                                   child: Wrap(
                                                     spacing: 8,
                                                     runSpacing: 6,
                                                     children: widget
                                                         .searchData!.amenities
                                                         .take(4)
-                                                        .map((a) {
-                                                      return _buildAmenityPill(
-                                                          a, _amenityIcon(a));
-                                                    }).toList(),
+                                                        .map((a) =>
+                                                            _buildAmenityPill(
+                                                                a,
+                                                                _amenityIcon(
+                                                                    a)))
+                                                        .toList(),
                                                   ),
                                                 )
                                               else if (!_useSearchData)
                                                 Padding(
                                                   padding:
                                                       const EdgeInsets.only(
-                                                          left: 10),
+                                                          bottom: 12),
                                                   child: Row(
-                                                    mainAxisAlignment:
-                                                        MainAxisAlignment
-                                                            .spaceEvenly,
                                                     children: [
                                                       _buildAmenityPill(
                                                           'Wifi', Icons.wifi),
+                                                      const SizedBox(width: 8),
                                                       _buildAmenityPill(
                                                           'Pool', Icons.pool),
+                                                      const SizedBox(width: 8),
                                                       _buildAmenityPill(
                                                           'Restaurant',
                                                           Icons
@@ -1537,56 +1666,43 @@ class _RoomDetailScreenState extends State<RoomDetailScreen>
                                                     ],
                                                   ),
                                                 ),
-                                              Padding(
-                                                padding:
-                                                    const EdgeInsets.symmetric(
-                                                        horizontal: 15),
-                                                child: Column(
-                                                  crossAxisAlignment:
-                                                      CrossAxisAlignment.start,
-                                                  children: [
-                                                    // Text(
-                                                    //   'About this hotel'.tr,
-                                                    //   style: TextStyle(
-                                                    //     fontSize: 18,
-                                                    //     fontWeight: FontWeight.w600,
-                                                    //     fontFamily: 'Inter'.tr,
-                                                    //     color: Colors.black,
-                                                    //   ),
-                                                    // ),
-                                                    const SizedBox(height: 10),
 
-                                                    ExpandableHtmlContent(
-                                                      content: detail
-                                                              ?.data?.content ??
-                                                          '',
-                                                      primaryColor:
-                                                          kPrimaryColor,
-                                                      textStyle: GoogleFonts
-                                                          .spaceGrotesk(
-                                                        fontWeight: FontWeight
-                                                            .w400, // Regular
+                                              // Description
+                                              ExpandableHtmlContent(
+                                                content:
+                                                    detail?.data?.content ?? '',
+                                                primaryColor: kPrimaryColor,
+                                                textStyle:
+                                                    GoogleFonts.spaceGrotesk(
+                                                        fontWeight:
+                                                            FontWeight.w400,
                                                         fontSize: 14,
-                                                        height: 21 /
-                                                            14, // line-height
+                                                        height: 21 / 14,
                                                         letterSpacing: 0,
                                                         color: const Color(
-                                                            0xFF65758B), // #65758B
-                                                      ),
-                                                      readMoreText: 'Read more'
-                                                          .tr, // .tr ONLY here
-                                                    ),
-
-                                                    const SizedBox(height: 20),
-                                                  ],
-                                                ),
+                                                            0xFF65758B)),
+                                                readMoreText: 'Read more'.tr,
                                               ),
 
-                                              const SizedBox(height: 10),
+                                              if (!_useSearchData) ...[
+                                                const SizedBox(height: 8),
+                                                Text(
+                                                  "${detail?.data?.reviewScore?.totalReview ?? 0} Reviews"
+                                                      .tr,
+                                                  style:
+                                                      GoogleFonts.spaceGrotesk(
+                                                          fontWeight:
+                                                              FontWeight.w400,
+                                                          fontSize: 13,
+                                                          color: const Color(
+                                                              0xFF65758B)),
+                                                ),
+                                              ],
+                                              const SizedBox(height: 12),
                                             ],
                                           ),
                                         ),
-                                        const SizedBox(height: 12),
+                                        // const SizedBox(height: 12),
                                       ],
                                     ),
 
@@ -1989,14 +2105,18 @@ class _RoomDetailScreenState extends State<RoomDetailScreen>
                                                   .toList(),
                                             ),
 
-                                    // Show rooms from search data when no availability check has been done
+                                    // Show rooms from API response or search data (API response takes priority)
                                     if (_useSearchData &&
                                         roomResponse == null &&
-                                        widget
-                                            .searchData!.rooms.isNotEmpty) ...[
+                                        (_apiParsedRooms.isNotEmpty ||
+                                            widget.searchData!.rooms
+                                                .isNotEmpty)) ...[
                                       Padding(
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: 20, vertical: 10),
+                                        padding: const EdgeInsets.only(
+                                            left: 20,
+                                            right: 20,
+                                            top: 16,
+                                            bottom: 8),
                                         child: Text(
                                           'Available Rooms'.tr,
                                           style: GoogleFonts.spaceGrotesk(
@@ -2006,8 +2126,13 @@ class _RoomDetailScreenState extends State<RoomDetailScreen>
                                           ),
                                         ),
                                       ),
-                                      ...widget.searchData!.rooms.map(
-                                          (room) => _buildSearchRoomCard(room)),
+                                      // Display API parsed rooms if available, otherwise use search data rooms
+                                      ...(_apiParsedRooms.isNotEmpty
+                                          ? _apiParsedRooms.map((room) =>
+                                              _buildSearchRoomCard(room))
+                                          : widget.searchData!.rooms.map(
+                                              (room) =>
+                                                  _buildSearchRoomCard(room))),
                                     ],
 
                                     // Show amenities from search data
@@ -2682,7 +2807,7 @@ Widget _buildRatingSection(HotelDetail hotelDetail) {
         Center(
           child: Container(
             decoration: BoxDecoration(
-              color: const Color(0xFF05A8C7),
+              color: AppColors.primary,
               borderRadius: BorderRadius.circular(10.0), // Rounded corners
             ),
             padding: const EdgeInsets.symmetric(horizontal: 120.0, vertical: 6),
@@ -2919,7 +3044,7 @@ Widget _buildReviewItem(ReviewData review) {
                         (index) => Icon(
                           Icons.star,
                           color: index < (review.rateNumber ?? 0)
-                              ? Colors.yellow
+                              ? AppColors.accent
                               : Colors.grey,
                           size: 18,
                         ),
@@ -3330,7 +3455,7 @@ class ExpandableHtmlContent extends StatefulWidget {
     this.readMoreText = 'Read more',
     this.textStyle = const TextStyle(color: Colors.black54),
     this.readMoreStyle =
-        const TextStyle(color: Colors.blue, fontWeight: FontWeight.w500),
+        const TextStyle(color: AppColors.primary, fontWeight: FontWeight.w500),
     Key? key,
   }) : super(key: key);
 

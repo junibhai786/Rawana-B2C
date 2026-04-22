@@ -43,6 +43,11 @@ List<CategoryData> categoryDatas = [
       category: "Activities".tr,
       id: 8,
     ),
+  CategoryData(
+    kIcon: 'assets/icons/home.svg',
+    category: "Home & Apts".tr,
+    id: 9,
+  ),
   if (enableEvent)
     CategoryData(
       kIcon: 'assets/icons/event.svg',

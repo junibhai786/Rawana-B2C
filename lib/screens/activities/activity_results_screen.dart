@@ -1,6 +1,7 @@
 // lib/screens/activities/activity_results_screen.dart
 
 import 'package:flutter/material.dart';
+import 'package:moonbnd/app_colors.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -654,7 +655,7 @@ class _ActivityCard extends StatelessWidget {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             const Icon(Icons.check_circle_outline,
-                                size: 12, color: Color(0xff4CAF50)),
+                                size: 12, color: AppColors.secondary),
                             const SizedBox(width: 4),
                             Text(
                               'Instant'.tr,
@@ -878,7 +879,7 @@ class _FilterSortBar extends StatelessWidget {
             child: Text(
               activityCount == null
                   ? 'Searching...'.tr
-                  : '$activityCount ${'Activities '.tr}',
+                  : '$activityCount ${'Activities'.tr}',
               style: GoogleFonts.spaceGrotesk(
                 fontSize: 13,
                 fontWeight: FontWeight.w500,

@@ -10,15 +10,48 @@ import 'package:moonbnd/widgets/bottom_navigation.dart';
 
 class ActivityBookingConfirmedScreen extends StatelessWidget {
   final ActivityOrderData data;
+  final String? paymentMethod;
 
-  const ActivityBookingConfirmedScreen({Key? key, required this.data})
-      : super(key: key);
+  const ActivityBookingConfirmedScreen({
+    Key? key,
+    required this.data,
+    this.paymentMethod,
+  }) : super(key: key);
 
   // ── Helpers ───────────────────────────────────────────────────────────────
 
   String _formatPrice(double? price, String? currency) {
     if (price == null) return '-';
     return '${currency ?? 'AED'} ${price.toStringAsFixed(2)}';
+  }
+
+  String _getPaymentMethodDisplay() {
+    // First, try to use the paymentMethod parameter passed from checkout screen
+    if (paymentMethod != null && paymentMethod!.isNotEmpty) {
+      final upperMethod = paymentMethod!.toUpperCase();
+      if (upperMethod == 'STRIPE' || upperMethod == 'CARD') {
+        return 'STRIPE';
+      }
+      if (upperMethod.contains('NGENIUS') || upperMethod == 'NGENIUS') {
+        return 'NGENIUS';
+      }
+      return upperMethod;
+    }
+
+    // Fallback to payment_method from response if available
+    if (data.paymentMethod != null && data.paymentMethod!.isNotEmpty) {
+      final upperMethod = data.paymentMethod!.toUpperCase();
+      if (upperMethod == 'STRIPE' || upperMethod == 'CARD') {
+        return 'STRIPE';
+      }
+      if (upperMethod.contains('NGENIUS') || upperMethod == 'NGENIUS') {
+        return 'NGENIUS';
+      }
+      return upperMethod;
+    }
+
+    // Final fallback
+    return 'STRIPE';
   }
 
   // ── Build ─────────────────────────────────────────────────────────────────
@@ -54,7 +87,7 @@ class ActivityBookingConfirmedScreen extends StatelessWidget {
                     const SizedBox(height: 28),
                     _buildBackToHomeButton(context),
                     const SizedBox(height: 12),
-                    _buildBrowseActivitiesButton(context),
+                    // _buildBrowseActivitiesButton(context),
                   ],
                 ),
               ),
@@ -204,8 +237,8 @@ class ActivityBookingConfirmedScreen extends StatelessWidget {
                   onTap: () {
                     Clipboard.setData(ClipboardData(text: data.orderId ?? ''));
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Booking code copied'),
+                      SnackBar(
+                        content: Text('Booking code copied'.tr),
                         duration: Duration(seconds: 2),
                         behavior: SnackBarBehavior.floating,
                       ),
@@ -251,7 +284,7 @@ class ActivityBookingConfirmedScreen extends StatelessWidget {
                   padding: EdgeInsets.symmetric(vertical: 8),
                   child: Divider(color: Color(0xffF1F5F9), height: 1),
                 ),
-                _row('Payment Method'.tr, 'STRIPE'),
+                _row('Payment Method'.tr, _getPaymentMethodDisplay()),
                 _row('Price / Person'.tr,
                     _formatPrice(data.unitPrice, data.currency)),
                 _row('Total Price'.tr,

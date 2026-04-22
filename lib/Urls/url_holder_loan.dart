@@ -2,11 +2,13 @@ class ApiUrls {
   //// production
   ///
   ///habib bhai
-  static const baseUrl = "https://travolyo.com/api/";
+  static const baseUrl =
+      "https://ectomeric-unhumanely-lyndia.ngrok-free.dev/api/";
+  //"https://rawana.com/api/";
   // "https://hebdomadally-bidirectional-marylyn.ngrok-free.dev/api/";
   // " https://hebdomadally-bidirectional-marylyn.ngrok-free.dev";
-  //"https://travolyo.com/api/"; //"https://dentirostral-pseudoindependently-michell.ngrok-free.dev/api/";    // "https://travolyo.com/api/";
-  static const webUrl = "https://travolyo.com/admin/";
+  //"https://rawana.com/api/"; //"https://dentirostral-pseudoindependently-michell.ngrok-free.dev/api/";    // "https://rawana.com/api/";
+  static const webUrl = "https://rawana.com/admin/";
 
   static const login = "auth/login";
   static const signup = "auth/register";
@@ -114,6 +116,7 @@ class ApiUrls {
   static const tourSearch = 'tour/search';
   static const eventSearch = 'event/search';
   static const spaceSearch = 'space/search';
+  static const homeAptsSearch = 'spaces/search';
   static const flightSearch = 'flights/search';
   static const activitiesSearch = 'activities/search';
   static const downloadInvoice = 'dowanload/invoice';

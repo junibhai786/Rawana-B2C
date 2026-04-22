@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:moonbnd/app_colors.dart';
 import 'package:provider/provider.dart';
 import 'package:moonbnd/Provider/search_hotel_provider.dart';
 import 'package:moonbnd/Provider/currency_provider.dart';
@@ -192,7 +193,7 @@ class HotelCard extends StatelessWidget {
                                 ? Icons.star
                                 : Icons.star_outline,
                             size: 16,
-                            color: Colors.amber,
+                            color: AppColors.accent,
                           ),
                         ),
                       ),
@@ -203,8 +204,8 @@ class HotelCard extends StatelessWidget {
                             horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
                           color: hotel.provider == 'local'
-                              ? Colors.blue[100]
-                              : Colors.green[100],
+                              ? AppColors.primary.withOpacity(0.100)
+                              : AppColors.secondary.withOpacity(0.100),
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
@@ -213,8 +214,8 @@ class HotelCard extends StatelessWidget {
                             fontSize: 10,
                             fontWeight: FontWeight.bold,
                             color: hotel.provider == 'local'
-                                ? Colors.blue[700]
-                                : Colors.green[700],
+                                ? AppColors.primary.withOpacity(0.700)
+                                : AppColors.secondary.withOpacity(0.700),
                           ),
                         ),
                       ),
@@ -268,7 +269,7 @@ class HotelCard extends StatelessWidget {
                           style:
                               Theme.of(context).textTheme.titleSmall?.copyWith(
                                     fontWeight: FontWeight.bold,
-                                    color: Colors.green[700],
+                                    color: AppColors.secondary.withOpacity(0.700),
                                   ),
                         ),
                       ],

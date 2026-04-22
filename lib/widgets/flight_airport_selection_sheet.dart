@@ -1,6 +1,7 @@
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
+import 'package:moonbnd/app_colors.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:moonbnd/Provider/flight_airport_provider.dart';
@@ -135,7 +136,7 @@ class _FlightAirportSelectionSheetState
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(color: Color(0xFF05A8C7)),
+                  borderSide: const BorderSide(color: AppColors.primary),
                 ),
               ),
             ),
@@ -184,7 +185,7 @@ class _FlightAirportSelectionSheetState
                           ElevatedButton(
                             onPressed: provider.retryFetch,
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF05A8C7),
+                              backgroundColor: AppColors.primary,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(8),
                               ),
@@ -275,7 +276,7 @@ class _FlightAirportSelectionSheetState
                                         text: provider.fuzzyDidYouMean,
                                         style: const TextStyle(
                                           fontWeight: FontWeight.w700,
-                                          color: Color(0xFF05A8C7),
+                                          color: AppColors.primary,
                                         ),
                                       ),
                                       const TextSpan(text: '?'),
@@ -285,7 +286,7 @@ class _FlightAirportSelectionSheetState
                               ),
                               const SizedBox(width: 4),
                               const Icon(Icons.arrow_forward_ios,
-                                  size: 12, color: Color(0xFF05A8C7)),
+                                  size: 12, color: AppColors.primary),
                             ],
                           ),
                         ),
@@ -313,7 +314,7 @@ class _FlightAirportSelectionSheetState
                                           'Cannot select the same airport for both From and To fields'
                                               .tr,
                                         ),
-                                        backgroundColor: Colors.orange,
+                                        backgroundColor: AppColors.accent,
                                         behavior: SnackBarBehavior.floating,
                                       ),
                                     );
@@ -357,7 +358,7 @@ class _FlightAirportSelectionSheetState
                                       Icons.flight_takeoff,
                                       color: isSameAirport
                                           ? const Color(0xffD1D5DB)
-                                          : const Color(0xFF05A8C7),
+                                          : AppColors.primary,
                                       size: 18,
                                     ),
                                   ),
@@ -419,7 +420,7 @@ class _FlightAirportSelectionSheetState
                                         fontWeight: FontWeight.w700,
                                         color: isSameAirport
                                             ? const Color(0xffD1D5DB)
-                                            : const Color(0xFF05A8C7),
+                                            : AppColors.primary,
                                       ),
                                     ),
                                   ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:moonbnd/app_colors.dart';
 import 'package:get/get.dart';
 import '../../constants.dart';
 import '../../data_models/chatscreen_data.dart';
@@ -288,7 +289,7 @@ class ChatItem extends StatelessWidget {
                         ),
                         const Icon(
                           Icons.done_all,
-                          color: Colors.blue,
+                          color: AppColors.primary,
                           size: 12,
                         )
                       ],

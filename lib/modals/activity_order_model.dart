@@ -35,6 +35,7 @@ class ActivityOrderData {
   final double? totalPrice;
   final String? currency;
   final String? status;
+  final String? paymentMethod;
   final ActivityOrderGuest? guest;
   final String? specialRequests;
   final List<ActivityOrderPassenger> passengers;
@@ -52,6 +53,7 @@ class ActivityOrderData {
     this.totalPrice,
     this.currency,
     this.status,
+    this.paymentMethod,
     this.guest,
     this.specialRequests,
     this.passengers = const [],
@@ -86,6 +88,7 @@ class ActivityOrderData {
           : null,
       currency: json['currency']?.toString(),
       status: json['status']?.toString(),
+      paymentMethod: json['payment_method']?.toString(),
       guest: json['guest'] is Map<String, dynamic>
           ? ActivityOrderGuest.fromJson(json['guest'] as Map<String, dynamic>)
           : null,

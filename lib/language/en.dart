@@ -962,6 +962,7 @@ Map<String, String> en = {
   'Marine': 'Marine',
   'Independent': 'Independent',
   'Activities': 'Activities',
+  'Home & Apts': 'Home & Apts',
   'Festivals & Events': 'Festivals & Events',
   'Special Interest': 'Special Interest',
   'Wifi': 'Wifi',
@@ -1343,4 +1344,246 @@ Map<String, String> en = {
   'Spaces': "Spaces",
   'events found': 'events found',
   'Events': 'Events',
+
+  // ── Authentication (Login / Sign-Up) ──────────────────────────────────
+  'Welcome Back': 'Welcome Back',
+  'Sign in to continue your journey': 'Sign in to continue your journey',
+  'Enter your email': 'Enter your email',
+  "Email can't be empty": "Email can't be empty",
+  'Please enter a valid email': 'Please enter a valid email',
+  'Enter your password': 'Enter your password',
+  "Password can't be empty": "Password can't be empty",
+  'Password must be at least 6 characters':
+      'Password must be at least 6 characters',
+  'Remember me': 'Remember me',
+  'Sign In': 'Sign In',
+  'Continue as Guest': 'Continue as Guest',
+  'or continue with': 'or continue with',
+  'Google': 'Google',
+  'Facebook': 'Facebook',
+  "Don't have an account? ": "Don't have an account? ",
+  'By continuing, you agree to our ': 'By continuing, you agree to our ',
+  'Terms of Service': 'Terms of Service',
+  ' and ': ' and ',
+  'Select Language': 'Select Language',
+  'English': 'English',
+  'Default': 'Default',
+  'Arabic': 'Arabic',
+  'Create Account': 'Create Account',
+  'Start your travel journey with us': 'Start your travel journey with us',
+  'Full Name': 'Full Name',
+  'Enter your full name': 'Enter your full name',
+  "Name can't be empty": "Name can't be empty",
+  'Name must be at least 2 characters': 'Name must be at least 2 characters',
+  'Name must contain only letters (2-40 characters)':
+      'Name must contain only letters (2-40 characters)',
+  'Create a password': 'Create a password',
+  'Password must be at least 8 characters':
+      'Password must be at least 8 characters',
+  'Password must not exceed 32 characters':
+      'Password must not exceed 32 characters',
+  'Password must contain uppercase, lowercase, number & special character':
+      'Password must contain uppercase, lowercase, number & special character',
+  'Confirm your password': 'Confirm your password',
+  "Confirm Password can't be empty": "Confirm Password can't be empty",
+  'Passwords do not match': 'Passwords do not match',
+  'I agree to the ': 'I agree to the ',
+  'and ': 'and ',
+  'Creating Account...': 'Creating Account...',
+  'Please agree to Terms of Service and Privacy Policy to continue':
+      'Please agree to Terms of Service and Privacy Policy to continue',
+  'Please enter a valid email address': 'Please enter a valid email address',
+
+  // ── Flight Tab ────────────────────────────────────────────────────────
+  'One-way': 'One-way',
+  'Round-Trip': 'Round-Trip',
+  'Departure City': 'Departure City',
+  'Destination City': 'Destination City',
+  'Please select departure city': 'Please select departure city',
+  'Please select destination city': 'Please select destination city',
+  'Please select a valid airport': 'Please select a valid airport',
+  'Departure and destination must be different':
+      'Departure and destination must be different',
+  'Departure Date': 'Departure Date',
+  'Required': 'Required',
+  'Must be after departure': 'Must be after departure',
+  'Return': 'Return',
+  'Please select valid airports': 'Please select valid airports',
+  'Search Flights': 'Search Flights',
+  'Infant': 'Infant',
+  'Under 2 years': 'Under 2 years',
+  'Above 12 years': 'Above 12 years',
+  'Below 12 years': 'Below 12 years',
+  'Rooms': 'Rooms',
+  'Units': 'Units',
+  'Guests & Rooms': 'Guests & Rooms',
+  'Room 1': 'Room 1',
+  'Years': 'Years',
+  'Available Flights': 'Available Flights',
+  'No Flights Found': 'No Flights Found',
+  "We couldn't find any flights matching your search criteria.":
+      "We couldn't find any flights matching your search criteria.",
+  'Failed to prebook flight. Please try again.':
+      'Failed to prebook flight. Please try again.',
+  'Please use the flights search to book':
+      'Please use the flights search to book',
+  'No flights match your filters': 'No flights match your filters',
+  'Clear filters': 'Clear filters',
+  'dd/mm/yyyy': 'dd/mm/yyyy',
+  'Destination': 'Destination',
+  'Please select a destination': 'Please select a destination',
+  'Please select a destination first': 'Please select a destination first',
+
+  // ── Hotel Search Screen ───────────────────────────────────────────────
+  'No Hotels Found': 'No Hotels Found',
+  'Try adjusting your dates or location.':
+      'Try adjusting your dates or location.',
+  'Modify Search': 'Modify Search',
+  'Something went wrong': 'Something went wrong',
+  'Try Again': 'Try Again',
+  'Searching...': 'Searching...',
+  'Sort:': 'Sort:',
+  'PRICE PER NIGHT': 'PRICE PER NIGHT',
+  'Up to': 'Up to',
+  'STAR RATING': 'STAR RATING',
+  'PROVIDER': 'PROVIDER',
+  'Reset': 'Reset',
+  'Apply Filters': 'Apply Filters',
+  'SORT BY': 'SORT BY',
+  'Star Rating (High to Low)': 'Star Rating (High to Low)',
+  'Name (A \u2013 Z)': 'Name (A \u2013 Z)',
+  'Any': 'Any',
+  'Local': 'Local',
+  'Stars': 'Stars',
+
+  // ── Activities Screen ─────────────────────────────────────────────────
+  'Go Back': 'Go Back',
+  'No Activities Found': 'No Activities Found',
+  'No Matches Found': 'No Matches Found',
+  'Search Again': 'Search Again',
+  'Loading activity details...': 'Loading activity details...',
+  'Failed to prepare booking. Please try again.':
+      'Failed to prepare booking. Please try again.',
+  'Instant': 'Instant',
+  'Per person': 'Per person',
+  'No Image Available': 'No Image Available',
+
+  // ── Home & Apartments Search Screen ──────────────────────────────────
+  'Select Units & Guests': 'Select Units & Guests',
+  'Children Ages': 'Children Ages',
+  'Done': 'Done',
+  'Search Homes': 'Search Homes',
+  'Search Activities': 'Search Activities',
+  'No Homes & Apts Found': 'No Homes & Apts Found',
+  'Try adjusting your dates or location':
+      'Try adjusting your dates or location',
+  'View Home': 'View Home',
+
+  // ── Hotel Booking Confirmed Screen ────────────────────────────────────
+  'Your hotel reservation has been submitted successfully.':
+      'Your hotel reservation has been submitted successfully.',
+  'Booking Overview': 'Booking Overview',
+  'Booking code copied': 'Booking code copied',
+  'Rooms / Nights': 'Rooms / Nights',
+  'Night': 'Night',
+  'night': 'night',
+  'nights': 'nights',
+  'Guest Name': 'Guest Name',
+  'Total Price': 'Total Price',
+  'Provider': 'Provider',
+  'Payment Summary': 'Payment Summary',
+  'Payment Status': 'Payment Status',
+  'COMPLETED': 'COMPLETED',
+  'Special Requests': 'Special Requests',
+  'Top things to do in': 'Top things to do in',
+
+  // ── Hotel Checkout Guest Form ────────────────────────────────────────────
+  'First Name *': 'First Name *',
+  'Customer': 'Customer',
+  'Please enter first name': 'Please enter first name',
+  'First name must be at least 2 characters':
+      'First name must be at least 2 characters',
+  'Last Name *': 'Last Name *',
+  'Last name': 'Last name',
+  'Please enter last name': 'Please enter last name',
+  'Last name must be at least 2 characters':
+      'Last name must be at least 2 characters',
+  'Email Address *': 'Email Address *',
+  'Please enter email address': 'Please enter email address',
+  'Phone Number *': 'Phone Number *',
+  'Please enter phone number': 'Please enter phone number',
+  'Number without country code': 'Number without country code',
+  'Credit / Debit Card': 'Credit / Debit Card',
+  'Visa, Mastercard, Amex — powered by Stripe':
+      'Visa, Mastercard, Amex — powered by Stripe',
+  'N-Genius': 'N-Genius',
+  'Secure hosted checkout by Network International':
+      'Secure hosted checkout by Network International',
+
+  // ── Home & Apts Search Result Screen ─────────────────────────────
+  'Price Range': 'Price Range',
+  'No homes match your filters': 'No homes match your filters',
+  'home available': 'home available',
+  'homes available': 'homes available',
+  'homes loaded': 'homes loaded',
+
+  // ── Flight Checkout ────────────────────────────────────────────────
+  'First name is required': 'First name is required',
+  'Last name is required': 'Last name is required',
+  'At least 2 characters': 'At least 2 characters',
+  'Email is required': 'Email is required',
+  'Enter a valid email address': 'Enter a valid email address',
+  'Passport number is required': 'Passport number is required',
+  'Include country code': 'Include country code',
+  'Enter Your Email Address': 'Enter Your Email Address',
+  'Email address is required': 'Email address is required',
+  'Email address cannot exceed 20 characters':
+      'Email address cannot exceed 20 characters',
+  'Phone number is required': 'Phone number is required',
+  'Phone number cannot exceed 20 characters':
+      'Phone number cannot exceed 20 characters',
+  'first name is required': 'first name is required',
+  'first name must be at least 2 characters':
+      'first name must be at least 2 characters',
+  'first name cannot exceed 20 characters':
+      'first name cannot exceed 20 characters',
+  'last name is required': 'last name is required',
+  'last name must be at least 2 characters':
+      'last name must be at least 2 characters',
+  'last name cannot exceed 20 characters':
+      'last name cannot exceed 20 characters',
+  'date of birth is required': 'date of birth is required',
+  'nationality is required': 'nationality is required',
+  'passport number is required': 'passport number is required',
+  'passport expiry is required': 'passport expiry is required',
+  'Processing payment...': 'Processing payment...',
+  'Unexpected server response. Please try again.':
+      'Unexpected server response. Please try again.',
+  'Payment cancelled.': 'Payment cancelled.',
+  'Booking confirmed!': 'Booking confirmed!',
+  'Network error. Please try again.': 'Network error. Please try again.',
+
+  // ── Flight Booking Screen ───────────────────────────────────────────
+  'Please accept the Terms & Conditions to proceed.':
+      'Please accept the Terms & Conditions to proceed.',
+  'Failed to submit booking. Please try again.':
+      'Failed to submit booking. Please try again.',
+
+  // ── General / Shared ────────────────────────────────────────────────
+  'An error occurred. Please try again.':
+      'An error occurred. Please try again.',
+
+  // ── Home Screen / Shared UI ──────────────────────────────────────
+  'Search Hotels': 'Search Hotels',
+  'Explore World': 'Explore World',
+  'Search destination': 'Search destination',
+  'Featured Destinations': 'Featured Destinations',
+  'View all': 'View all',
+  'Best Seller': 'Best Seller',
+  'Wishlist': 'Wishlist',
+  'Participants': 'Participants',
+  'Units & Guests': 'Units & Guests',
+  'Unit': 'Unit',
+  'Adult': 'Adult',
+  'Child': 'Child',
 };

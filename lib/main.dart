@@ -1,3 +1,4 @@
+import 'package:moonbnd/app_colors.dart';
 import 'dart:developer';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -15,6 +16,7 @@ import 'package:moonbnd/Provider/flight_airport_provider.dart';
 import 'package:moonbnd/Provider/hotel_city_provider.dart';
 import 'package:moonbnd/Provider/hotel_country_provider.dart';
 import 'package:moonbnd/Provider/search_hotel_provider.dart';
+import 'package:moonbnd/Provider/home_apts_search_provider.dart';
 import 'package:moonbnd/Provider/hotel_checkout_provider.dart';
 import 'package:moonbnd/Provider/hotel_destination_provider.dart';
 import 'package:moonbnd/Provider/currency_provider.dart';
@@ -23,12 +25,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:moonbnd/screens/auth/splash_screen.dart';
-
 import 'package:moonbnd/services/push-notification_service.dart';
 import 'package:provider/provider.dart';
 import 'package:moonbnd/Provider/auth_provider.dart';
 import 'package:moonbnd/Provider/home_provider.dart';
 import 'package:moonbnd/Provider/tour_provider.dart';
+
 import 'package:moonbnd/constants.dart';
 import 'package:moonbnd/language/localization.dart';
 import 'package:moonbnd/screens/auth/signin_screen.dart';
@@ -72,11 +74,11 @@ void configLoading() {
     ..loadingStyle = EasyLoadingStyle.dark
     ..indicatorSize = 45.0
     ..radius = 10.0
-    ..progressColor = Colors.yellow
-    ..backgroundColor = Colors.green
-    ..indicatorColor = Colors.yellow
-    ..textColor = Colors.yellow
-    ..maskColor = Colors.blue.withOpacity(0.5)
+    ..progressColor = AppColors.secondary
+    ..backgroundColor = AppColors.primary
+    ..indicatorColor = AppColors.secondary
+    ..textColor = AppColors.secondary
+    ..maskColor = AppColors.accent.withOpacity(0.5)
     ..userInteractions = false
     ..dismissOnTap = false;
 }
@@ -100,6 +102,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (context) => FlightProvider()),
         ChangeNotifierProvider(create: (context) => VendorFlightProvider()),
         ChangeNotifierProvider(create: (context) => SearchHotelProvider()),
+        ChangeNotifierProvider(create: (context) => HomeAptsSearchProvider()),
         ChangeNotifierProvider(create: (context) => VendorTourProvider()),
         ChangeNotifierProvider(create: (context) => VendorBoatProvider()),
         ChangeNotifierProvider(create: (context) => HotelCountryProvider()),
@@ -177,7 +180,7 @@ class _NavigationState extends State<NavigationScreen> {
           child: SizedBox(
             height: 150,
             width: 150,
-            child: Image.asset('assets/haven/logo.png'),
+            child: Image.asset('assets/icons/rawana.logo.jpeg'),
           ),
         ),
       ),

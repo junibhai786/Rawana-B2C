@@ -11,6 +11,7 @@ import 'package:moonbnd/screens/payment_screen.dart';
 import 'package:moonbnd/widgets/separator.dart';
 import 'package:moonbnd/widgets/tertiary_button.dart';
 import 'package:flutter/material.dart';
+import 'package:moonbnd/app_colors.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
@@ -202,7 +203,7 @@ class _BookingScreenState extends State<BookingScreenForHotel> {
               ),
             );
             print("check in to $urlGo");
-            if (urlGo.contains("https://travolyo.com/api/booking/confirm")) {
+            if (urlGo.contains("https://rawana.com/api/booking/confirm")) {
               await Navigator.push(
                 context,
                 MaterialPageRoute(
@@ -1215,7 +1216,7 @@ class _BookingScreenState extends State<BookingScreenForHotel> {
 //                 _isOnlinePayment = value!;
 //               });
 //             },
-//             activeColor: Colors.blue,
+//             activeColor: AppColors.primary,
 //             contentPadding: EdgeInsets.symmetric(horizontal: 16),
 //           ),
 //           Divider(height: 1),
@@ -1228,7 +1229,7 @@ class _BookingScreenState extends State<BookingScreenForHotel> {
 //                 _isOnlinePayment = value!;
 //               });
 //             },
-//             activeColor: Colors.blue,
+//             activeColor: AppColors.primary,
 //             contentPadding: EdgeInsets.symmetric(horizontal: 16),
 //           ),
 //         ],

@@ -3,6 +3,7 @@
 // Fixes image overflow, improves layout, spacing, and hierarchy
 
 import 'package:flutter/material.dart';
+import 'package:moonbnd/app_colors.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
@@ -133,7 +134,7 @@ class _BookingConfirmedScreenState extends State<BookingConfirmedScreen> {
             style: GoogleFonts.spaceGrotesk(
               fontSize: 24,
               fontWeight: FontWeight.w600,
-              color: Colors.green,
+              color: AppColors.secondary,
             ),
           ),
           const SizedBox(height: 8),

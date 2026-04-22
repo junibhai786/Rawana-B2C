@@ -76,7 +76,7 @@ class _WishlistScreenState extends State<WishlistScreen> {
     } catch (e) {
       // Handle any exceptions
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('An error occurred. Please try again.')),
+        SnackBar(content: Text('An error occurred. Please try again.'.tr)),
       );
     } finally {
       setState(() {

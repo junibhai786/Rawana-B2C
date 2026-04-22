@@ -112,6 +112,7 @@ class SearchHotelProvider with ChangeNotifier {
     DateTime? checkOut,
     int? adults,
     int? children,
+    List<int>? childAges,
     int? rooms,
     String? currency,
     // Backward compatibility: old API with searchParams dict
@@ -181,46 +182,90 @@ class SearchHotelProvider with ChangeNotifier {
     notifyListeners();
 
     try {
+      // ════════════════════════════════════════════════════════════════════
+      // VALIDATION: Check child_ages consistency
+      // ════════════════════════════════════════════════════════════════════
+      if (children > 0 && (childAges == null || childAges.isEmpty)) {
+        _error =
+            'ERROR: Selected $children child(ren) but no ages provided. Please enter their ages.';
+        debugPrint('[HOTEL_SEARCH] ❌ VALIDATION: $_error');
+        _isLoading = false;
+        _isLoadingMore = false;
+        notifyListeners();
+        return false;
+      }
+
+      if (children > 0 && childAges != null && childAges.length != children) {
+        _error =
+            'ERROR: Age list length (${childAges.length}) does not match children count ($children).';
+        debugPrint('[HOTEL_SEARCH] ❌ VALIDATION: $_error');
+        _isLoading = false;
+        _isLoadingMore = false;
+        notifyListeners();
+        return false;
+      }
+
+      // ════════════════════════════════════════════════════════════════════
+
       // Ensure token is loaded
       if (_token == null) {
         await _loadToken();
       }
 
-      // Build query params matching Postman format:
-      // POST /api/hotels/search?city=Dubai&check_in=...&check_out=...&adults=1
-      final queryParams = {
+      // ════════════════════════════════════════════════════════════════════
+      // BUILD JSON REQUEST BODY (not query params)
+      // ════════════════════════════════════════════════════════════════════
+      final requestBody = {
         'city': city,
         'check_in': _formatDate(checkIn),
         'check_out': _formatDate(checkOut),
-        'adults': adults.toString(),
-        'children': children.toString(),
-        'rooms': rooms.toString(),
-        'page': pageToLoad.toString(),
+        'adults': adults,
+        'children': children,
+        'rooms': rooms,
+        'page': pageToLoad,
         'currency': currency ?? CurrencyProvider.defaultCurrency,
       };
 
-      final url = Uri.parse('${ApiUrls.baseUrl}${ApiUrls.hotelSearch}')
-          .replace(queryParameters: queryParams);
+      // ONLY ADD child_ages if children > 0
+      if (children > 0 && childAges != null && childAges.isNotEmpty) {
+        requestBody['child_ages'] = childAges;
+        debugPrint('[HOTEL_SEARCH] ✓ Added child_ages to request: $childAges');
+      }
+
+      final requestBodyJson = jsonEncode(requestBody);
+
+      final url = '${ApiUrls.baseUrl}${ApiUrls.hotelSearch}';
 
       debugPrint(
           '═══════════════════════════════════════════════════════════════');
       debugPrint('[HOTEL_SEARCH] ${isLoadMore ? "LOAD MORE" : "POST REQUEST"}');
       debugPrint('[HOTEL_SEARCH] URL: $url');
       debugPrint('[HOTEL_SEARCH] Page: $pageToLoad / $_lastPage');
+      debugPrint('[HOTEL_SEARCH] Request Body (JSON):');
+      debugPrint('[HOTEL_SEARCH] $requestBodyJson');
+      debugPrint('[HOTEL_SEARCH] Headers:');
+      debugPrint('[HOTEL_SEARCH] Content-Type: application/json');
+      debugPrint('[HOTEL_SEARCH] Authorization: Bearer \$_token');
       debugPrint(
           '═══════════════════════════════════════════════════════════════');
 
-      // Make POST request with query params (matching Postman)
-      final response = await http.post(
-        url,
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          if (_token != null) 'Authorization': 'Bearer $_token',
-        },
-      ).timeout(const Duration(seconds: 60));
+      // Make POST request with JSON body
+      final response = await http
+          .post(
+            Uri.parse(url),
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+              if (_token != null) 'Authorization': 'Bearer $_token',
+            },
+            body: requestBodyJson,
+          )
+          .timeout(const Duration(seconds: 60));
 
       debugPrint('[HOTEL_SEARCH] Response Status: ${response.statusCode}');
+      debugPrint('[HOTEL_SEARCH] Response Body:');
+      debugPrint('[HOTEL_SEARCH] ${response.body}');
+      debugPrint('');
 
       if (response.statusCode == 200) {
         // Parse JSON response

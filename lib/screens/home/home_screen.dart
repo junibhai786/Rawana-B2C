@@ -52,6 +52,7 @@ import 'package:moonbnd/widgets/flight_shimmer_card.dart';
 import 'package:moonbnd/widgets/activity_search_widget.dart';
 
 import 'package:flutter/material.dart';
+import 'package:moonbnd/app_colors.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:provider/provider.dart';
@@ -71,10 +72,12 @@ import '../../data_models/home_screen_data.dart';
 import '../../widgets/card_widget.dart';
 import '../hotel/search_hotel_screen.dart';
 import '../hotel/room_detail_screen.dart';
+import '../home_apts/home_apts_search_screen.dart';
 
 import '../notification/notifications_screen.dart';
 import '../../Provider/currency_provider.dart';
 import '../../services/location_service.dart';
+import 'package:moonbnd/language/language_controller.dart';
 
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 
@@ -139,6 +142,7 @@ class _HomeScreenState extends State<HomeScreen>
     6: false, // Flights (no auto-load)
     7: false, // Boats
     8: false, // Activities (no API call)
+    9: false, // Home & Apts (no API call)
   };
 
   /// Tracks which tabs are currently fetching (prevent concurrent API calls)
@@ -152,6 +156,7 @@ class _HomeScreenState extends State<HomeScreen>
     6: false,
     7: false,
     8: false,
+    9: false,
   };
 
   void dispose() {
@@ -169,6 +174,9 @@ class _HomeScreenState extends State<HomeScreen>
   final TextEditingController _toCityController = TextEditingController();
   final ScrollController _cityScrollController = ScrollController();
 
+  final LanguageController _languageController = Get.find<LanguageController>();
+  late String _currentLanguage;
+
   // Form keys for validation
   final GlobalKey<FormState> _flightFormKey = GlobalKey<FormState>();
   final GlobalKey<FormState> _hotelFormKey = GlobalKey<FormState>();
@@ -178,17 +186,29 @@ class _HomeScreenState extends State<HomeScreen>
   @override
   void initState() {
     super.initState();
+    _currentLanguage = _languageController.langLocal;
     final homeProvider = Provider.of<HomeProvider>(context, listen: false);
 
     homeProvider.tabController =
         TabController(length: categoryDatas.length, vsync: this);
 
-    // Add listener to handle both tap and swipe
+    // Animation listener: fires every frame during a swipe so the highlight
+    // updates in real-time (rounds the continuous float to nearest tab index).
+    homeProvider.tabController?.animation?.addListener(() {
+      if (!_isInitialFetchDone) return;
+      final animValue = homeProvider.tabController?.animation?.value ?? 0.0;
+      final nearestIndex = animValue.round().clamp(0, categoryDatas.length - 1);
+      final nearestCategoryId = categoryDatas[nearestIndex].id;
+      final homeProvider2 = Provider.of<HomeProvider>(context, listen: false);
+      if (homeProvider2.selectedHomeTab != nearestCategoryId) {
+        homeProvider2.setSelectedHomeTab(nearestCategoryId, animate: false);
+      }
+    });
+
+    // Index listener: fires when swipe fully settles — triggers data fetch.
     homeProvider.tabController?.addListener(() {
-      // Skip during initialization to avoid duplicate first-render fetch
       if (!_isInitialFetchDone) return;
       if (homeProvider.tabController?.indexIsChanging == false) {
-        // Convert tab position to category ID
         final tabIndex = homeProvider.tabController?.index ?? 0;
         final categoryId = tabIndex < categoryDatas.length
             ? categoryDatas[tabIndex].id
@@ -228,6 +248,84 @@ class _HomeScreenState extends State<HomeScreen>
         // Removed duplicate _fetchDataForTab call — handled in getMe().then() above
       }
     });
+  }
+
+  void _showLanguageBottomSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (BuildContext ctx) {
+        return SizedBox(
+          height: 220,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Text(
+                  'Select Language'.tr,
+                  style: GoogleFonts.spaceGrotesk(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: ListTile(
+                  title: Text('English'.tr, style: GoogleFonts.spaceGrotesk()),
+                  trailing: _currentLanguage == 'English'
+                      ? Text('Default'.tr,
+                          style: const TextStyle(color: AppColors.primary))
+                      : null,
+                  shape: RoundedRectangleBorder(
+                    side: BorderSide(
+                        color: _currentLanguage == 'English'
+                            ? Colors.grey
+                            : Colors.transparent,
+                        width: 1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  onTap: () {
+                    setState(() {
+                      _currentLanguage = 'English';
+                      _languageController.changeLanguage('en');
+                    });
+                    Navigator.pop(ctx);
+                  },
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: ListTile(
+                  title: Text('Arabic'.tr, style: GoogleFonts.spaceGrotesk()),
+                  trailing: _currentLanguage == 'Arabic'.tr
+                      ? const Icon(Icons.check, color: AppColors.primary)
+                      : null,
+                  shape: RoundedRectangleBorder(
+                    side: BorderSide(
+                        color: _currentLanguage == 'Arabic'.tr
+                            ? Colors.grey
+                            : Colors.transparent,
+                        width: 1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  onTap: () {
+                    setState(() {
+                      _currentLanguage = 'Arabic'.tr;
+                      _languageController.changeLanguage('ar');
+                    });
+                    Navigator.pop(ctx);
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   Future _fetchDataForTab(int index, {bool animate = true}) async {
@@ -1056,7 +1154,7 @@ class _HomeScreenState extends State<HomeScreen>
                             provider.locations.isEmpty
                         ? const Center(child: CircularProgressIndicator())
                         : provider.filteredLocations.isEmpty
-                            ? const Center(child: Text('No locations found'))
+                            ? Center(child: Text('No locations found'.tr))
                             : ListView.builder(
                                 controller: _cityScrollController,
                                 itemCount: provider.filteredLocations.length +
@@ -1328,12 +1426,12 @@ class _HomeScreenState extends State<HomeScreen>
     {
       final parts = <String>[];
       if (_adultCount > 0)
-        parts.add('$_adultCount Adult${_adultCount > 1 ? 's' : ''}');
+        parts.add('$_adultCount ${'Adult'.tr}${_adultCount > 1 ? 's' : ''}');
       if (_childCount > 0)
-        parts.add('$_childCount Child${_childCount > 1 ? 'ren' : ''}');
+        parts.add('$_childCount ${'Child'.tr}${_childCount > 1 ? 'ren' : ''}');
       if (_infantCount > 0)
-        parts.add('$_infantCount Infant${_infantCount > 1 ? 's' : ''}');
-      passengerText = parts.isEmpty ? '1 Adult' : parts.join(', ');
+        parts.add('$_infantCount ${'Infant'.tr}${_infantCount > 1 ? 's' : ''}');
+      passengerText = parts.isEmpty ? '1 ${'Adult'.tr}' : parts.join(', ');
     }
 
     return Padding(
@@ -1357,6 +1455,7 @@ class _HomeScreenState extends State<HomeScreen>
                       _isRoundTrip = false;
                     });
                   },
+                  icon: Icons.arrow_forward,
                 ),
                 SizedBox(width: 12),
                 _buildTripTypeButton(
@@ -1367,6 +1466,7 @@ class _HomeScreenState extends State<HomeScreen>
                       _isRoundTrip = true;
                     });
                   },
+                  icon: Icons.compare_arrows,
                 ),
               ],
             ),
@@ -1705,11 +1805,21 @@ class _HomeScreenState extends State<HomeScreen>
                                     final DateTime? picked =
                                         await showDatePicker(
                                       context: context,
-                                      initialDate: _flightDepartureDate ??
-                                          DateTime.now(),
-                                      firstDate: _flightDepartureDate ??
-                                          DateTime.now(),
+                                      initialDate: _flightDepartureDate != null
+                                          ? _flightDepartureDate!
+                                              .add(const Duration(days: 1))
+                                          : DateTime.now(),
+                                      firstDate: DateTime.now(),
                                       lastDate: DateTime(2100),
+                                      selectableDayPredicate: (DateTime day) {
+                                        // If departure date is selected, only allow dates after it
+                                        if (_flightDepartureDate != null) {
+                                          return day
+                                              .isAfter(_flightDepartureDate!);
+                                        }
+                                        // If departure not selected, allow all dates
+                                        return true;
+                                      },
                                     );
                                     if (picked != null) {
                                       setState(() {
@@ -1995,8 +2105,8 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
-  Widget _buildTripTypeButton(
-      String title, bool isSelected, VoidCallback onTap) {
+  Widget _buildTripTypeButton(String title, bool isSelected, VoidCallback onTap,
+      {IconData? icon}) {
     return Expanded(
       child: GestureDetector(
         onTap: onTap,
@@ -2012,7 +2122,16 @@ class _HomeScreenState extends State<HomeScreen>
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              SizedBox(width: 8),
+              if (icon != null) ...[
+                const SizedBox(width: 4),
+                Icon(
+                  icon,
+                  size: 16,
+                  color: isSelected ? Colors.white : kHeadingColor,
+                ),
+                const SizedBox(width: 6),
+              ] else
+                const SizedBox(width: 8),
               Text(
                 title.tr,
                 style: GoogleFonts.spaceGrotesk(
@@ -2039,7 +2158,7 @@ class _HomeScreenState extends State<HomeScreen>
         : 'dd/mm/yyyy'.tr;
 
     final String guestSummary =
-        '$_hotelRoomCount Unit${_hotelRoomCount > 1 ? 's' : ''} · $_hotelAdultCount Adult${_hotelAdultCount > 1 ? 's' : ''} · $_hotelChildCount Child${_hotelChildCount != 1 ? 'ren' : ''}';
+        '$_hotelRoomCount ${'Unit'.tr}${_hotelRoomCount > 1 ? 's' : ''} · $_hotelAdultCount ${'Adult'.tr}${_hotelAdultCount > 1 ? 's' : ''} · $_hotelChildCount ${'Child'.tr}${_hotelChildCount != 1 ? 'ren' : ''}';
 
     // Shared border style helper
     OutlineInputBorder _border(Color color) => OutlineInputBorder(
@@ -2275,9 +2394,20 @@ class _HomeScreenState extends State<HomeScreen>
                                 onTap: () async {
                                   final DateTime? picked = await showDatePicker(
                                     context: context,
-                                    initialDate: _checkInDate ?? DateTime.now(),
-                                    firstDate: _checkInDate ?? DateTime.now(),
+                                    initialDate: _checkInDate != null
+                                        ? _checkInDate!
+                                            .add(const Duration(days: 1))
+                                        : DateTime.now(),
+                                    firstDate: DateTime.now(),
                                     lastDate: DateTime(2100),
+                                    // selectableDayPredicate: (DateTime day) {
+                                    //   // If check-in is selected, only allow dates after check-in
+                                    //   if (_checkInDate != null) {
+                                    //     return day.isAfter(_checkInDate!);
+                                    //   }
+                                    //   // If check-in not selected, allow all dates
+                                    //   return true;
+                                    // },
                                   );
                                   if (picked != null) {
                                     setState(() {
@@ -2445,6 +2575,9 @@ class _HomeScreenState extends State<HomeScreen>
                               guests: _guestCount,
                               adults: _hotelAdultCount,
                               children: _hotelChildCount,
+                              childAges: _childrenAges.isNotEmpty
+                                  ? _childrenAges
+                                  : null,
                               rooms: _hotelRoomCount,
                             ),
                           ),
@@ -2616,7 +2749,7 @@ class _HomeScreenState extends State<HomeScreen>
                     child: Container(
                       padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
-                        color: Colors.orange,
+                        color: AppColors.accent,
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
@@ -2691,36 +2824,40 @@ class _HomeScreenState extends State<HomeScreen>
                     ),
                     Row(
                       children: [
-                        const SizedBox(
-                          width: 20,
-                        ),
-                        //search button
+                        const SizedBox(width: 20),
                         Expanded(
                           child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text(
-                                    "Hello, Welcome back!".tr,
-                                    style: GoogleFonts.spaceGrotesk(
-                                      fontWeight: FontWeight.w400,
-                                      fontSize: 13,
-                                      color: kSubtitleColor,
+                              // Left: greeting + title
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      "Hello, Welcome back!".tr,
+                                      style: GoogleFonts.spaceGrotesk(
+                                        fontWeight: FontWeight.w400,
+                                        fontSize: 13,
+                                        color: kSubtitleColor,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
                                     ),
-                                  ),
-                                  Text(
-                                    "Explore World".tr,
-                                    style: GoogleFonts.spaceGrotesk(
-                                      color: kHeadingColor,
-                                      fontSize: 22,
-                                      fontWeight: FontWeight.w700,
+                                    Text(
+                                      "Explore World".tr,
+                                      style: GoogleFonts.spaceGrotesk(
+                                        color: kHeadingColor,
+                                        fontSize: 22,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
+                              const SizedBox(width: 8),
+                              // Right: currency + language + bell
                               Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
@@ -2734,7 +2871,7 @@ class _HomeScreenState extends State<HomeScreen>
 
                                       return Container(
                                         padding: const EdgeInsets.symmetric(
-                                            horizontal: 10, vertical: 6),
+                                            horizontal: 6, vertical: 4),
                                         decoration: BoxDecoration(
                                           border:
                                               Border.all(color: kBorderColor),
@@ -2817,6 +2954,16 @@ class _HomeScreenState extends State<HomeScreen>
                                         ),
                                       );
                                     },
+                                  ),
+                                  const SizedBox(width: 8),
+                                  GestureDetector(
+                                    onTap: () =>
+                                        _showLanguageBottomSheet(context),
+                                    child: const Icon(
+                                      Icons.language,
+                                      color: kPrimaryColor,
+                                      size: 26,
+                                    ),
                                   ),
                                   const SizedBox(width: 10),
                                   Stack(
@@ -3095,6 +3242,8 @@ class _HomeScreenState extends State<HomeScreen>
             ],
           ),
         );
+      case 9: // Home & Apartments
+        return const HomeAptsSearchScreen();
       default:
         return const Center(child: Text('Unknown tab'));
     }
@@ -4307,7 +4456,7 @@ class _PropertyItemState extends State<PropertyItem> {
       type: 'hotel'.tr,
       id: widget.dataSrc.id.toString(),
       badgeText: 'HOTEL'.tr,
-      badgeColor: Colors.blue,
+      badgeColor: AppColors.primary,
       priceSuffix: '/night'.tr,
       features: null,
     );
@@ -5138,7 +5287,7 @@ class _FlightListItemState extends State<FlightListItem> {
                                   size: 56, color: Colors.grey[300]),
                               const SizedBox(height: 16),
                               Text(
-                                'No flights match your filters',
+                                'No flights match your filters'.tr,
                                 style: GoogleFonts.spaceGrotesk(
                                   fontSize: 15,
                                   fontWeight: FontWeight.w600,
@@ -5149,9 +5298,9 @@ class _FlightListItemState extends State<FlightListItem> {
                               TextButton(
                                 onPressed: () => setState(() =>
                                     _activeFilter = const _FlightFilterState()),
-                                child: const Text(
-                                  'Clear filters',
-                                  style: TextStyle(
+                                child: Text(
+                                  'Clear filters'.tr,
+                                  style: const TextStyle(
                                     color: kPrimaryColor,
                                     fontWeight: FontWeight.w600,
                                   ),
@@ -6953,12 +7102,12 @@ class OfferItem extends StatelessWidget {
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: Colors.amber.shade50,
+                  color: AppColors.accent,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Icon(
                   Icons.local_offer,
-                  color: Colors.amber,
+                  color: AppColors.accent,
                   size: 24,
                 ),
               ),

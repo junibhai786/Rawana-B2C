@@ -6,6 +6,7 @@ import 'package:moonbnd/Provider/tour_provider.dart';
 import 'package:moonbnd/screens/auth/signin_screen.dart';
 import 'package:moonbnd/widgets/popup_login.dart';
 import 'package:flutter/material.dart';
+import 'package:moonbnd/app_colors.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:provider/provider.dart';
@@ -94,7 +95,7 @@ class _TourItemState extends State<TourItem> {
       type: 'tour',
       id: widget.dataSrc.id.toString(),
       badgeText: 'TOUR',
-      badgeColor: Colors.orange,
+      badgeColor: AppColors.accent,
       priceSuffix: '',
     );
   }

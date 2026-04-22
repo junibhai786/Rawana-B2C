@@ -9,6 +9,7 @@ import 'package:moonbnd/vendor/boat/boat_one_screen.dart';
 import 'package:moonbnd/vendor/boat/editboat/edit_boat_one_screen.dart';
 import 'package:moonbnd/widgets/elevatedbuttonicon.dart';
 import 'package:flutter/material.dart';
+import 'package:moonbnd/app_colors.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
@@ -400,7 +401,7 @@ class _HotelCardState extends State<HotelCard> {
                           decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(5),
                               color: widget.boat?.status == 'publish'
-                                  ? Colors.green
+                                  ? AppColors.secondary
                                   : Colors.grey),
                           child: Icon(
                               widget.boat?.status == 'publish'
@@ -510,7 +511,7 @@ class _HotelCardState extends State<HotelCard> {
                 },
                 child: Text('View'.tr),
                 style: TextButton.styleFrom(
-                  backgroundColor: Color(0xFF17A2B8),
+                  backgroundColor: AppColors.secondary,
                   foregroundColor: Colors.white,
                   padding: EdgeInsets.symmetric(horizontal: 30, vertical: 10),
                   shape: RoundedRectangleBorder(
@@ -532,7 +533,7 @@ class _HotelCardState extends State<HotelCard> {
                 },
                 child: Text('Clone'.tr),
                 style: TextButton.styleFrom(
-                  backgroundColor: Color(0xFF1A2B47),
+                  backgroundColor: AppColors.accent,
                   foregroundColor: Colors.white,
                   padding: EdgeInsets.symmetric(horizontal: 30, vertical: 10),
                   shape: RoundedRectangleBorder(
@@ -584,7 +585,7 @@ class _HotelCardState extends State<HotelCard> {
                 },
                 child: Text('Edit'.tr),
                 style: TextButton.styleFrom(
-                  backgroundColor: Color(0xFFFFC107),
+                  backgroundColor: AppColors.accent,
                   foregroundColor: Colors.white,
                   padding: EdgeInsets.symmetric(horizontal: 30, vertical: 10),
                   shape: RoundedRectangleBorder(
@@ -605,7 +606,7 @@ class _HotelCardState extends State<HotelCard> {
                   await launch(widget.boat?.availability_url ?? "");
                 },
                 style: TextButton.styleFrom(
-                  backgroundColor: Color(0xFF1A2B47),
+                  backgroundColor: AppColors.accent,
                   foregroundColor: Colors.white,
                   padding: EdgeInsets.symmetric(horizontal: 41, vertical: 10),
                   shape: RoundedRectangleBorder(

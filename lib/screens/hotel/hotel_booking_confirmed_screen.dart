@@ -16,11 +16,13 @@ import 'package:moonbnd/screens/activities/activity_results_screen.dart';
 class HotelBookingConfirmedScreen extends StatefulWidget {
   final HotelBookingConfirmationData data;
   final String? city;
+  final String? paymentMethod;
 
   const HotelBookingConfirmedScreen({
     Key? key,
     required this.data,
     this.city,
+    this.paymentMethod,
   }) : super(key: key);
 
   @override
@@ -90,9 +92,9 @@ class _HotelBookingConfirmedScreenState
   String _formatGuests(int? adults, int? children) {
     final a = adults ?? 0;
     final c = children ?? 0;
-    final adultStr = a == 1 ? '1 Adult' : '$a Adults';
+    final adultStr = a == 1 ? '1 ${'Adult'.tr}' : '$a ${'Adults'.tr}';
     if (c == 0) return adultStr;
-    final childStr = c == 1 ? '1 Child' : '$c Children';
+    final childStr = c == 1 ? '1 ${'Child'.tr}' : '$c ${'Children'.tr}';
     return '$adultStr, $childStr';
   }
 
@@ -122,6 +124,8 @@ class _HotelBookingConfirmedScreenState
                     _buildStatusBadge(),
                     const SizedBox(height: 10),
                     _buildDetailsCard(context),
+                    const SizedBox(height: 16),
+                    _buildPaymentSummaryCard(),
                     if (data.specialRequests != null &&
                         data.specialRequests!.isNotEmpty) ...[
                       const SizedBox(height: 16),
@@ -168,7 +172,7 @@ class _HotelBookingConfirmedScreenState
           //  color: Colors.white, size: 48),
           const SizedBox(height: 12),
           Text(
-            'Booking Confirmed',
+            'Booking Confirmed'.tr,
             style: GoogleFonts.spaceGrotesk(
               fontSize: 26,
               fontWeight: FontWeight.bold,
@@ -177,7 +181,7 @@ class _HotelBookingConfirmedScreenState
           ),
           const SizedBox(height: 6),
           Text(
-            'Your hotel reservation has been submitted successfully.',
+            'Your hotel reservation has been submitted successfully.'.tr,
             style: GoogleFonts.spaceGrotesk(
               fontSize: 14,
               color: Colors.white.withOpacity(0.85),
@@ -274,7 +278,7 @@ class _HotelBookingConfirmedScreenState
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Booking Overview',
+                  'Booking Overview'.tr,
                   style: GoogleFonts.spaceGrotesk(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -286,8 +290,8 @@ class _HotelBookingConfirmedScreenState
                   onTap: () {
                     Clipboard.setData(ClipboardData(text: data.orderId ?? ''));
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Booking code copied'),
+                      SnackBar(
+                        content: Text('Booking code copied'.tr),
                         duration: Duration(seconds: 2),
                         behavior: SnackBarBehavior.floating,
                       ),
@@ -317,28 +321,28 @@ class _HotelBookingConfirmedScreenState
             padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
             child: Column(
               children: [
-                _row('Hotel', data.hotelName),
-                _row('Room', data.roomName),
-                _row('Check-in', _formatDate(data.checkIn)),
-                _row('Check-out', _formatDate(data.checkOut)),
-                _row('Guests', _formatGuests(data.adults, data.children)),
-                _row('Rooms / Nights',
-                    '1 Room, $nights ${nights == 1 ? 'Night' : 'Nights'}'),
+                _row('Hotel'.tr, data.hotelName),
+                _row('Room'.tr, data.roomName),
+                _row('Check-in'.tr, _formatDate(data.checkIn)),
+                _row('Check-out'.tr, _formatDate(data.checkOut)),
+                _row('Guests'.tr, _formatGuests(data.adults, data.children)),
+                _row('Rooms / Nights'.tr,
+                    '1 ${'Room'.tr}, $nights ${nights == 1 ? 'Night'.tr : 'Nights'.tr}'),
                 const Padding(
                   padding: EdgeInsets.symmetric(vertical: 8),
                   child: Divider(color: Color(0xffF1F5F9), height: 1),
                 ),
-                _row('Guest Name', data.guest?.fullName),
-                _row('Email', data.guest?.email),
-                _row('Phone', data.guest?.phone),
+                _row('Guest Name'.tr, data.guest?.fullName),
+                _row('Email'.tr, data.guest?.email),
+                _row('Phone'.tr, data.guest?.phone),
                 const Padding(
                   padding: EdgeInsets.symmetric(vertical: 8),
                   child: Divider(color: Color(0xffF1F5F9), height: 1),
                 ),
-                _row('Total Price',
+                _row('Total Price'.tr,
                     _formatPrice(data.totalPrice, data.currency)),
                 if (data.provider != null && data.provider!.isNotEmpty)
-                  _row('Provider', data.provider),
+                  _row('Provider'.tr, data.provider),
               ],
             ),
           ),
@@ -380,6 +384,194 @@ class _HotelBookingConfirmedScreenState
     );
   }
 
+  // ── Payment Summary ───────────────────────────────────────────────────────
+
+  Widget _buildPaymentSummaryCard() {
+    final nights = data.nights ?? 1;
+    final pricePerNight = data.totalPrice != null && nights > 0
+        ? data.totalPrice! / nights
+        : data.totalPrice ?? 0;
+    final currency = data.currency ?? 'USD';
+
+    String getPaymentMethodDisplay(String? method) {
+      // First, try to use the paymentMethod parameter passed from checkout screen
+      if (widget.paymentMethod != null && widget.paymentMethod!.isNotEmpty) {
+        final upperMethod = widget.paymentMethod!.toUpperCase();
+        if (upperMethod == 'STRIPE' || upperMethod == 'CARD') {
+          return 'STRIPE';
+        }
+        if (upperMethod.contains('NGENIUS') || upperMethod == 'NGENIUS') {
+          return 'NGENIUS';
+        }
+        return upperMethod;
+      }
+
+      // Fallback to payment_method from response if available
+      if (method != null && method.isNotEmpty) {
+        final upperMethod = method.toUpperCase();
+        if (upperMethod == 'STRIPE' || upperMethod == 'CARD') {
+          return 'STRIPE';
+        }
+        if (upperMethod.contains('NGENIUS') || upperMethod == 'NGENIUS') {
+          return 'NGENIUS';
+        }
+        return upperMethod;
+      }
+
+      // Final fallback - show not specified
+      return 'Not specified';
+    }
+
+    final paymentMethodDisplay = getPaymentMethodDisplay(data.paymentMethod);
+    final status = (data.status ?? 'completed').toUpperCase();
+
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          // Header
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            decoration: const BoxDecoration(
+              color: kPrimaryColor,
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(16),
+                topRight: Radius.circular(16),
+              ),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Payment Summary'.tr,
+                  style: GoogleFonts.spaceGrotesk(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Payment details rows
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              children: [
+                // Payment Method
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Payment Method'.tr,
+                      style: GoogleFonts.spaceGrotesk(
+                        fontSize: 13,
+                        color: const Color(0xff94A3B8),
+                      ),
+                    ),
+                    Text(
+                      paymentMethodDisplay,
+                      style: GoogleFonts.spaceGrotesk(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: kPrimaryColor,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                // Payment Status
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Payment Status'.tr,
+                      style: GoogleFonts.spaceGrotesk(
+                        fontSize: 13,
+                        color: const Color(0xff94A3B8),
+                      ),
+                    ),
+                    Text(
+                      'COMPLETED'.tr,
+                      style: GoogleFonts.spaceGrotesk(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: kPrimaryColor,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                // Amount breakdown
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      '$currency ${pricePerNight.toStringAsFixed(2)} × $nights ${nights == 1 ? 'night'.tr : 'nights'.tr}',
+                      style: GoogleFonts.spaceGrotesk(
+                        fontSize: 13,
+                        color: const Color(0xff94A3B8),
+                      ),
+                    ),
+                    Text(
+                      '$currency ${data.totalPrice?.toStringAsFixed(2) ?? '0.00'}',
+                      style: GoogleFonts.spaceGrotesk(
+                        fontSize: 13,
+                        color: const Color(0xff64748B),
+                      ),
+                    ),
+                  ],
+                ),
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 12),
+                  child: Divider(
+                    color: Color(0xffF1F5F9),
+                    height: 1,
+                  ),
+                ),
+                // Total
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Total'.tr,
+                      style: GoogleFonts.spaceGrotesk(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: kHeadingColor,
+                      ),
+                    ),
+                    Text(
+                      '$currency ${data.totalPrice?.toStringAsFixed(2) ?? '0.00'}',
+                      style: GoogleFonts.spaceGrotesk(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: kPrimaryColor,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   // ── Special requests ──────────────────────────────────────────────────────
 
   Widget _buildSpecialRequestsCard() {
@@ -401,7 +593,7 @@ class _HotelBookingConfirmedScreenState
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Special Requests',
+            'Special Requests'.tr,
             style: GoogleFonts.spaceGrotesk(
               fontSize: 14,
               fontWeight: FontWeight.bold,
@@ -513,7 +705,7 @@ class _HotelBookingConfirmedScreenState
         ),
         const SizedBox(height: 4),
         Text(
-          'Top things to do in $destination',
+          '${'Top things to do in'.tr} $destination',
           style: GoogleFonts.spaceGrotesk(
             fontSize: 13,
             color: const Color(0xff64748B),
@@ -686,7 +878,7 @@ class _HotelBookingConfirmedScreenState
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'from',
+                              'from'.tr,
                               style: GoogleFonts.spaceGrotesk(
                                 fontSize: 10,
                                 color: const Color(0xff94A3B8),

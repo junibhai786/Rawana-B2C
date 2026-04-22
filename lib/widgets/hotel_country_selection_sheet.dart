@@ -4,6 +4,7 @@
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
+import 'package:moonbnd/app_colors.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:moonbnd/Provider/hotel_country_provider.dart';
@@ -153,7 +154,7 @@ class _HotelCountrySelectionSheetState
                                   onPressed: () =>
                                       provider.fetchHotelCountries(),
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor: const Color(0xFF05A8C7),
+                                    backgroundColor: AppColors.primary,
                                     elevation: 0,
                                     shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(8)),
@@ -187,7 +188,7 @@ class _HotelCountrySelectionSheetState
                                           const Icon(
                                             Icons.language,
                                             size: 22,
-                                            color: Color(0xFF05A8C7),
+                                            color: AppColors.primary,
                                           ),
                                           const SizedBox(width: 12),
                                           Expanded(

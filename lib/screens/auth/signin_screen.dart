@@ -12,6 +12,7 @@ import 'package:moonbnd/constants.dart';
 import 'signup_screen.dart';
 import 'forgot_password_screen.dart';
 import 'package:flutter/gestures.dart';
+import 'package:moonbnd/app_colors.dart';
 
 class SignInScreen extends StatefulWidget {
   const SignInScreen({super.key});
@@ -145,7 +146,7 @@ class _SignInScreenState extends State<SignInScreen> {
                   Align(
                     alignment: Alignment.centerLeft,
                     child: Image.asset(
-                      'assets/images/logo.png',
+                      'assets/icons/rawana.logo.jpeg',
                       height: 60, // Adjust height as needed
                       fit: BoxFit.contain,
                     ),
@@ -338,7 +339,7 @@ class _SignInScreenState extends State<SignInScreen> {
                           "Forgot Password?".tr,
                           style: GoogleFonts.spaceGrotesk(
                             fontSize: 14,
-                            color: Color(0xFF05A8C7),
+                            color: AppColors.primary,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -383,9 +384,9 @@ class _SignInScreenState extends State<SignInScreen> {
                               }
                             },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Color(0xFF05A8C7),
+                        backgroundColor: AppColors.primary,
                         disabledBackgroundColor:
-                            Color(0xFF05A8C7).withOpacity(0.6),
+                            AppColors.primary.withOpacity(0.6),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
@@ -570,7 +571,7 @@ class _SignInScreenState extends State<SignInScreen> {
                           TextSpan(
                             text: "Sign Up".tr,
                             style: GoogleFonts.spaceGrotesk(
-                              color: Color(0xFF05A8C7),
+                              color: AppColors.primary,
                               fontWeight: FontWeight.w600,
                             ),
                             recognizer: TapGestureRecognizer()
@@ -605,7 +606,7 @@ class _SignInScreenState extends State<SignInScreen> {
                           TextSpan(
                             text: "Terms of Service".tr,
                             style: GoogleFonts.spaceGrotesk(
-                              color: Color(0xFF05A8C7),
+                              color: AppColors.primary,
                               decoration: TextDecoration.underline,
                             ),
                           ),
@@ -613,7 +614,7 @@ class _SignInScreenState extends State<SignInScreen> {
                           TextSpan(
                             text: "Privacy Policy".tr,
                             style: GoogleFonts.spaceGrotesk(
-                              color: Color(0xFF05A8C7),
+                              color: AppColors.primary,
                               decoration: TextDecoration.underline,
                             ),
                           ),
@@ -661,7 +662,7 @@ class _SignInScreenState extends State<SignInScreen> {
                   trailing: currentLanguage == 'English'
                       ? Text(
                           'Default'.tr,
-                          style: TextStyle(color: Colors.blue),
+                          style: TextStyle(color: AppColors.primary),
                         )
                       : null,
                   shape: RoundedRectangleBorder(
@@ -686,7 +687,7 @@ class _SignInScreenState extends State<SignInScreen> {
                 child: ListTile(
                   title: Text('Arabic'.tr, style: GoogleFonts.spaceGrotesk()),
                   trailing: currentLanguage == 'Arabic'.tr
-                      ? Icon(Icons.check, color: Colors.blue)
+                      ? Icon(Icons.check, color: AppColors.primary)
                       : null,
                   shape: RoundedRectangleBorder(
                     side: BorderSide(
@@ -1163,7 +1164,7 @@ class _SignInScreenState extends State<SignInScreen> {
 //                   trailing: currentLanguage == 'English'
 //                       ? Text(
 //                           'Default'.tr,
-//                           style: TextStyle(color: Colors.blue),
+//                           style: TextStyle(color: AppColors.primary),
 //                         )
 //                       : null,
 //                   shape: RoundedRectangleBorder(
@@ -1188,7 +1189,7 @@ class _SignInScreenState extends State<SignInScreen> {
 //                 child: ListTile(
 //                   title: Text('Arabic'.tr),
 //                   trailing: currentLanguage == 'Arabic'.tr
-//                       ? Icon(Icons.check, color: Colors.blue)
+//                       ? Icon(Icons.check, color: AppColors.primary)
 //                       : null,
 //                   shape: RoundedRectangleBorder(
 //                     side: BorderSide(

@@ -343,12 +343,19 @@ class HotelCheckoutProvider with ChangeNotifier {
   /// confirmation screen.
   Future<bool> pollForConfirmedStatus(
     String bookingCode, {
-    int maxAttempts = 10,
-    Duration interval = const Duration(seconds: 2),
+    int maxAttempts = 20,
+    Duration interval = const Duration(seconds: 3),
   }) async {
     _isFetchingOrder = true;
     _orderError = null;
     notifyListeners();
+
+    // The Stripe return URL has already been called, but the order status is
+    // updated by the Stripe WEBHOOK (checkout.session.completed) which fires
+    // asynchronously — typically 2–10 s after the return URL redirect.
+    // Wait before the first poll so the webhook has time to update the record.
+    log('[PAYMENT POLL] waiting 5s before first attempt (webhook delay)...');
+    await Future.delayed(const Duration(seconds: 5));
 
     for (int attempt = 1; attempt <= maxAttempts; attempt++) {
       log('');

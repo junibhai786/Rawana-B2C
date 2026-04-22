@@ -12,6 +12,7 @@ import 'package:moonbnd/vendor/space/all_space_screen.dart';
 import 'package:moonbnd/vendor/tour/manage_tour_screen.dart';
 import 'package:moonbnd/widgets/bottom_navigation.dart';
 import 'package:flutter/material.dart';
+import 'package:moonbnd/app_colors.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:moonbnd/constants.dart';
@@ -824,14 +825,14 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? Colors.blue : Colors.white,
+          color: isSelected ? AppColors.primary : Colors.white,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: Colors.blue),
+          border: Border.all(color: AppColors.primary),
         ),
         child: Text(
           text,
           style: TextStyle(
-            color: isSelected ? Colors.white : Colors.blue,
+            color: isSelected ? Colors.white : AppColors.primary,
             fontWeight: FontWeight.w500,
           ),
         ),

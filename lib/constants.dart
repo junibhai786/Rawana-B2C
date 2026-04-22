@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
+import 'app_colors.dart';
 
-// Color Palette
-const kPrimaryColor = Color(0xFF05A8C7);
-// const kSecondaryColor = Color(0xFF0088A3);
-const kSecondaryColor = Color(0xFF01A9C7);
+// Color Palette — mapped to centralized AppColors
+const kPrimaryColor = AppColors.primary;
+const kSecondaryColor = AppColors.secondary;
 const kBackgroundColor = Color(0xFFFFFFFF);
-const kColor1 = Color(0xFFE8F7FA);
-const kColor2 = Color(0xFF006B82);
+const kColor1 = Color(0xFFE8F0FF); // light primary tint
+const kColor2 = AppColors.accent;
 const darkgrey = Color(0xFF424242);
 const grey = Color(0xFF757575);
 const grey1 = Color(0xFF616161);
-const flutterpads = Color(0xFF01A9C7);
+const flutterpads = AppColors.secondary;
 
 // Text hierarchy
 const kHeadingColor = Color(0xff1D2025);
@@ -34,11 +34,11 @@ const kScaffoldBgColor = Color(0xffF8F9FA);
 const kPrimaryTintColor = Color(0xffE0F7FC);
 
 // Success — instant confirmation, etc.
-const kSuccessColor = Color(0xff4CAF50);
+const kSuccessColor = AppColors.secondary;
 const kSuccessTintColor = Color(0xffE8F5E9);
 
 // Star rating
-const kStarColor = Color(0xffFACC15);
+const kStarColor = AppColors.accent;
 
 // Light dividers inside cards (softer than kBorderColor)
 const kCardDividerColor = Color(0xffF3F4F6);
@@ -48,7 +48,7 @@ const kAmenityBgColor = Color(0xffF0FAFB);
 const kAmenityBorderColor = Color(0xffBAE6F5);
 
 // Filter / sort sheet heading
-const kSheetHeadingColor = Color(0xFF1A1A2E);
+const kSheetHeadingColor = AppColors.accent;
 
 /// Google Map Key
 const googleAPIKey = "AIzaSyDqei5NmKaui1wNC9iyCAftXM3d08CJTFE";

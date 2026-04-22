@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:moonbnd/modals/hotel_search_model.dart';
@@ -16,6 +17,7 @@ class HotelApiService {
   /// - [adults]: Number of adults
   /// - [children]: Number of children
   /// - [rooms]: Number of rooms
+  /// - [childAges]: List of child ages (REQUIRED if children > 0)
   /// - [token]: Authorization token
   ///
   /// Returns: List of HotelModel objects
@@ -24,6 +26,7 @@ class HotelApiService {
   /// - Double-wrapped response (outer wrapper + inner API response)
   /// - Date formatting (yyyy-MM-dd format, NOT DateTime.toString())
   /// - Safe null handling for all fields
+  /// - Child ages validation (length must match children count)
   static Future<List<HotelModel>> searchHotels({
     required String city,
     required DateTime checkIn,
@@ -31,23 +34,43 @@ class HotelApiService {
     required int adults,
     required int children,
     required int rooms,
+    List<int>? childAges,
     required String token,
   }) async {
     try {
       final url = '${ApiUrls.baseUrl}${ApiUrls.hotelSearch}';
 
-      // === ISSUE 3: Format dates correctly (yyyy-MM-dd, not DateTime.toString()) ===
+      // === VALIDATION: Check child_ages consistency ===
+      if (children > 0 && (childAges == null || childAges.isEmpty)) {
+        log('[HOTEL SEARCH] ❌ VALIDATION ERROR: children=$children but childAges is null/empty');
+        throw Exception(
+            'ERROR: Selected $children child(ren) but no ages provided. Please enter their ages.');
+      }
+
+      if (children > 0 && childAges != null && childAges.length != children) {
+        log('[HOTEL SEARCH] ❌ VALIDATION ERROR: childAges.length=${childAges.length} != children=$children');
+        throw Exception(
+            'ERROR: Age list length (${childAges.length}) does not match children count ($children).');
+      }
+
+      // === FORMAT DATES ===
       final checkInString = DateFormat('yyyy-MM-dd').format(checkIn);
       final checkOutString = DateFormat('yyyy-MM-dd').format(checkOut);
 
-      print('[HotelApiService] POST REQUEST');
-      print('[HotelApiService] URL: $url');
-      print('[HotelApiService] City: $city');
-      print('[HotelApiService] Check-in: $checkInString');
-      print('[HotelApiService] Check-out: $checkOutString');
-      print(
-          '[HotelApiService] Adults: $adults, Children: $children, Rooms: $rooms');
+      log('');
+      log('[HOTEL SEARCH] Starting hotel search request');
+      log('[HOTEL SEARCH] URL: $url');
+      log('[HOTEL SEARCH] Input Parameters:');
+      log('[HOTEL SEARCH]   City: $city');
+      log('[HOTEL SEARCH]   Check-in: $checkInString');
+      log('[HOTEL SEARCH]   Check-out: $checkOutString');
+      log('[HOTEL SEARCH]   Adults: $adults');
+      log('[HOTEL SEARCH]   Children: $children');
+      log('[HOTEL SEARCH]   Child Ages: $childAges');
+      log('[HOTEL SEARCH]   Rooms: $rooms');
+      log('');
 
+      // === BUILD JSON REQUEST BODY ===
       final body = {
         'city': city,
         'check_in': checkInString,
@@ -57,7 +80,13 @@ class HotelApiService {
         'rooms': rooms.toString(),
       };
 
-      print('[HotelApiService] Request body: $body');
+      // ONLY ADD child_ages if children > 0
+      if (children > 0 && childAges != null && childAges.isNotEmpty) {
+        body['child_ages'] = childAges as String;
+        log('[HOTEL SEARCH] ✓ Added child_ages to request: $childAges');
+      }
+
+      final bodyJson = jsonEncode(body);
 
       final headers = {
         'Content-Type': 'application/json',
@@ -65,62 +94,70 @@ class HotelApiService {
         'Authorization': 'Bearer $token',
       };
 
-      print('[HotelApiService] Headers: ${headers.keys.toList()}');
+      log('');
+      log('[HOTEL SEARCH REQUEST]');
+      log('URL: $url');
+      log('HEADERS: ${jsonEncode(headers)}');
+      log('BODY: $bodyJson');
+      log('');
 
       final response = await http
           .post(
         Uri.parse(url),
         headers: headers,
-        body: jsonEncode(body),
+        body: bodyJson,
       )
           .timeout(const Duration(seconds: timeoutSeconds), onTimeout: () {
         throw TimeoutException(
             'Hotel search request timed out after $timeoutSeconds seconds');
       });
 
-      print('[HotelApiService] Response status code: ${response.statusCode}');
-      print('[HotelApiService] Response body: ${response.body}');
+      final responseBody = response.body;
+
+      log('');
+      log('[HOTEL SEARCH RESPONSE]');
+      log('STATUS CODE: ${response.statusCode}');
+      log('RESPONSE BODY: $responseBody');
+      log('');
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        final raw = jsonDecode(response.body) as Map<String, dynamic>;
-        print('[HotelApiService] Parsed raw response');
+        final raw = jsonDecode(responseBody) as Map<String, dynamic>;
+        log('[HOTEL SEARCH] Parsed JSON response successfully');
 
         // === ISSUE 1: Handle double-wrapped response ===
-        print('[HotelApiService] Checking response structure...');
-        print('[HotelApiService] Raw keys: ${raw.keys.toList()}');
+        log('[HOTEL SEARCH] Checking response structure...');
+        log('[HOTEL SEARCH] Top-level keys: ${raw.keys.toList()}');
 
         Map<String, dynamic> apiData;
         final inner = raw['data'];
 
         if (inner is Map<String, dynamic>) {
-          print('[HotelApiService] Inner data is Map');
-          print('[HotelApiService] Inner keys: ${inner.keys.toList()}');
+          log('[HOTEL SEARCH] Inner data is Map');
+          log('[HOTEL SEARCH] Inner keys: ${inner.keys.toList()}');
 
           // Check if inner has 'data' and 'success' (double wrapped)
           if (inner.containsKey('data') && inner.containsKey('success')) {
-            print(
-                '[HotelApiService] ✓ Double-wrapped response detected — unwrapping');
+            log('[HOTEL SEARCH] ✓ Double-wrapped response detected — unwrapping');
             apiData = Map<String, dynamic>.from(inner); // Unwrap one level
           } else {
-            print('[HotelApiService] Single-wrapped response');
+            log('[HOTEL SEARCH] Single-wrapped response');
             apiData = raw;
           }
         } else {
-          print('[HotelApiService] Using raw response (inner is not Map)');
+          log('[HOTEL SEARCH] Using raw response (inner is not Map)');
           apiData = raw;
         }
 
-        print('[HotelApiService] API data success: ${apiData['success']}');
-        print('[HotelApiService] API data count: ${apiData['count']}');
+        log('[HOTEL SEARCH] API success: ${apiData['success']}');
+        log('[HOTEL SEARCH] Hotel count: ${apiData['count']}');
 
         if (apiData['success'] == true) {
           final hotelList = apiData['data'] ?? [];
-          print('[HotelApiService] ✓ API returned success');
-          print('[HotelApiService] Hotel list length: ${hotelList.length}');
+          log('[HOTEL SEARCH] ✓ API returned success');
+          log('[HOTEL SEARCH] Hotel list length: ${hotelList.length}');
 
           if (hotelList is! List) {
-            print(
-                '[HotelApiService] ✗ ERROR: "data" is not a List, got ${hotelList.runtimeType}');
+            log('[HOTEL SEARCH] ✗ ERROR: "data" is not a List, got ${hotelList.runtimeType}');
             throw Exception('Invalid response: "data" field is not a list');
           }
 
@@ -129,23 +166,22 @@ class HotelApiService {
               .map((h) => HotelModel.fromJson(h))
               .toList();
 
-          print(
-              '[HotelApiService] ✓ Parsed ${hotels.length} hotels successfully');
+          log('[HOTEL SEARCH] ✓ Successfully parsed ${hotels.length} hotels');
           return hotels;
         } else {
           final message = apiData['message'] ?? 'Unknown error';
-          print('[HotelApiService] ✗ API returned false: $message');
+          log('[HOTEL SEARCH] ✗ API returned false: $message');
           throw Exception('API error: $message');
         }
       } else {
-        print('[HotelApiService] ✗ HTTP Error: ${response.statusCode}');
-        print('[HotelApiService] Response: ${response.body}');
+        log('[HOTEL SEARCH] ✗ HTTP Error: ${response.statusCode}');
+        log('[HOTEL SEARCH] Response: $responseBody');
         throw Exception(
             'HTTP ${response.statusCode}: ${response.reasonPhrase}');
       }
     } catch (e) {
-      print('[HotelApiService] ✗ EXCEPTION: $e');
-      print('[HotelApiService] Stack: $e');
+      log('[HOTEL SEARCH] ✗ EXCEPTION: $e');
+      log('[HOTEL SEARCH] Stack: ${StackTrace.current}');
       rethrow;
     }
   }
@@ -154,7 +190,7 @@ class HotelApiService {
   ///
   /// Parameters:
   /// - [hotelId]: Hotel ID (local db ID or external provider ID)
-  /// - [provider]: Provider name (e.g. "local", "travolyo_b2b"). Required for disambiguation.
+  /// - [provider]: Provider name (e.g. "local", "rawana_b2b"). Required for disambiguation.
   /// - [token]: Authorization token
   ///
   /// Returns: Raw Map<String, dynamic> of hotel detail data
@@ -231,6 +267,100 @@ class HotelApiService {
       }
     } catch (e) {
       print('[HotelApiService] ✗ Hotel Detail EXCEPTION: $e');
+      rethrow;
+    }
+  }
+
+  /// Fetch hotel rooms with detailed availability and pricing
+  ///
+  /// Parameters:
+  /// - [offerId]: Offer ID from search response
+  /// - [cityCode]: City code
+  /// - [checkIn]: Check-in date (yyyy-MM-dd format)
+  /// - [checkOut]: Check-out date (yyyy-MM-dd format)
+  /// - [adults]: Number of adults
+  /// - [currency]: Currency code (e.g., "USD", "EUR")
+  /// - [provider]: Hotel provider
+  /// - [token]: Authorization token
+  ///
+  /// Returns: Response map with rooms data
+  static Future<Map<String, dynamic>> fetchHotelRooms({
+    required String offerId,
+    required String cityCode,
+    required String checkIn,
+    required String checkOut,
+    required int adults,
+    required String currency,
+    required String provider,
+    required String token,
+  }) async {
+    try {
+      final url = '${ApiUrls.baseUrl}hotels/rooms';
+
+      final headers = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': 'Bearer $token',
+      };
+
+      final body = {
+        'offer_id': offerId,
+        'city_code': cityCode,
+        'check_in': checkIn,
+        'check_out': checkOut,
+        'adults': adults,
+        'currency': currency,
+        'provider': provider,
+      };
+
+      final bodyJson = jsonEncode(body);
+
+      log('[HOTEL_ROOMS] Fetching rooms details');
+      log('[HOTEL_ROOMS] URL: $url');
+      log('[HOTEL_ROOMS] Request Body: $bodyJson');
+
+      final response = await http
+          .post(
+        Uri.parse(url),
+        headers: headers,
+        body: bodyJson,
+      )
+          .timeout(const Duration(seconds: timeoutSeconds), onTimeout: () {
+        throw TimeoutException(
+            'Hotel rooms request timed out after $timeoutSeconds seconds');
+      });
+
+      log('[HOTEL_ROOMS] Response Status: ${response.statusCode}');
+      log('[HOTEL_ROOMS] Response Body: ${response.body}');
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final raw = jsonDecode(response.body) as Map<String, dynamic>;
+
+        // Handle potential double-wrapped response
+        Map<String, dynamic> apiData;
+        final inner = raw['data'];
+        if (inner is Map<String, dynamic> &&
+            inner.containsKey('data') &&
+            inner.containsKey('success')) {
+          log('[HOTEL_ROOMS] Double-wrapped response detected');
+          apiData = Map<String, dynamic>.from(inner);
+        } else {
+          apiData = raw;
+        }
+
+        if (apiData['success'] == true || apiData['data'] != null) {
+          log('[HOTEL_ROOMS] ✓ Successfully fetched rooms');
+          return apiData;
+        } else {
+          final message = apiData['message'] ?? 'Failed to fetch rooms';
+          throw Exception('API error: $message');
+        }
+      } else {
+        throw Exception(
+            'HTTP ${response.statusCode}: ${response.reasonPhrase}');
+      }
+    } catch (e) {
+      log('[HOTEL_ROOMS] ✗ Error fetching rooms: $e');
       rethrow;
     }
   }

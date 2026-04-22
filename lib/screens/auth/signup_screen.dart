@@ -18,6 +18,7 @@ import 'package:moonbnd/widgets/app_snackbar.dart';
 import 'otp_screen.dart';
 import 'package:flutter/gestures.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:moonbnd/app_colors.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -77,7 +78,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Image.asset(
-                    'assets/images/logo.png',
+                    'assets/icons/rawana.logo.jpeg',
                     height: 60,
                     fit: BoxFit.contain,
                   ),
@@ -474,25 +475,24 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                 TextSpan(
                                   text: "Terms of Service".tr,
                                   style: GoogleFonts.spaceGrotesk(
-                                    color: Color(0xFF05A8C7),
+                                    color: AppColors.primary,
                                     decoration: TextDecoration.underline,
                                   ),
                                   recognizer: TapGestureRecognizer()
                                     ..onTap = () {
-                                      _launchUrl('https://travolyo.com/terms');
+                                      _launchUrl('https://rawana.com/terms');
                                     },
                                 ),
                                 TextSpan(text: " and ".tr),
                                 TextSpan(
                                   text: "Privacy Policy".tr,
                                   style: GoogleFonts.spaceGrotesk(
-                                    color: Color(0xFF05A8C7),
+                                    color: AppColors.primary,
                                     decoration: TextDecoration.underline,
                                   ),
                                   recognizer: TapGestureRecognizer()
                                     ..onTap = () {
-                                      _launchUrl(
-                                          'https://travolyo.com/privacy');
+                                      _launchUrl('https://rawana.com/privacy');
                                     },
                                 ),
                               ],
@@ -574,7 +574,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                               }
                             },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Color(0xFF05A8C7),
+                        backgroundColor: AppColors.primary,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),

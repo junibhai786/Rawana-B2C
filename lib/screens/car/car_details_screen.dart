@@ -12,6 +12,7 @@ import 'package:moonbnd/screens/hotel/room_detail_screen.dart';
 import 'package:moonbnd/widgets/popup_login.dart';
 import 'package:moonbnd/widgets/tertiary_button.dart';
 import 'package:flutter/material.dart';
+import 'package:moonbnd/app_colors.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
@@ -684,7 +685,7 @@ class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
                       context, item.carDetail); // Call the modal sheet method
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue,
+                  backgroundColor: AppColors.primary,
                   padding: EdgeInsets.symmetric(horizontal: 32, vertical: 16),
                 ),
                 child: Text('Book Now'.tr),
@@ -1653,7 +1654,7 @@ class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
   Widget _buildHighlightItem(String text) {
     return Row(
       children: [
-        Icon(Icons.check_circle, color: Colors.green),
+        Icon(Icons.check_circle, color: AppColors.secondary),
         SizedBox(width: 8),
         Expanded(child: Text(text)),
       ],
@@ -1718,7 +1719,7 @@ class _CarRentalDetailsScreenState extends State<CarRentalDetailsScreen> {
           Center(
             child: Container(
               decoration: BoxDecoration(
-                color: const Color(0xFF05A8C7),
+                color: AppColors.primary,
                 borderRadius: BorderRadius.circular(10.0), // Rounded corners
               ),
               padding:

@@ -174,7 +174,7 @@ class _ActivitySearchWidgetState extends State<ActivitySearchWidget> {
             readOnly: true,
             onTap: _pickDate,
             controller: TextEditingController(
-              text: DateFormat('MM/dd/yyyy').format(_selectedDate),
+              text: DateFormat('dd/MM/yyyy').format(_selectedDate),
             ),
             decoration: _fieldDecoration(
               hint: 'Select date'.tr,
