@@ -54,8 +54,8 @@ class _SplashScreenState extends State<SplashScreen> {
             // --- LOGO SECTION ---
             // OPTION 1: If you have the image asset (Recommended)
             Image.asset(
-              'assets/icons/rawana.logo.jpeg',
-              width: 250,
+              'assets/icons/rawana.logo.png',
+              width: 280,
             ),
           ],
         ),

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../constants.dart';
+import '../app_colors.dart';
 
 //tertiary button
 class TertiaryButton extends StatelessWidget {
@@ -18,7 +18,7 @@ class TertiaryButton extends StatelessWidget {
     return ElevatedButton(
       style: ElevatedButton.styleFrom(
         minimumSize: const Size.fromHeight(48),
-        backgroundColor: kSecondaryColor,
+        backgroundColor: AppColors.primary,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(10),
         ),
@@ -26,8 +26,7 @@ class TertiaryButton extends StatelessWidget {
       onPressed: press,
       child: Text(
         text,
-        style:  GoogleFonts.spaceGrotesk(
-
+        style: GoogleFonts.spaceGrotesk(
           color: Colors.white,
           fontSize: 14,
           fontWeight: FontWeight.w600,
