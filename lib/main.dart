@@ -178,9 +178,10 @@ class _NavigationState extends State<NavigationScreen> {
       body: SafeArea(
         child: Center(
           child: SizedBox(
-            height: 150,
-            width: 150,
-            child: Image.asset('assets/icons/rawana.logo.jpeg'),
+            height: 160,
+            width: 220,
+            child: Image.asset('assets/icons/rawana.logo.png',
+                fit: BoxFit.contain),
           ),
         ),
       ),

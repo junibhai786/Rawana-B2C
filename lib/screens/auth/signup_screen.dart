@@ -78,8 +78,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Image.asset(
-                    'assets/icons/rawana.logo.jpeg',
-                    height: 60,
+                    'assets/icons/rawana.logo.png',
+                    height: 75,
                     fit: BoxFit.contain,
                   ),
                   SizedBox(height: 10),

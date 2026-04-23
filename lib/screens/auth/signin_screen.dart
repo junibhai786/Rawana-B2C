@@ -146,8 +146,8 @@ class _SignInScreenState extends State<SignInScreen> {
                   Align(
                     alignment: Alignment.centerLeft,
                     child: Image.asset(
-                      'assets/icons/rawana.logo.jpeg',
-                      height: 60, // Adjust height as needed
+                      'assets/icons/rawana.logo.png',
+                      height: 75,
                       fit: BoxFit.contain,
                     ),
                   ),
